@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Users, Trophy, Zap, Play } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getStravaAuthUrl } from '../../services/stravaService';
+import SportAnimation from './SportAnimation';
 
 const LandingPage: React.FC = () => {
   const { user, isConnectedToStrava } = useAuth();
@@ -72,6 +73,16 @@ const LandingPage: React.FC = () => {
                 <Play className="w-5 h-5" />
                 <span>View Demo Race</span>
               </Link>
+            </motion.div>
+
+            {/* Sport Animation */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-16"
+            >
+              <SportAnimation />
             </motion.div>
           </div>
         </div>

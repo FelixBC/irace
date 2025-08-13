@@ -67,7 +67,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                 </div>
                 <p className="text-sm text-gray-600 mb-1">
                   <span className={`font-semibold ${sportConfig[activity.sport]?.color || 'text-gray-600'}`}>
-                    {activity.distance.toFixed(1)}km
+                    {activity.sport === Sport.WEIGHT_TRAINING 
+                      ? `${activity.distance} ${activity.unit}` // Show "12 sets" for strength training
+                      : `${activity.distance.toFixed(1)}${activity.unit}` // Show "8.2km" for distance sports
+                    }
                   </span>{' '}
                   {activity.sport === Sport.RUNNING ? 'run' : 
                    activity.sport === Sport.CYCLING ? 'ride' : 

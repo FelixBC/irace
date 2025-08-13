@@ -8,6 +8,8 @@ import RaceView from './components/Race/RaceView';
 import StravaConnect from './components/Strava/StravaConnect';
 import AuthCallback from './components/Auth/AuthCallback';
 import TestStrava from './components/TestStrava';
+import Profile from './components/Profile/Profile';
+import MyChallenges from './components/Challenges/MyChallenges';
 
 function App() {
   return (
@@ -19,8 +21,8 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/create" element={<CreateChallenge />} />
             <Route path="/race/:challengeId" element={<RaceView />} />
-            <Route path="/challenges" element={<div className="p-8 text-center">My Challenges - Coming Soon!</div>} />
-            <Route path="/profile" element={<div className="p-8 text-center">Profile - Coming Soon!</div>} />
+            <Route path="/challenges" element={<MyChallenges />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/strava" element={<StravaConnect onConnect={() => {}} isConnected={false} />} />
             <Route path="/api/auth/callback/strava" element={<AuthCallback />} />
             <Route path="/test-strava" element={<TestStrava />} />

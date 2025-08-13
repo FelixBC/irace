@@ -6,6 +6,7 @@ export interface CreateChallengeData {
   sports: Sport[];
   duration: number;
   isPrivate: boolean;
+  goals: Record<Sport, number>;
 }
 
 export class ChallengeService {
@@ -16,14 +17,19 @@ export class ChallengeService {
     const startDate = new Date();
     const endDate = addDays(startDate, data.duration);
 
+    // Calculate average goal for the challenge
+    const totalGoal = Object.values(data.goals).reduce((sum, goal) => sum + goal, 0);
+    const averageGoal = totalGoal / Object.keys(data.goals).length;
+
     const challenge: Challenge = {
       id: `challenge-${Date.now()}`,
       name: data.name,
       description: `${data.name} - A fitness challenge with ${data.sports.length} sports`,
       sports: data.sports,
       challengeType: ChallengeType.DISTANCE,
-      goal: 100, // Default goal
+      goal: averageGoal, // Use average of all sport goals
       goalUnit: 'km',
+      sportGoals: data.goals, // Store sport-specific goals
       duration: `${data.duration} days`,
       startDate,
       endDate,

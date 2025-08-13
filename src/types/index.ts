@@ -44,6 +44,7 @@ export interface Challenge {
   challengeType: ChallengeType;
   goal: number;
   goalUnit: string;
+  sportGoals: Record<Sport, number>; // Sport-specific goals
   duration: string;
   startDate: Date;
   endDate: Date;
@@ -75,6 +76,7 @@ export interface Activity {
   sport: Sport;
   distance: number;
   duration: number;
+  unit: string; // Unit of measurement (km, sets, minutes, etc.)
   date: Date;
   synced: boolean;
 }
@@ -107,4 +109,18 @@ export enum ParticipationStatus {
   COMPLETED = 'COMPLETED',
   DROPPED = 'DROPPED',
   INVITED = 'INVITED'
+}
+
+export interface ParticipantProgress {
+  user: User;
+  distance: number;
+  percentage: number;
+  dailyProgress: any[];
+}
+
+export interface RaceTrack {
+  sport: Sport;
+  participants: ParticipantProgress[];
+  maxDistance: number;
+  leader: User | null;
 }

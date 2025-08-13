@@ -6,6 +6,7 @@ import { Sport, Challenge } from '../../types';
 import { ChallengeService, CreateChallengeData } from '../../services/challengeService';
 import { addDays } from 'date-fns';
 import QRCode from 'react-qr-code';
+import GoalSettingModal from './GoalSettingModal';
 
 const CreateChallenge: React.FC = () => {
   const navigate = useNavigate();
@@ -15,9 +16,12 @@ const CreateChallenge: React.FC = () => {
     sports: [] as Sport[],
     duration: 7,
     isPrivate: false,
+    goals: {} as Record<Sport, number>,
   });
   const [createdChallenge, setCreatedChallenge] = useState<Challenge | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
 
   const sportOptions = [
     { id: Sport.RUNNING, name: 'Running', icon: '🏃‍♂️', color: 'from-orange-400 to-red-500' },
@@ -36,12 +40,20 @@ const CreateChallenge: React.FC = () => {
   ];
 
   const handleSportToggle = (sport: Sport) => {
-    setFormData(prev => ({
-      ...prev,
-      sports: prev.sports.includes(sport)
-        ? prev.sports.filter(s => s !== sport)
-        : [...prev.sports, sport]
-    }));
+    if (formData.sports.includes(sport)) {
+      // Remove sport and its goal
+      setFormData(prev => ({
+        ...prev,
+        sports: prev.sports.filter(s => s !== sport),
+        goals: Object.fromEntries(
+          Object.entries(prev.goals).filter(([s]) => s !== sport)
+        ) as Record<Sport, number>,
+      }));
+    } else {
+      // Add sport and open goal modal
+      setSelectedSport(sport);
+      setShowGoalModal(true);
+    }
   };
 
   const handleNext = () => {
@@ -50,12 +62,23 @@ const CreateChallenge: React.FC = () => {
     }
   };
 
+  const handleGoalsSet = (goals: Record<Sport, number>) => {
+    setFormData(prev => ({
+      ...prev,
+      goals: { ...prev.goals, ...goals },
+      sports: [...prev.sports, selectedSport!],
+    }));
+    setShowGoalModal(false);
+    setSelectedSport(null);
+  };
+
   const handleCreateChallenge = () => {
     const challengeData: CreateChallengeData = {
       name: formData.name,
       sports: formData.sports,
       duration: formData.duration,
       isPrivate: formData.isPrivate,
+      goals: formData.goals,
     };
 
     const newChallenge = ChallengeService.createChallenge(challengeData, '1'); // Mock user ID for now
@@ -164,6 +187,11 @@ const CreateChallenge: React.FC = () => {
                       <div className="text-center">
                         <span className="text-3xl mb-2 block">{sport.icon}</span>
                         <p className="font-medium text-gray-900">{sport.name}</p>
+                        {formData.goals[sport.id] && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            {formData.goals[sport.id]} {sport.id === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
+                          </p>
+                        )}
                       </div>
                     </motion.button>
                   ))}
@@ -173,14 +201,17 @@ const CreateChallenge: React.FC = () => {
                 </p>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 onClick={handleNext}
                 disabled={!formData.name.trim() || formData.sports.length === 0}
                 className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </motion.button>
             </div>
           )}
 
@@ -249,19 +280,25 @@ const CreateChallenge: React.FC = () => {
               </div>
 
               <div className="flex space-x-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={() => setStep(1)}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
                 >
                   Back
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={handleCreateChallenge}
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <span>Create Challenge</span>
                   <Plus className="w-4 h-4" />
-                </button>
+                </motion.button>
               </div>
             </div>
           )}
@@ -301,26 +338,37 @@ const CreateChallenge: React.FC = () => {
                     readOnly
                     className="flex-1 p-2 bg-white border border-gray-300 rounded text-sm"
                   />
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     onClick={copyShareLink}
                     className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded transition-colors"
                   >
                     <Copy className="w-4 h-4" />
-                  </button>
+                  </motion.button>
                 </div>
 
                 <div className="flex justify-center space-x-4">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     onClick={() => setShowQR(!showQR)}
                     className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     <QrCode className="w-4 h-4" />
                     <span>QR Code</span>
-                  </button>
-                  <button className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  >
                     <Share2 className="w-4 h-4" />
                     <span>Share</span>
-                  </button>
+                  </motion.button>
                 </div>
 
                 {showQR && (
@@ -338,16 +386,27 @@ const CreateChallenge: React.FC = () => {
                 )}
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 onClick={goToRace}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>Go to Race</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </motion.button>
             </div>
           )}
         </motion.div>
+
+        {/* Goal Setting Modal */}
+        <GoalSettingModal
+          isOpen={showGoalModal}
+          onClose={() => setShowGoalModal(false)}
+          sports={selectedSport ? [selectedSport] : []}
+          onGoalsSet={handleGoalsSet}
+        />
       </div>
     </div>
   );

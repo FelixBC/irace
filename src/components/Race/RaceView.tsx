@@ -25,6 +25,8 @@ const RaceView: React.FC = () => {
 
   useEffect(() => {
     // Check if this is a demo challenge or a real challenge
+    if (!challengeId) return;
+    
     if (challengeId === 'demo-challenge') {
       // Demo challenge - use mock data
       setChallenge(mockChallenge);
@@ -106,20 +108,32 @@ const RaceView: React.FC = () => {
       // Calculate participant progress for all mock users
       const participantProgress: ParticipantProgress[] = mockUsers.map((user) => {
         const userActivities = sportActivities.filter((a) => a.userId === user.id);
-        const totalDistance = userActivities.reduce((sum, a) => sum + a.distance, 0);
+        
+        // For strength training, use the activity value directly (sets/time)
+        // For other sports, use distance
+        const totalValue = userActivities.reduce((sum, a) => {
+          if (a.sport === Sport.WEIGHT_TRAINING) {
+            return sum + a.distance; // distance field stores sets/time for strength training
+          } else {
+            return sum + a.distance; // distance field stores km for other sports
+          }
+        }, 0);
 
         return {
           user,
-          distance: totalDistance,
+          distance: totalValue, // This will be sets for strength training, km for others
           percentage: 0, // Will be calculated below
           dailyProgress: [], // Simplified for demo
         };
-      }).filter(p => p.distance > 0); // Only show participants with activities
+      }); // Remove the filter to include all users
 
-      // Calculate max distance and percentages
-      const maxDistance = Math.max(...participantProgress.map((p) => p.distance), 1);
+      // Use sport-specific goal from challenge, fallback to calculated max
+      const sportGoal = mockChallenge.sportGoals?.[sport] || 100;
+      const maxDistance = Math.max(...participantProgress.map((p) => p.distance), sportGoal);
+      
+      // Calculate percentages based on the sport goal
       participantProgress.forEach((p) => {
-        p.percentage = (p.distance / maxDistance) * 100;
+        p.percentage = (p.distance / sportGoal) * 100;
       });
 
       // Sort by distance (descending)
@@ -130,7 +144,7 @@ const RaceView: React.FC = () => {
       return {
         sport,
         participants: participantProgress,
-        maxDistance,
+        maxDistance: sportGoal, // Use the sport-specific goal
         leader,
       };
     });
@@ -152,11 +166,14 @@ const RaceView: React.FC = () => {
         dailyProgress: [],
       }];
 
+      // Use sport-specific goal if available, otherwise fallback to challenge goal
+      const sportGoal = challenge.sportGoals?.[sport] || challenge.goal || 100;
+
       return {
         sport,
         participants: participantProgress,
-        maxDistance: challenge.goal || 100, // Use challenge goal as max distance
-        leader: participantProgress[0],
+        maxDistance: sportGoal, // Use sport-specific goal
+        leader: participantProgress[0].user,
       };
     });
 
@@ -194,7 +211,7 @@ const RaceView: React.FC = () => {
 
       // For real challenges, calculate progress based on challenge goal
       const totalDistance = sportActivities.reduce((sum, a) => sum + a.distance, 0);
-      const challengeGoal = challenge.goal || 100; // Default to 100km if no goal set
+      const challengeGoal = challenge.sportGoals?.[sport] || challenge.goal || 100; // Use sport-specific goal, fallback to general goal
       const progressPercentage = Math.min((totalDistance / challengeGoal) * 100, 100); // Cap at 100%
       
       console.log(`🏃‍♂️ Sport ${sport}: ${totalDistance}km / ${challengeGoal}km = ${progressPercentage.toFixed(1)}% (since challenge start)`);
@@ -214,7 +231,7 @@ const RaceView: React.FC = () => {
       return {
         sport,
         participants: participantProgress,
-        maxDistance: challengeGoal, // Use the challenge goal as max distance
+        maxDistance: challengeGoal, // Use the sport-specific goal as max distance
         leader,
       };
     });
@@ -242,6 +259,26 @@ const RaceView: React.FC = () => {
     }
   };
 
+  const getTotalParticipants = (): number => {
+    // For demo challenge, show the mock users count
+    if (challengeId === 'demo-challenge') {
+      return mockUsers.length; // Always 4 for demo
+    }
+    
+    // For real challenges, count actual participants
+    if (raceTracks.length === 0) return 0;
+    
+    // Get unique participants across all tracks
+    const allParticipants = new Set<string>();
+    raceTracks.forEach(track => {
+      track.participants.forEach(participant => {
+        allParticipants.add(participant.user.id);
+      });
+    });
+    
+    return allParticipants.size;
+  };
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     
@@ -262,7 +299,7 @@ const RaceView: React.FC = () => {
   };
 
   const copyShareLink = () => {
-    const shareUrl = `${window.location.origin}/race/${challenge?.shareCode}`;
+    const shareUrl = `${window.location.origin}/race/${challenge?.inviteCode}`;
     navigator.clipboard.writeText(shareUrl);
     // In a real app, show success toast
   };
@@ -299,7 +336,7 @@ const RaceView: React.FC = () => {
             <div className="flex flex-wrap justify-center items-center gap-6 text-lg">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5" />
-                <span>{mockUsers.length} participants</span>
+                <span>{getTotalParticipants()} participants</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
@@ -356,29 +393,38 @@ const RaceView: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex justify-center space-x-4 mt-8">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={copyShareLink}
               className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg transition-colors"
             >
               <Share2 className="w-4 h-4" />
               <span>Share</span>
-            </button>
+            </motion.button>
             {isConnectedToStrava && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 onClick={() => window.location.href = '/create'}
                 className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors"
               >
                 <span>🏆</span>
                 <span>Create Challenge</span>
-              </button>
+              </motion.button>
             )}
           </div>
         </div>

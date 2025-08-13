@@ -51,6 +51,13 @@ const sportConfig = {
     borderColor: 'border-purple-200',
     textColor: 'text-purple-700',
   },
+  YOGA: {
+    icon: '🧘‍♀️',
+    color: 'from-indigo-400 to-indigo-600',
+    bgColor: 'bg-indigo-50',
+    borderColor: 'border-indigo-200',
+    textColor: 'text-indigo-700',
+  },
 };
 
 const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
@@ -70,11 +77,17 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
             <p className="text-sm text-gray-500">
               {track.participants.length} participants
             </p>
+            {/* Challenge Goal Badge */}
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                🎯 Goal: {track.maxDistance.toFixed(1)} {track.sport === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
+              </span>
+            </div>
             {/* Progress vs Goal */}
             {track.participants.length === 1 && track.participants[0] && (
               <div className="mt-2 text-sm">
                 <span className="text-gray-600">
-                  Progress: {track.participants[0].distance.toFixed(1)}km / {track.maxDistance.toFixed(1)}km
+                  Progress: {track.participants[0].distance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sets' : 'km'} / {track.maxDistance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sessions' : 'km'}
                 </span>
                 <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
                   <motion.div
@@ -121,10 +134,13 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
 
           {/* Distance Markers */}
           <div className="absolute -bottom-6 left-0 text-xs text-gray-500 font-mono">
-            0km
+            {track.sport === Sport.WEIGHT_TRAINING ? '0' : '0km'}
           </div>
           <div className="absolute -bottom-6 right-0 text-xs text-gray-500 font-mono">
-            {track.maxDistance.toFixed(1)}km
+            {track.sport === Sport.WEIGHT_TRAINING 
+              ? `${track.maxDistance.toFixed(0)} sessions`
+              : `${track.maxDistance.toFixed(1)}km`
+            }
           </div>
         </div>
 
@@ -167,7 +183,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className={`absolute -top-8 bg-gradient-to-r ${config.color} text-white px-2 py-1 rounded text-xs font-mono shadow-lg whitespace-nowrap`}
               >
-                {participant.distance.toFixed(1)}km
+                {participant.distance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sets' : 'km'}
               </motion.div>
 
               {/* Progress Trail */}
@@ -204,7 +220,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
               />
             </div>
             <span className="text-xs font-mono text-gray-500 w-12 text-right">
-              {participant.distance.toFixed(1)}km
+              {participant.distance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sets' : 'km'}
             </span>
           </div>
         ))}

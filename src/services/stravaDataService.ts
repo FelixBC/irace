@@ -1,0 +1,108 @@
+import { StravaService } from './stravaService';
+import { StravaTokens, StravaActivity, User, Activity, Sport } from '../types';
+
+export interface RealTimeStravaData {
+  user: User;
+  activities: Activity[];
+  lastSync: Date;
+}
+
+export class StravaDataService {
+  private stravaService: StravaService;
+
+  constructor(tokens: StravaTokens) {
+    this.stravaService = new StravaService(tokens);
+  }
+
+  async getUserProfile(): Promise<User> {
+    const athlete = await this.stravaService.getAthlete();
+    
+    return {
+      id: athlete.id.toString(),
+      name: `${athlete.firstname} ${athlete.lastname}`,
+      email: athlete.email || undefined,
+      image: athlete.profile,
+      stravaId: athlete.id.toString(),
+      lastSync: new Date(),
+    };
+  }
+
+  async getRecentActivities(days: number = 2): Promise<Activity[]> {
+    const afterDate = new Date();
+    afterDate.setDate(afterDate.getDate() - days);
+    
+    console.log(`📅 Fetching activities from ${afterDate.toDateString()} (last ${days} days)`);
+    
+    const stravaActivities = await this.stravaService.getActivitiesAfterDate(afterDate);
+    
+    console.log(`📊 Found ${stravaActivities.length} activities in the last ${days} days`);
+    
+    return stravaActivities.map(stravaActivity => ({
+      id: stravaActivity.id.toString(),
+      stravaActivityId: stravaActivity.id.toString(),
+      userId: stravaActivity.athlete?.id?.toString() || 'unknown',
+      challengeId: undefined, // Will be set when added to a challenge
+      sport: this.mapStravaTypeToSport(stravaActivity.type),
+      distance: stravaActivity.distance / 1000, // Convert meters to kilometers
+      duration: stravaActivity.moving_time,
+      date: new Date(stravaActivity.start_date),
+      synced: true,
+    }));
+  }
+
+  async getActivitiesForChallenge(challengeId: string, startDate: Date, endDate: Date): Promise<Activity[]> {
+    // Only get activities from the last 2 days, regardless of challenge dates
+    const activities = await this.getRecentActivities(2);
+    
+    console.log(`🏆 Challenge ${challengeId}: Filtering ${activities.length} recent activities (last 2 days)`);
+    
+    return activities.filter(activity => {
+      const activityDate = new Date(activity.date);
+      const isInChallengePeriod = activityDate >= startDate && activityDate <= endDate;
+      const isRecent = activityDate >= new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // Last 2 days
+      
+      console.log(`📅 Activity ${activity.id}: ${activityDate.toDateString()} - Challenge: ${isInChallengePeriod}, Recent: ${isRecent}`);
+      
+      // Only include if it's both in challenge period AND recent (last 2 days)
+      return isInChallengePeriod && isRecent;
+    });
+  }
+
+  private mapStravaTypeToSport(stravaType: string): Sport {
+    const type = stravaType.toLowerCase();
+    
+    if (type.includes('run') || type.includes('trail')) {
+      return Sport.RUNNING;
+    } else if (type.includes('ride') || type.includes('cycle') || type.includes('bike')) {
+      return Sport.CYCLING;
+    } else if (type.includes('swim')) {
+      return Sport.SWIMMING;
+    } else if (type.includes('walk')) {
+      return Sport.WALKING;
+    } else if (type.includes('hike')) {
+      return Sport.HIKING;
+    } else if (type.includes('weight') || type.includes('strength') || type.includes('gym')) {
+      return Sport.WEIGHT_TRAINING;
+    } else {
+      return Sport.RUNNING; // Default fallback
+    }
+  }
+
+  async refreshUserData(): Promise<RealTimeStravaData> {
+    const [user, activities] = await Promise.all([
+      this.getUserProfile(),
+      this.getRecentActivities(2) // Only last 2 days
+    ]);
+
+    return {
+      user,
+      activities,
+      lastSync: new Date()
+    };
+  }
+}
+
+// Utility function to create the service from tokens
+export function createStravaDataService(tokens: StravaTokens): StravaDataService {
+  return new StravaDataService(tokens);
+}

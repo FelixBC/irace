@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  stravaId      String?   @unique
+  stravaTokens  Json?     // Store Strava access and refresh tokens
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  challenges    Challenge[] @relation("ChallengeCreator")
+  participations Participation[]
+  activities    Activity[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Challenge {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  sports          Sport[]  // Array of sports for multi-sport challenges
+  challengeType   ChallengeType @default(DISTANCE)  // Default to DISTANCE
+  goal            Float    // Goal value (distance, time, or frequency)
+  goalUnit        String   // Unit for the goal (km, hours, count)
+  duration        String   // 3_DAYS, 1_WEEK, 2_WEEKS, 1_MONTH
+  startDate       DateTime
+  endDate         DateTime
+  isPublic        Boolean  @default(true)  // Default to public for better sharing
+  inviteCode      String   @unique          // Auto-generated for sharing
+  maxParticipants Int      @default(10)     // Max participants (2-100)
+  status          ChallengeStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creatorId       String
+  creator         User           @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  participants    Participation[]
+  activities      Activity[]
+
+  @@index([creatorId])
+  @@index([startDate, endDate])
+  @@index([inviteCode])
+  @@index([status])
+  @@index([isPublic])
+}
+
+model Participation {
+  id              String   @id @default(cuid())
+  userId          String
+  challengeId     String
+  avatarId        String?  // For avatar customization (future monetization)
+  joinedAt        DateTime @default(now())
+  status          ParticipationStatus @default(ACTIVE)
+  progress        Json?    // Multi-sport progress tracking
+  lastActivityDate DateTime?
+  currentDistance Float    @default(0)
+  lastActivityAt  DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+  @@index([avatarId])
+}
+
+model Activity {
+  id               String   @id @default(cuid())
+  stravaActivityId String   @unique
+  userId           String
+  challengeId      String?
+  sport            Sport
+  distance         Float    // Distance in kilometers
+  duration         Int      // Duration in seconds
+  date             DateTime
+  synced           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([challengeId])
+  @@index([sport])
+  @@index([date])
+  @@index([stravaActivityId])
+}
+
+// Avatar system for future monetization
+model Avatar {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  sport       Sport
+  imageUrl    String
+  isPremium   Boolean  @default(false)
+  price       Float?   // Price in USD for premium avatars
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sport])
+  @@index([isPremium])
+  @@index([isActive])
+}
+
+enum Sport {
+  RUNNING
+  CYCLING
+  SWIMMING
+  WALKING
+  HIKING
+  YOGA
+  WEIGHT_TRAINING
+}
+
+enum ChallengeType {
+  DISTANCE    // Distance-based challenges (e.g., "Run 50km this month")
+  TIME        // Time-based challenges (e.g., "Cycle for 10 hours this week")
+  FREQUENCY   // Frequency-based challenges (e.g., "Swim 3 times this week")
+}
+
+enum ChallengeStatus {
+  ACTIVE      // Challenge is currently running
+  COMPLETED   // Challenge has ended
+  CANCELLED   // Challenge was cancelled
+  DRAFT       // Challenge is in draft mode
+}
+
+enum ParticipationStatus {
+  ACTIVE      // User is actively participating
+  COMPLETED   // User completed the challenge
+  DROPPED     // User dropped out of the challenge
+  INVITED     // User was invited but hasn't joined yet
+} 

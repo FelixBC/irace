@@ -9,7 +9,7 @@ export interface CreateChallengeData {
   goals: Record<Sport, number>;
 }
 
-const API_BASE_URL = 'https://project-3cxzjuqus-felixbcs-projects.vercel.app/api';
+const API_BASE_URL = 'https://project-pyj9n0y7y-felixbcs-projects.vercel.app/api';
 
 export class ChallengeService {
   static async createChallenge(data: CreateChallengeData, creatorId: string): Promise<Challenge> {

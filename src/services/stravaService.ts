@@ -85,7 +85,7 @@ export class StravaService {
 export function getStravaAuthUrl(): string {
   const clientId = '169822'; // Your actual Strava Client ID
   // Use the redirect URI that matches your Strava app configuration
-  const redirectUri = `${window.location.origin}/api/auth/callback/strava`;
+  const redirectUri = `${window.location.origin}/auth/callback`;
   const scope = 'read,activity:read_all';
   
   console.log('🔗 Generated OAuth URL with redirect URI:', redirectUri);

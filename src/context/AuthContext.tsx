@@ -14,7 +14,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = 'https://project-3cxzjuqus-felixbcs-projects.vercel.app/api';
+const API_BASE_URL = 'https://project-pyj9n0y7y-felixbcs-projects.vercel.app/api';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

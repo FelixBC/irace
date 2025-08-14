@@ -14,6 +14,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const API_BASE_URL = 'https://project-3cxzjuqus-felixbcs-projects.vercel.app/api';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [stravaTokens, setStravaTokens] = useState<StravaTokens | null>(null);
@@ -22,67 +24,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [apiCallCount, setApiCallCount] = useState<number>(0);
 
   useEffect(() => {
-    // Check for existing Strava tokens on app load (only once)
-    const checkExistingAuth = async () => {
+    // Check for existing user session on app load
+    const checkExistingSession = async () => {
       try {
-        const savedTokens = localStorage.getItem('strava_tokens');
-        if (savedTokens) {
-          const tokens: StravaTokens = JSON.parse(savedTokens);
-          
-          // Check if tokens are still valid BEFORE setting them in state
-          if (tokens.expires_at * 1000 > Date.now()) {
-            // Only set valid tokens, but don't fetch profile immediately
-            // This prevents rate limiting issues on app startup
-            setStravaTokens(tokens);
-            // Fetch profile after a small delay to avoid immediate API calls
-            setTimeout(() => fetchUserProfile(tokens), 1000);
-          } else {
-            // Tokens expired, remove them and don't set in state
-            console.log('Existing tokens expired, removing from storage');
-            localStorage.removeItem('strava_tokens');
+        // Try to get user from API using stored session token
+        const sessionToken = localStorage.getItem('session_token');
+        
+        if (sessionToken) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/auth/session`, {
+              headers: {
+                'Authorization': `Bearer ${sessionToken}`
+              }
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              setUser(userData.user);
+              setStravaTokens(userData.stravaTokens);
+            } else {
+              // Session invalid, clear it
+              localStorage.removeItem('session_token');
+              setUser(null);
+              setStravaTokens(null);
+            }
+          } catch (error) {
+            console.error('Error checking session:', error);
+            localStorage.removeItem('session_token');
+            setUser(null);
             setStravaTokens(null);
           }
         }
       } catch (error) {
-        console.error('Error checking existing auth:', error);
-        localStorage.removeItem('strava_tokens');
-        setStravaTokens(null);
+        console.error('Error checking existing session:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkExistingAuth();
-
-    // Simple storage event listener for cross-tab synchronization
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'strava_tokens' && e.newValue) {
-        try {
-          const tokens: StravaTokens = JSON.parse(e.newValue);
-          // Only set tokens, don't automatically fetch profile
-          setStravaTokens(tokens);
-          // Only fetch profile if tokens are valid
-          if (tokens.expires_at * 1000 > Date.now()) {
-            fetchUserProfile(tokens);
-          }
-        } catch (error) {
-          console.error('Error parsing updated tokens:', error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Reset API call count every minute
-    const resetTimer = setInterval(() => {
-      setApiCallCount(0);
-    }, 60000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(resetTimer);
-    };
-  }, []); // Empty dependency array - only run once on mount
+    checkExistingSession();
+  }, []);
 
   // Rate limiting function to prevent too many API calls
   const canMakeApiCall = (): boolean => {
@@ -114,8 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Don't make API calls if tokens are expired or invalid
     if (!tokens || !tokens.access_token || tokens.expires_at * 1000 <= Date.now()) {
       console.log('Tokens expired or invalid, skipping API call');
-      // Clean up invalid tokens
-      localStorage.removeItem('strava_tokens');
+      // Clear invalid session
+      localStorage.removeItem('session_token');
       setStravaTokens(null);
       setUser(null);
       return;
@@ -142,21 +123,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           stravaId: athlete.id.toString(),
           stravaTokens: tokens
         };
-        setUser(userData);
-        setStravaTokens(tokens);
+
+        // Save user to API and get session token
+        try {
+          const saveResponse = await fetch(`${API_BASE_URL}/auth/user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: userData.name,
+              email: userData.email,
+              image: userData.image,
+              stravaId: athlete.id.toString(),
+              stravaTokens: tokens
+            }),
+          });
+
+          if (saveResponse.ok) {
+            const result = await saveResponse.json();
+            
+            // Store session token
+            localStorage.setItem('session_token', result.sessionToken);
+            
+            // Update user data with database ID
+            userData.id = result.user.id;
+            
+            setUser(userData);
+            setStravaTokens(tokens);
+          } else {
+            throw new Error('Failed to save user to database');
+          }
+        } catch (dbError) {
+          console.error('Error saving user to database:', dbError);
+          throw new Error('Failed to save user data. Please try again.');
+        }
       } else if (response.status === 401 || response.status === 429) {
         // Token is invalid or rate limited, remove it
         console.log('Token invalid or rate limited, removing from storage');
-        localStorage.removeItem('strava_tokens');
+        localStorage.removeItem('session_token');
         setStravaTokens(null);
         setUser(null);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // On any error, remove the tokens to prevent further issues
-      localStorage.removeItem('strava_tokens');
+      // On any error, clear the session
+      localStorage.removeItem('session_token');
       setStravaTokens(null);
       setUser(null);
+      throw error;
     }
   };
 
@@ -165,12 +180,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // The actual connection happens in the callback component
   };
 
-
-
   const disconnectStrava = () => {
     setUser(null);
     setStravaTokens(null);
-    localStorage.removeItem('strava_tokens');
+    localStorage.removeItem('session_token');
     // Reset rate limiting
     setLastApiCall(0);
     setApiCallCount(0);
@@ -179,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     setStravaTokens(null);
-    localStorage.removeItem('strava_tokens');
+    localStorage.removeItem('session_token');
     // Reset rate limiting
     setLastApiCall(0);
     setApiCallCount(0);

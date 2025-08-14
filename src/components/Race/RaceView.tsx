@@ -33,25 +33,34 @@ const RaceView: React.FC = () => {
       generateDemoRaceTracks();
     } else {
       // Real challenge - fetch from ChallengeService
-      const realChallenge = ChallengeService.getChallenge(challengeId);
-      console.log('🏆 Loading real challenge:', challengeId, realChallenge);
-      
-      if (realChallenge) {
-        setChallenge(realChallenge);
-        // If user is connected to Strava, load real data
-        if (isConnectedToStrava && stravaTokens) {
-          console.log('🏃‍♂️ User connected to Strava, loading real data...');
-          loadStravaData();
-        } else {
-          console.log('🔗 User not connected to Strava, showing empty tracks');
-          // Show empty tracks but still generate the structure
-          generateEmptyRaceTracks(realChallenge);
+      const loadRealChallenge = async () => {
+        try {
+          const realChallenge = await ChallengeService.getChallenge(challengeId);
+          console.log('🏆 Loading real challenge:', challengeId, realChallenge);
+          
+          if (realChallenge) {
+            setChallenge(realChallenge);
+            // If user is connected to Strava, load real data
+            if (isConnectedToStrava && stravaTokens) {
+              console.log('🏃‍♂️ User connected to Strava, loading real data...');
+              loadStravaData();
+            } else {
+              console.log('🔗 User not connected to Strava, showing empty tracks');
+              // Show empty tracks but still generate the structure
+              generateEmptyRaceTracks(realChallenge);
+            }
+          } else {
+            // Challenge not found - could show error or redirect
+            console.error('Challenge not found:', challengeId);
+            setChallenge(null);
+          }
+        } catch (error) {
+          console.error('Error loading challenge:', error);
+          setChallenge(null);
         }
-      } else {
-        // Challenge not found - could show error or redirect
-        console.error('Challenge not found:', challengeId);
-        setChallenge(null);
-      }
+      };
+      
+      loadRealChallenge();
     }
   }, [challengeId]); // Remove isConnectedToStrava and stravaTokens to prevent infinite loops
 

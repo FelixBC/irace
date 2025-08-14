@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Copy, QrCode, Share2, ArrowRight } from 'lucide-react';
+import { Plus, Copy, QrCode, Share2, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Sport, Challenge } from '../../types';
 import { ChallengeService, CreateChallengeData } from '../../services/challengeService';
 import { addDays } from 'date-fns';
 import QRCode from 'react-qr-code';
 import GoalSettingModal from './GoalSettingModal';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const CreateChallenge: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +26,7 @@ const CreateChallenge: React.FC = () => {
   const [showQR, setShowQR] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const sportOptions = [
     { id: Sport.RUNNING, name: 'Running', icon: '🏃‍♂️', color: 'from-orange-400 to-red-500' },
@@ -72,7 +77,14 @@ const CreateChallenge: React.FC = () => {
     setSelectedSport(null);
   };
 
-  const handleCreateChallenge = () => {
+  const handleCreateChallenge = async () => {
+    if (!user) {
+      showToast('error', 'Authentication Required', 'Please log in to create a challenge');
+      return;
+    }
+
+    setIsCreating(true);
+
     const challengeData: CreateChallengeData = {
       name: formData.name,
       sports: formData.sports,
@@ -81,16 +93,24 @@ const CreateChallenge: React.FC = () => {
       goals: formData.goals,
     };
 
-    const newChallenge = ChallengeService.createChallenge(challengeData, '1'); // Mock user ID for now
-    setCreatedChallenge(newChallenge);
-    setStep(3);
+    try {
+      const newChallenge = await ChallengeService.createChallenge(challengeData, user.id);
+      setCreatedChallenge(newChallenge);
+      showToast('success', 'Challenge Created!', 'Your fitness challenge is ready to share');
+      setStep(3);
+    } catch (error) {
+      console.error('Error creating challenge:', error);
+      showToast('error', 'Creation Failed', error instanceof Error ? error.message : 'Failed to create challenge. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const copyShareLink = () => {
     if (createdChallenge) {
       const shareUrl = `${window.location.origin}/race/${createdChallenge.inviteCode}`;
       navigator.clipboard.writeText(shareUrl);
-      // In a real app, show success toast
+      showToast('success', 'Link Copied!', 'Share link copied to clipboard');
     }
   };
 
@@ -158,7 +178,7 @@ const CreateChallenge: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Winter Fitness Challenge 2025"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
                   maxLength={50}
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -171,34 +191,38 @@ const CreateChallenge: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-4">
                   Select Sports
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {sportOptions.map((sport) => (
                     <motion.button
                       key={sport.id}
                       onClick={() => handleSportToggle(sport.id)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
                         formData.sports.includes(sport.id)
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="text-center">
-                        <span className="text-3xl mb-2 block">{sport.icon}</span>
-                        <p className="font-medium text-gray-900">{sport.name}</p>
-                        {formData.goals[sport.id] && (
-                          <p className="text-xs text-orange-600 mt-1">
-                            {formData.goals[sport.id]} {sport.id === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
-                          </p>
-                        )}
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{sport.icon}</span>
+                        <div>
+                          <p className="font-medium text-gray-900">{sport.name}</p>
+                          {formData.goals[sport.id] && (
+                            <p className="text-sm text-orange-600">
+                              Goal: {formData.goals[sport.id]} {sport.id === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </motion.button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Select at least one sport for your challenge
-                </p>
+                {formData.sports.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-3 text-center">
+                    Select at least one sport for your challenge
+                  </p>
+                )}
               </div>
 
               <motion.button
@@ -294,10 +318,20 @@ const CreateChallenge: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={handleCreateChallenge}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  disabled={isCreating}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
-                  <span>Create Challenge</span>
-                  <Plus className="w-4 h-4" />
+                  {isCreating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Challenge</span>
+                      <Plus className="w-4 h-4" />
+                    </>
+                  )}
                 </motion.button>
               </div>
             </div>
@@ -305,108 +339,96 @@ const CreateChallenge: React.FC = () => {
 
           {step === 3 && createdChallenge && (
             <div className="text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-green-500"
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Challenge Created!</h2>
+                <p className="text-gray-600">Your fitness challenge is ready to share</p>
+              </div>
+
+              {/* Challenge Info */}
+              <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
+                <h3 className="font-semibold text-gray-900 mb-3">{createdChallenge.name}</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Sports</p>
+                    <p className="font-medium">{createdChallenge.sports.join(', ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Duration</p>
+                    <p className="font-medium">{createdChallenge.duration}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Privacy</p>
+                    <p className="font-medium">{createdChallenge.isPublic ? 'Public' : 'Private'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Invite Code</p>
+                    <p className="font-medium font-mono">{createdChallenge.inviteCode}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={copyShareLink}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
-                  ✓
-                </motion.div>
-              </motion.div>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy Share Link</span>
+                </motion.button>
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Challenge Created Successfully!
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Your challenge "{createdChallenge.name}" is ready to go.
-                Share it with friends to start competing!
-              </p>
-
-              {/* Share Options */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <p className="text-sm font-medium text-gray-700 mb-3">Share URL:</p>
-                <div className="flex items-center space-x-2 mb-4">
-                  <input
-                    type="text"
-                    value={`${window.location.origin}/race/${createdChallenge.inviteCode}`}
-                    readOnly
-                    className="flex-1 p-2 bg-white border border-gray-300 rounded text-sm"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    onClick={copyShareLink}
-                    className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </motion.button>
-                </div>
-
-                <div className="flex justify-center space-x-4">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    onClick={() => setShowQR(!showQR)}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    <span>QR Code</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share</span>
-                  </motion.button>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowQR(!showQR)}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>{showQR ? 'Hide' : 'Show'} QR Code</span>
+                </motion.button>
 
                 {showQR && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 p-4 bg-white rounded-lg"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white p-6 rounded-lg border border-gray-200"
                   >
                     <QRCode
                       value={`${window.location.origin}/race/${createdChallenge.inviteCode}`}
-                      size={128}
+                      size={200}
                       className="mx-auto"
                     />
                   </motion.div>
                 )}
-              </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                onClick={goToRace}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <span>Go to Race</span>
-                <ArrowRight className="w-4 h-4" />
-              </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={goToRace}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Go to Challenge</span>
+                </motion.button>
+              </div>
             </div>
           )}
         </motion.div>
 
         {/* Goal Setting Modal */}
-        <GoalSettingModal
-          isOpen={showGoalModal}
-          onClose={() => setShowGoalModal(false)}
-          sports={selectedSport ? [selectedSport] : []}
-          onGoalsSet={handleGoalsSet}
-        />
+        {showGoalModal && selectedSport && (
+          <GoalSettingModal
+            isOpen={showGoalModal}
+            sports={[selectedSport]}
+            onGoalsSet={handleGoalsSet}
+            onClose={() => setShowGoalModal(false)}
+          />
+        )}
       </div>
     </div>
   );

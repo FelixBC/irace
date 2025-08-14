@@ -71,6 +71,7 @@ model Challenge {
   challengeType   ChallengeType @default(DISTANCE)  // Default to DISTANCE
   goal            Float    // Goal value (distance, time, or frequency)
   goalUnit        String   // Unit for the goal (km, hours, count)
+  sportGoals      Json?    // Sport-specific goals (e.g., {"RUNNING": 42, "CYCLING": 100})
   duration        String   // 3_DAYS, 1_WEEK, 2_WEEKS, 1_MONTH
   startDate       DateTime
   endDate         DateTime

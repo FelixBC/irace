@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Sport, ChallengeStatus, ChallengeType } from '../../types';
+import { ChallengeService } from '../../services/challengeService';
 
 interface Challenge {
   id: string;
@@ -50,152 +51,57 @@ const MyChallenges: React.FC = () => {
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock challenges data - in real app this would come from services
-  const mockChallenges: Challenge[] = [
-    {
-      id: '1',
-      name: 'Winter Fitness Challenge 2025',
-      description: 'A comprehensive winter fitness challenge with multiple sports',
-      sports: [Sport.RUNNING, Sport.CYCLING, Sport.SWIMMING, Sport.WEIGHT_TRAINING],
-      challengeType: ChallengeType.DISTANCE,
-      goal: 100,
-      goalUnit: 'km',
-      sportGoals: {
-        [Sport.RUNNING]: 42,
-        [Sport.CYCLING]: 150,
-        [Sport.SWIMMING]: 10,
-        [Sport.WEIGHT_TRAINING]: 20,
-        [Sport.WALKING]: 0,
-        [Sport.HIKING]: 0,
-        [Sport.YOGA]: 0,
-      },
-      duration: '30 days',
-      startDate: new Date('2025-01-01'),
-      endDate: new Date('2025-01-31'),
-      isPublic: true,
-      inviteCode: 'WF2025',
-      maxParticipants: 50,
-      status: ChallengeStatus.ACTIVE,
-      creatorId: '1',
-      participants: 23,
-      progress: 75,
-    },
-    {
-      id: '2',
-      name: 'Summer Cycling Tour',
-      description: 'Explore the countryside with this cycling challenge',
-      sports: [Sport.CYCLING],
-      challengeType: ChallengeType.DISTANCE,
-      goal: 500,
-      goalUnit: 'km',
-      sportGoals: {
-        [Sport.RUNNING]: 0,
-        [Sport.CYCLING]: 500,
-        [Sport.SWIMMING]: 0,
-        [Sport.WEIGHT_TRAINING]: 0,
-        [Sport.WALKING]: 0,
-        [Sport.HIKING]: 0,
-        [Sport.YOGA]: 0,
-      },
-      duration: '60 days',
-      startDate: new Date('2025-06-01'),
-      endDate: new Date('2025-07-31'),
-      isPublic: true,
-      inviteCode: 'SCT2025',
-      maxParticipants: 100,
-      status: ChallengeStatus.COMPLETED,
-      creatorId: '1',
-      participants: 67,
-      progress: 100,
-    },
-    {
-      id: '3',
-      name: 'Swimming Mastery',
-      description: 'Improve your swimming skills and endurance',
-      sports: [Sport.SWIMMING],
-      challengeType: ChallengeType.DISTANCE,
-      goal: 25,
-      goalUnit: 'km',
-      sportGoals: {
-        [Sport.RUNNING]: 0,
-        [Sport.CYCLING]: 0,
-        [Sport.SWIMMING]: 25,
-        [Sport.WEIGHT_TRAINING]: 0,
-        [Sport.WALKING]: 0,
-        [Sport.HIKING]: 0,
-        [Sport.YOGA]: 0,
-      },
-      duration: '21 days',
-      startDate: new Date('2025-03-01'),
-      endDate: new Date('2025-03-21'),
-      isPublic: false,
-      inviteCode: 'SM2025',
-      maxParticipants: 25,
-      status: ChallengeStatus.COMPLETED,
-      creatorId: '1',
-      participants: 18,
-      progress: 100,
-    },
-    {
-      id: '4',
-      name: 'Mountain Hiking Adventure',
-      description: 'Conquer mountain trails and build endurance',
-      sports: [Sport.HIKING, Sport.WALKING],
-      challengeType: ChallengeType.DISTANCE,
-      goal: 100,
-      goalUnit: 'km',
-      sportGoals: {
-        [Sport.RUNNING]: 0,
-        [Sport.CYCLING]: 0,
-        [Sport.SWIMMING]: 0,
-        [Sport.WEIGHT_TRAINING]: 0,
-        [Sport.WALKING]: 60,
-        [Sport.HIKING]: 40,
-        [Sport.YOGA]: 0,
-      },
-      duration: '45 days',
-      startDate: new Date('2025-05-01'),
-      endDate: new Date('2025-06-15'),
-      isPublic: true,
-      inviteCode: 'MHA2025',
-      maxParticipants: 30,
-      status: ChallengeStatus.UPCOMING,
-      creatorId: '1',
-      participants: 12,
-      progress: 0,
-    },
-    {
-      id: '5',
-      name: 'Strength Training Challenge',
-      description: 'Build muscle and improve overall strength',
-      sports: [Sport.WEIGHT_TRAINING],
-      challengeType: ChallengeType.SESSIONS,
-      goal: 30,
-      goalUnit: 'sessions',
-      sportGoals: {
-        [Sport.RUNNING]: 0,
-        [Sport.CYCLING]: 0,
-        [Sport.SWIMMING]: 0,
-        [Sport.WEIGHT_TRAINING]: 30,
-        [Sport.WALKING]: 0,
-        [Sport.HIKING]: 0,
-        [Sport.YOGA]: 0,
-      },
-      duration: '28 days',
-      startDate: new Date('2025-02-01'),
-      endDate: new Date('2025-02-28'),
-      isPublic: false,
-      inviteCode: 'STC2025',
-      maxParticipants: 20,
-      status: ChallengeStatus.ACTIVE,
-      creatorId: '1',
-      participants: 15,
-      progress: 60,
-    },
-  ];
+  // Load challenges from database
+  useEffect(() => {
+    const loadChallenges = async () => {
+      try {
+        setIsLoading(true);
+        const dbChallenges = await ChallengeService.getUserChallenges(user!.id);
+        
+        // Transform database challenges to match our interface
+        const transformedChallenges: Challenge[] = dbChallenges.map(dbChallenge => ({
+          id: dbChallenge.id,
+          name: dbChallenge.name,
+          description: dbChallenge.description || '',
+          sports: dbChallenge.sports,
+          challengeType: dbChallenge.challengeType,
+          goal: dbChallenge.goal,
+          goalUnit: dbChallenge.goalUnit,
+          sportGoals: dbChallenge.sportGoals || {},
+          duration: dbChallenge.duration,
+          startDate: dbChallenge.startDate,
+          endDate: dbChallenge.endDate,
+          isPublic: dbChallenge.isPublic,
+          inviteCode: dbChallenge.inviteCode,
+          maxParticipants: dbChallenge.maxParticipants,
+          status: dbChallenge.status,
+          creatorId: dbChallenge.creatorId,
+          participants: dbChallenge.participants?.length || 0,
+          progress: 0, // TODO: Calculate real progress
+        }));
+        
+        setChallenges(transformedChallenges);
+      } catch (error) {
+        console.error('Error loading challenges:', error);
+        // Fallback to empty array
+        setChallenges([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const [challenges, setChallenges] = useState<Challenge[]>(mockChallenges);
+    if (user) {
+      loadChallenges();
+    }
+  }, [user]);
+
+  // No more mock data - everything comes from database
+
+  // Use the challenges state from useEffect
+  const displayChallenges = challenges;
 
   const sportConfig = {
     RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50' },
@@ -242,7 +148,7 @@ const MyChallenges: React.FC = () => {
     return 'bg-red-500';
   };
 
-  const filteredChallenges = challenges.filter(challenge => {
+  const filteredChallenges = displayChallenges.filter(challenge => {
     const matchesSearch = challenge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          challenge.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || challenge.status === statusFilter;
@@ -534,8 +440,36 @@ const MyChallenges: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-              {sortedChallenges.map((challenge, index) => (
+            <>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading your challenges...</p>
+                  </div>
+                </div>
+              ) : challenges.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="text-gray-400 mb-4">
+                      <Trophy className="w-16 h-16 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges yet</h3>
+                    <p className="text-gray-600 mb-6">Create your first fitness challenge to get started!</p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleCreateChallenge}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>Create Challenge</span>
+                    </motion.button>
+                  </div>
+                </div>
+              ) : (
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+                  {sortedChallenges.map((challenge, index) => (
                 <motion.div
                   key={challenge.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -682,7 +616,9 @@ const MyChallenges: React.FC = () => {
                   </div>
                 </motion.div>
               ))}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </motion.div>
       </div>

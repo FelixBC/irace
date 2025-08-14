@@ -1,4 +1,5 @@
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
+import { CHALLENGES, CHALLENGE, USER_CHALLENGES, JOIN_CHALLENGE, UPDATE_PROGRESS } from '../config/api';
 import { addDays } from 'date-fns';
 
 export interface CreateChallengeData {
@@ -8,8 +9,6 @@ export interface CreateChallengeData {
   isPrivate: boolean;
   goals: Record<Sport, number>;
 }
-
-const API_BASE_URL = 'https://project-pyj9n0y7y-felixbcs-projects.vercel.app/api';
 
 export class ChallengeService {
   static async createChallenge(data: CreateChallengeData, creatorId: string): Promise<Challenge> {
@@ -22,7 +21,7 @@ export class ChallengeService {
     const averageGoal = totalGoal / Object.keys(data.goals).length;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges`, {
+              const response = await fetch(CHALLENGES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +59,7 @@ export class ChallengeService {
 
   static async getChallenge(challengeId: string): Promise<Challenge | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`);
+              const response = await fetch(`${CHALLENGES}?id=${challengeId}`);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -79,7 +78,7 @@ export class ChallengeService {
 
   static async getAllChallenges(): Promise<Challenge[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges`);
+              const response = await fetch(CHALLENGES);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch challenges: ${response.statusText}`);
@@ -95,7 +94,7 @@ export class ChallengeService {
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/user/${userId}`);
+              const response = await fetch(USER_CHALLENGES(userId));
       
       if (!response.ok) {
         throw new Error(`Failed to fetch user challenges: ${response.statusText}`);
@@ -111,7 +110,7 @@ export class ChallengeService {
 
   static async joinChallenge(challengeId: string, userId: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/join`, {
+              const response = await fetch(JOIN_CHALLENGE(challengeId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +129,7 @@ export class ChallengeService {
 
   static async updateChallengeProgress(challengeId: string, userId: string, progress: any): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/progress`, {
+              const response = await fetch(UPDATE_PROGRESS(challengeId), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

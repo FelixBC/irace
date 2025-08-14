@@ -29,11 +29,17 @@ const AuthCallback: React.FC = () => {
 
     // Check if we already have tokens (prevent unnecessary processing)
     const existingTokens = localStorage.getItem('strava_tokens');
-    if (existingTokens) {
-      console.log('🔄 Tokens already exist, redirecting...');
+    if (existingTokens && !searchParams.get('code')) {
+      console.log('🔄 Tokens already exist and no new auth code, redirecting...');
       setHasProcessed(true);
       setTimeout(() => navigate('/', { replace: true }), 100);
       return;
+    }
+    
+    // If we have a new authorization code, clear old tokens to allow fresh connection
+    if (searchParams.get('code')) {
+      console.log('🔄 New authorization code received, clearing old tokens...');
+      localStorage.removeItem('strava_tokens');
     }
 
     const handleCallback = async () => {
@@ -63,33 +69,47 @@ const AuthCallback: React.FC = () => {
         console.log('🔑 Exchanging code for tokens...');
         
         // Exchange code for tokens directly with Strava
+        const tokenRequestBody = {
+          client_id: '169822', // Your Strava Client ID
+          client_secret: 'ac6921be29eb6fadaec73dc5bd2803dc5ee1b62c', // Your Strava Client Secret
+          code,
+          grant_type: 'authorization_code',
+        };
+        
+        console.log('🔑 Token exchange request body:', { ...tokenRequestBody, client_secret: '***' });
+        
         const response = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            client_id: '169822', // Your Strava Client ID
-            client_secret: 'ac6921be29eb6fadaec73dc5bd2803dc5ee1b62c', // Your Strava Client Secret
-            code,
-            grant_type: 'authorization_code',
-          }),
+          body: JSON.stringify(tokenRequestBody),
         });
+
+        console.log('📡 Strava API response status:', response.status, response.statusText);
 
         if (!response.ok) {
           let errorMessage = 'Failed to authenticate with Strava';
+          let responseText = '';
+          
+          try {
+            responseText = await response.text();
+            console.log('❌ Strava API error response:', responseText);
+          } catch (e) {
+            console.log('❌ Could not read error response');
+          }
           
           if (response.status === 429) {
             errorMessage = 'Too many requests to Strava. Please wait a few minutes and try again.';
           } else if (response.status === 400) {
-            errorMessage = 'Invalid request. Please try connecting again.';
+            errorMessage = `Invalid request: ${responseText || 'Please try connecting again.'}`;
           } else if (response.status === 401) {
-            errorMessage = 'Authentication failed. Please try again.';
+            errorMessage = 'Authentication failed. Please check your Strava app credentials.';
           } else if (response.status === 500) {
             errorMessage = 'Strava server error. Please try again later.';
           }
           
-          console.error('❌ Strava API error:', response.status, response.statusText);
+          console.error('❌ Strava API error:', response.status, response.statusText, responseText);
           throw new Error(errorMessage);
         }
 
@@ -108,11 +128,47 @@ const AuthCallback: React.FC = () => {
         localStorage.setItem('strava_tokens', JSON.stringify(tokenData));
         console.log('💾 Tokens stored in localStorage');
         
-        // Trigger a storage event to notify other components
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'strava_tokens',
-          newValue: JSON.stringify(tokenData)
-        }));
+        // Create/update user in database
+        try {
+          console.log('👤 Creating/updating user in database...');
+          const userResponse = await fetch(`${window.location.origin}/api/user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: tokens.athlete.firstname + ' ' + tokens.athlete.lastname,
+              email: tokens.athlete.email || '',
+              image: tokens.athlete.profile,
+              stravaId: tokens.athlete.id.toString(),
+              stravaTokens: tokenData,
+            }),
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            console.log('✅ User created/updated in database:', userData);
+            
+            // Store session token
+            localStorage.setItem('session_token', userData.sessionToken);
+            
+            // Trigger a storage event to notify other components
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'strava_tokens',
+              newValue: JSON.stringify(tokenData)
+            }));
+            
+            // Also trigger user update event
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'user_updated',
+              newValue: JSON.stringify(userData.user)
+            }));
+          } else {
+            console.error('❌ Failed to create/update user in database');
+          }
+        } catch (error) {
+          console.error('❌ Error creating/updating user:', error);
+        }
         
         console.log('🔄 Redirecting to home page...');
         

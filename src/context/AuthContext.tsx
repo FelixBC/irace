@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, StravaTokens } from '../types';
+import { SESSION } from '../config/api';
 
 interface AuthContextType {
   user: User | null;
@@ -13,8 +14,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = 'https://project-pyj9n0y7y-felixbcs-projects.vercel.app/api';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (sessionToken) {
           try {
-            const response = await fetch(`${API_BASE_URL}/auth/session`, {
+            const response = await fetch(SESSION, {
               headers: {
                 'Authorization': `Bearer ${sessionToken}`
               }
@@ -63,6 +62,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     checkExistingSession();
+
+    // Listen for storage events to update state when tokens/user data changes
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'strava_tokens') {
+        console.log('🔄 Strava tokens updated, refreshing user state...');
+        const tokens = event.newValue ? JSON.parse(event.newValue) : null;
+        setStravaTokens(tokens);
+        
+        // If we have tokens, try to get user data
+        if (tokens) {
+          checkExistingSession();
+        }
+      }
+      
+      if (event.key === 'user_updated') {
+        console.log('🔄 User data updated, refreshing state...');
+        const userData = event.newValue ? JSON.parse(event.newValue) : null;
+        if (userData) {
+          setUser(userData);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for tokens in localStorage on mount
+    const storedTokens = localStorage.getItem('strava_tokens');
+    if (storedTokens) {
+      const tokens = JSON.parse(storedTokens);
+      setStravaTokens(tokens);
+      // Check if tokens are still valid
+      if (tokens.expires_at * 1000 > Date.now()) {
+        checkExistingSession();
+      }
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Rate limiting function to prevent too many API calls
@@ -126,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Save user to API and get session token
         try {
-          const saveResponse = await fetch(`${API_BASE_URL}/auth/user`, {
+          const saveResponse = await fetch(`${window.location.origin}/api/user`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

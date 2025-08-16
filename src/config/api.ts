@@ -1,19 +1,10 @@
-// API Configuration - Automatically detects current URL
+import { getApiBaseUrl } from './urls';
+
+// API Configuration - Uses centralized URL configuration
 export const API_CONFIG = {
-  // Automatically detect the current domain
+  // Use centralized URL configuration
   get BASE_URL() {
-    // In development, use localhost
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      return 'http://localhost:5173/api';
-    }
-    
-    // In production, use the current domain
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/api`;
-    }
-    
-    // Fallback for server-side rendering
-    return '/api';
+    return getApiBaseUrl();
   },
   
   // API endpoints

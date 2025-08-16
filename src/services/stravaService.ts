@@ -1,4 +1,5 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
+import { getStravaCallbackUrl } from '../config/urls';
 
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
 
@@ -85,7 +86,7 @@ export class StravaService {
 export function getStravaAuthUrl(): string {
   const clientId = '169822'; // Your actual Strava Client ID
   // Use the redirect URI that matches your Strava app configuration
-  const redirectUri = `${window.location.origin}/auth/callback`;
+  const redirectUri = getStravaCallbackUrl();
   const scope = 'read,activity:read_all';
   
   console.log('🔗 Generated OAuth URL with redirect URI:', redirectUri);
@@ -94,6 +95,7 @@ export function getStravaAuthUrl(): string {
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<StravaTokens> {
+  // Use relative URL so it works with any production domain
   const response = await fetch('/api/auth/strava/callback', {
     method: 'POST',
     headers: {

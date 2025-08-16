@@ -22,6 +22,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Sport, ChallengeStatus, ChallengeType } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
+import { getMainAppUrl } from '../../config/urls';
 
 interface Challenge {
   id: string;
@@ -191,7 +192,7 @@ const MyChallenges: React.FC = () => {
   };
 
   const handleShareChallenge = (inviteCode: string) => {
-    const shareUrl = `${window.location.origin}/race/${inviteCode}`;
+          const shareUrl = `${getMainAppUrl()}/race/${inviteCode}`;
     navigator.clipboard.writeText(shareUrl);
     // In real app, show toast notification
   };

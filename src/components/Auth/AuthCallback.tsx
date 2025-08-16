@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { getApiBaseUrl } from '../../config/urls';
 
 const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -131,7 +132,7 @@ const AuthCallback: React.FC = () => {
         // Create/update user in database
         try {
           console.log('👤 Creating/updating user in database...');
-          const userResponse = await fetch(`${window.location.origin}/api/user`, {
+          const userResponse = await fetch(`${getApiBaseUrl()}/user`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

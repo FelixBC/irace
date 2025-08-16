@@ -23,31 +23,33 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Mock data for demonstration
-  const mockStats = {
-    totalChallenges: 12,
-    completedChallenges: 8,
-    currentChallenges: 3,
-    totalDistance: 1247.8,
-    totalActivities: 156,
-    longestStreak: 14,
-    achievements: 7,
-    rank: 'Gold'
-  };
+  // Real data will be loaded from database and Strava
+  const [stats, setStats] = useState({
+    totalChallenges: 0,
+    completedChallenges: 0,
+    currentChallenges: 0,
+    totalDistance: 0,
+    totalActivities: 0,
+    longestStreak: 0,
+    achievements: 0,
+    rank: 'Bronze'
+  });
 
-  const mockRecentChallenges = [
-    { id: '1', name: 'Winter Fitness Challenge 2025', status: 'active', progress: 75, sport: Sport.RUNNING },
-    { id: '2', name: 'Summer Cycling Tour', status: 'completed', progress: 100, sport: Sport.CYCLING },
-    { id: '3', name: 'Swimming Mastery', status: 'completed', progress: 100, sport: Sport.SWIMMING },
-    { id: '4', name: 'Mountain Hiking Adventure', status: 'upcoming', progress: 0, sport: Sport.HIKING },
-  ];
+  const [recentChallenges, setRecentChallenges] = useState<Array<{
+    id: string;
+    name: string;
+    status: string;
+    progress: number;
+    sport: Sport;
+  }>>([]);
 
-  const mockRecentActivities = [
-    { id: '1', sport: Sport.RUNNING, distance: 8.2, date: '2 hours ago', unit: 'km' },
-    { id: '2', sport: Sport.CYCLING, distance: 25.3, date: '1 day ago', unit: 'km' },
-    { id: '3', sport: Sport.WEIGHT_TRAINING, distance: 12, date: '2 days ago', unit: 'sets' },
-    { id: '4', sport: Sport.SWIMMING, distance: 1.2, date: '3 days ago', unit: 'km' },
-  ];
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    id: string;
+    sport: Sport;
+    distance: number;
+    date: string;
+    unit: string;
+  }>>([]);
 
   const sportConfig = {
     RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50' },
@@ -178,7 +180,7 @@ const Profile: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Challenges</p>
-                <p className="text-2xl font-bold text-gray-900">{mockStats.totalChallenges}</p>
+                                  <p className="text-2xl font-bold text-gray-900">{stats.totalChallenges}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-orange-600" />
@@ -193,7 +195,7 @@ const Profile: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Distance</p>
-                <p className="text-2xl font-bold text-gray-900">{mockStats.totalDistance.toFixed(1)} km</p>
+                                  <p className="text-2xl font-bold text-gray-900">{stats.totalDistance.toFixed(1)} km</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -208,7 +210,7 @@ const Profile: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Activities</p>
-                <p className="text-2xl font-bold text-gray-900">{mockStats.totalActivities}</p>
+                                  <p className="text-2xl font-bold text-gray-900">{stats.totalActivities}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Activity className="w-6 h-6 text-green-600" />
@@ -223,7 +225,7 @@ const Profile: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rank</p>
-                <p className="text-2xl font-bold text-gray-900">{mockStats.rank}</p>
+                                  <p className="text-2xl font-bold text-gray-900">{stats.rank}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Award className="w-6 h-6 text-yellow-600" />
@@ -275,7 +277,7 @@ const Profile: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Challenges</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockRecentChallenges.slice(0, 4).map((challenge) => (
+                    {recentChallenges.slice(0, 4).map((challenge) => (
                       <motion.div
                         key={challenge.id}
                         whileHover={{ scale: 1.02 }}
@@ -304,7 +306,7 @@ const Profile: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
                   <div className="space-y-3">
-                    {mockRecentActivities.map((activity) => (
+                    {recentActivities.map((activity) => (
                       <motion.div
                         key={activity.id}
                         whileHover={{ scale: 1.01 }}
@@ -345,7 +347,7 @@ const Profile: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mockRecentChallenges.map((challenge) => (
+                  {recentChallenges.map((challenge) => (
                     <motion.div
                       key={challenge.id}
                       whileHover={{ scale: 1.02 }}
@@ -393,7 +395,7 @@ const Profile: React.FC = () => {
                   </div>
                   <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                     <h4 className="font-medium text-gray-900 mb-2">Longest Streak</h4>
-                    <p className="text-2xl font-bold text-green-600">{mockStats.longestStreak} days</p>
+                    <p className="text-2xl font-bold text-green-600">{stats.longestStreak} days</p>
                     <p className="text-sm text-gray-600">Current: 5 days</p>
                   </div>
                 </div>
@@ -404,7 +406,7 @@ const Profile: React.FC = () => {
                     <h4 className="font-medium text-gray-900">Recent Activities</h4>
                   </div>
                   <div className="divide-y divide-gray-200">
-                    {mockRecentActivities.map((activity, index) => (
+                    {recentActivities.map((activity, index) => (
                       <motion.div
                         key={activity.id}
                         initial={{ opacity: 0, x: -20 }}

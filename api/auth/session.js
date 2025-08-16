@@ -1,69 +1,89 @@
-export default function handler(req, res) {
-  console.log('🔐 === SESSION API FUNCTION START ===');
-  
+import { PrismaClient } from '@prisma/client';
+
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Create a new PrismaClient instance for each request
+  const prisma = new PrismaClient();
+
   try {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No valid authorization header' });
     }
 
-    if (req.method === 'GET') {
-      console.log('🔐 Processing GET request...');
-      
-      const authHeader = req.headers.authorization;
-      console.log('🔐 Auth header:', authHeader);
+    const sessionToken = authHeader.substring(7);
+    console.log('🔍 Looking for session:', sessionToken);
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.log('❌ No valid auth header');
-        res.status(401).json({ error: 'No valid authorization header' });
-        return;
+    // Find the session in the database
+    const session = await prisma.session.findUnique({
+      where: { sessionToken: sessionToken },
+      include: {
+        user: true
       }
+    });
 
-      const sessionToken = authHeader.replace('Bearer ', '');
-      console.log('🔐 Session token:', sessionToken);
+    if (!session) {
+      console.log('❌ Session not found:', sessionToken);
+      return res.status(401).json({ error: 'Session not found' });
+    }
 
-      // For now, return a mock user since we're not using the database yet
-      // In the future, this would validate the session token against the database
-      const mockUser = {
-        id: 'user_mock',
-        name: 'Felix Jose',
-        email: '',
-        image: 'https://lh3.googleusercontent.com/a/ACg8ocJhdQhIn4JuOOaAD-FxXG-mV6dzX26BjE3b7HufzZWVq6C14R-zSA=s96-c',
-        stravaId: '78476350'
-      };
+    // Check if session has expired
+    if (session.expires < new Date()) {
+      console.log('❌ Session expired:', sessionToken);
+      return res.status(401).json({ error: 'Session expired' });
+    }
 
-      const mockStravaTokens = {
-        access_token: 'mock_token',
-        refresh_token: 'mock_refresh',
-        expires_at: Date.now() + 3600000, // 1 hour from now
-        expires_in: 3600
-      };
+    console.log('✅ Session found and valid:', session.id);
 
-      const response = {
-        user: mockUser,
-        stravaTokens: mockStravaTokens,
-        message: 'Session validated successfully (JavaScript version)'
-      };
+    // Parse stravaTokens from the user object
+    let stravaTokens = null;
+    try {
+      if (session.user.stravaTokens) {
+        stravaTokens = typeof session.user.stravaTokens === 'string' 
+          ? JSON.parse(session.user.stravaTokens)
+          : session.user.stravaTokens;
+      }
+    } catch (parseError) {
+      console.log('⚠️ Error parsing stravaTokens:', parseError.message);
+      stravaTokens = null;
+    }
 
-      console.log('✅ Session API completed successfully');
-      res.status(200).json(response);
-    } else {
-      res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    const response = {
+      user: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image,
+        stravaId: session.user.stravaId
+      },
+      stravaTokens: stravaTokens,
+      message: 'Session validated successfully (JavaScript version)'
+    };
+
+    console.log('✅ Session validation completed successfully');
+    return res.status(200).json(response);
+
+  } catch (error) {
+    console.error('❌ Error in session validation:', error);
+    
+    // Check if it's a database connection issue
+    if (error.message.includes('prepared statement') || error.message.includes('connection')) {
+      return res.status(500).json({ 
+        error: 'Session validation failed',
+        details: 'Database connection issue. Please try again.',
+        fallback: true
+      });
     }
     
-    console.log('✅ === SESSION API FUNCTION SUCCESS ===');
-  } catch (error) {
-    console.error('❌ === SESSION API FUNCTION ERROR ===');
-    console.error('❌ Error:', error);
-    
-    res.status(500).json({ 
-      error: 'Session API error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    return res.status(500).json({ 
+      error: 'Session validation failed',
+      details: error.message
     });
+  } finally {
+    await prisma.$disconnect();
   }
 }

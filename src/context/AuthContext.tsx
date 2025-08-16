@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiBaseUrl } from '../config/urls';
 import { User, StravaTokens } from '../types';
 import { SESSION } from '../config/api';
 
@@ -164,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Save user to API and get session token
         try {
-          const saveResponse = await fetch(`${window.location.origin}/api/user`, {
+          const saveResponse = await fetch(`${getApiBaseUrl()}/user`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

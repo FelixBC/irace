@@ -5,12 +5,13 @@ import { useParams } from 'react-router-dom';
 import RaceTrack from './RaceTrack';
 import ActivityFeed from './ActivityFeed';
 import Leaderboard from './Leaderboard';
-import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User, Activity } from '../../types';
-import { mockChallenge, mockActivities, mockUsers } from '../../services/mockData';
+import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User, Activity, ChallengeType, ChallengeStatus } from '../../types';
+// Mock data removed - using real data only
 import { ChallengeService } from '../../services/challengeService';
 import { createStravaDataService, RealTimeStravaData } from '../../services/stravaDataService';
 import { useAuth } from '../../context/AuthContext';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
+import { getMainAppUrl } from '../../config/urls';
 
 const RaceView: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
@@ -28,8 +29,34 @@ const RaceView: React.FC = () => {
     if (!challengeId) return;
     
     if (challengeId === 'demo-challenge') {
-      // Demo challenge - use mock data
-      setChallenge(mockChallenge);
+      // Demo challenge - create a demo challenge for landing page
+      const demoChallenge: Challenge = {
+        id: 'demo-challenge',
+        name: 'Demo Challenge',
+        description: 'This is a demo challenge for the landing page',
+        sports: [Sport.RUNNING, Sport.CYCLING],
+        challengeType: ChallengeType.DISTANCE,
+        goal: 100,
+        goalUnit: 'km',
+        sportGoals: { 
+          [Sport.RUNNING]: 42, 
+          [Sport.CYCLING]: 100,
+          [Sport.SWIMMING]: 0,
+          [Sport.WALKING]: 0,
+          [Sport.HIKING]: 0,
+          [Sport.YOGA]: 0,
+          [Sport.WEIGHT_TRAINING]: 0
+        },
+        duration: '1_MONTH',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        isPublic: true,
+        inviteCode: 'DEMO123',
+        maxParticipants: 10,
+        status: ChallengeStatus.ACTIVE,
+        creatorId: 'demo-user'
+      };
+      setChallenge(demoChallenge);
       generateDemoRaceTracks();
     } else {
       // Real challenge - fetch from ChallengeService
@@ -106,55 +133,38 @@ const RaceView: React.FC = () => {
   };
 
   const generateDemoRaceTracks = () => {
-    if (!mockChallenge) return;
+    if (!challenge) return;
 
-    const tracks: RaceTrackType[] = mockChallenge.sports.map((sport) => {
-      // Get activities for this sport
-      const sportActivities = mockActivities.filter(
-        (activity) => activity.sport === sport && activity.challengeId === mockChallenge.id
-      );
-
-      // Calculate participant progress for all mock users
-      const participantProgress: ParticipantProgress[] = mockUsers.map((user) => {
-        const userActivities = sportActivities.filter((a) => a.userId === user.id);
-        
-        // For strength training, use the activity value directly (sets/time)
-        // For other sports, use distance
-        const totalValue = userActivities.reduce((sum, a) => {
-          if (a.sport === Sport.WEIGHT_TRAINING) {
-            return sum + a.distance; // distance field stores sets/time for strength training
-          } else {
-            return sum + a.distance; // distance field stores km for other sports
-          }
-        }, 0);
-
-        return {
-          user,
-          distance: totalValue, // This will be sets for strength training, km for others
-          percentage: 0, // Will be calculated below
-          dailyProgress: [], // Simplified for demo
-        };
-      }); // Remove the filter to include all users
-
-      // Use sport-specific goal from challenge, fallback to calculated max
-      const sportGoal = mockChallenge.sportGoals?.[sport] || 100;
-      const maxDistance = Math.max(...participantProgress.map((p) => p.distance), sportGoal);
+    const tracks: RaceTrackType[] = challenge.sports.map((sport) => {
+      // For demo, create sample participant progress
+      const demoParticipants: ParticipantProgress[] = [
+        {
+          user: { id: 'demo-user-1', name: 'Demo Runner 1' },
+          distance: 25,
+          percentage: 60,
+          dailyProgress: []
+        },
+        {
+          user: { id: 'demo-user-2', name: 'Demo Runner 2' },
+          distance: 18,
+          percentage: 43,
+          dailyProgress: []
+        },
+        {
+          user: { id: 'demo-user-3', name: 'Demo Runner 3' },
+          distance: 32,
+          percentage: 76,
+          dailyProgress: []
+        }
+      ];
       
-      // Calculate percentages based on the sport goal
-      participantProgress.forEach((p) => {
-        p.percentage = (p.distance / sportGoal) * 100;
-      });
-
-      // Sort by distance (descending)
-      participantProgress.sort((a, b) => b.distance - a.distance);
-
-      const leader = participantProgress.length > 0 ? participantProgress[0].user : null;
-
       return {
         sport,
-        participants: participantProgress,
-        maxDistance: sportGoal, // Use the sport-specific goal
-        leader,
+        participants: demoParticipants,
+        maxDistance: challenge.sportGoals?.[sport] || 100,
+        leader: demoParticipants.reduce((leader, current) => 
+          current.distance > (leader?.distance || 0) ? current : leader
+        , null as ParticipantProgress | null)?.user || null
       };
     });
 
@@ -269,9 +279,9 @@ const RaceView: React.FC = () => {
   };
 
   const getTotalParticipants = (): number => {
-    // For demo challenge, show the mock users count
+    // For demo challenge, show the demo users count
     if (challengeId === 'demo-challenge') {
-      return mockUsers.length; // Always 4 for demo
+      return 3; // Demo has 3 participants
     }
     
     // For real challenges, count actual participants
@@ -308,7 +318,7 @@ const RaceView: React.FC = () => {
   };
 
   const copyShareLink = () => {
-    const shareUrl = `${window.location.origin}/race/${challenge?.inviteCode}`;
+          const shareUrl = `${getMainAppUrl()}/race/${challenge?.inviteCode}`;
     navigator.clipboard.writeText(shareUrl);
     // In a real app, show success toast
   };

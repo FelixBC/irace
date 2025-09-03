@@ -1,8 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +13,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'GET') {
+    const prisma = new PrismaClient();
+
     try {
+      // Connect to database
+      await prisma.$connect();
+      console.log('✅ Database connected successfully');
+
       const authHeader = req.headers.authorization;
       
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,6 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const sessionToken = authHeader.substring(7);
+      console.log('🔑 Validating session token:', sessionToken);
 
       // Find session and include user data
       const session = await prisma.session.findUnique({
@@ -57,9 +62,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
         stravaTokens: session.user.stravaTokens
       });
+
+      await prisma.$disconnect();
     } catch (error) {
       console.error('Error validating session:', error);
-      res.status(500).json({ error: 'Failed to validate session' });
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+        stack: error.stack
+      });
+      
+      await prisma.$disconnect();
+      
+      // Check if it's a database connection issue
+      if (error.message && error.message.includes('connect')) {
+        return res.status(500).json({ 
+          error: 'Session validation failed',
+          details: 'Database connection issue. Please try again.',
+          fallback: true
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Session validation failed',
+        details: error.message || 'Unknown error occurred',
+        fallback: true
+      });
     }
   } else {
     res.setHeader('Allow', ['GET']);

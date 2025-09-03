@@ -1,43 +1,94 @@
 import { PrismaClient } from '@prisma/client';
-const { getFrontendUrl } = require('../config/urls.js');
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  console.log('🚀 Strava callback handler started');
+  console.log('📋 Request method:', req.method);
+  console.log('📋 Request query:', req.query);
+
+  // Simple test endpoint
+  if (req.query.test === 'true') {
+    console.log('🧪 Test endpoint requested');
+    return res.status(200).json({
+      success: true,
+      message: 'Test endpoint working',
+      timestamp: new Date().toISOString()
+    });
   }
 
-  // Create a new PrismaClient instance for each request with aggressive connection management
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL
-      }
-    },
-    // Force new connections and disable connection pooling
-    __internal: {
-      engine: {
-        enableEngineDebugMode: false,
-        enableQueryLogging: false
-      }
+  // Clean database endpoint
+  if (req.query.clean === 'true') {
+    console.log('🧹 Database cleanup requested');
+    
+    try {
+      const prisma = new PrismaClient();
+      await prisma.$connect();
+      
+      // Clean all data in correct order (based on Supabase tables)
+      try {
+        await prisma.challengeParticipant.deleteMany();
+        console.log('✅ ChallengeParticipants deleted');
+      } catch (e) { console.log('⚠️ ChallengeParticipant table not found'); }
+      
+      try {
+        await prisma.activity.deleteMany();
+        console.log('✅ Activities deleted');
+      } catch (e) { console.log('⚠️ Activity table not found'); }
+      
+      try {
+        await prisma.challenge.deleteMany();
+        console.log('✅ Challenges deleted');
+      } catch (e) { console.log('⚠️ Challenge table not found'); }
+      
+      try {
+        await prisma.session.deleteMany();
+        console.log('✅ Sessions deleted');
+      } catch (e) { console.log('⚠️ Session table not found'); }
+      
+      try {
+        await prisma.user.deleteMany();
+        console.log('✅ Users deleted');
+      } catch (e) { console.log('⚠️ User table not found'); }
+      
+      await prisma.$disconnect();
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Database cleaned successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Database cleanup failed:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Database cleanup failed',
+        details: error.message
+      });
     }
-  });
+  }
+
+  if (req.method !== 'GET') {
+    console.log('❌ Method not allowed:', req.method);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
     const { code } = req.query;
     
     if (!code) {
+      console.log('❌ No authorization code provided');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
     console.log('🔑 Authorization code received:', code);
 
     // Exchange authorization code for tokens
+    console.log('🔄 Exchanging code for tokens...');
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         client_id: process.env.STRAVA_CLIENT_ID,
         client_secret: process.env.STRAVA_CLIENT_SECRET,
         code: code,
@@ -46,13 +97,16 @@ export default async function handler(req, res) {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to exchange code for tokens: ${tokenResponse.statusText}`);
+      const errorText = await tokenResponse.text();
+      console.log('❌ Token exchange failed:', tokenResponse.status, errorText);
+      return res.status(400).json({ error: 'Token exchange failed' });
     }
 
     const tokens = await tokenResponse.json();
     console.log('✅ Tokens received successfully');
 
     // Get athlete info
+    console.log('👤 Fetching athlete info...');
     const athleteResponse = await fetch('https://www.strava.com/api/v3/athlete', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`
@@ -60,139 +114,93 @@ export default async function handler(req, res) {
     });
 
     if (!athleteResponse.ok) {
-      throw new Error(`Failed to get athlete info: ${athleteResponse.statusText}`);
+      console.log('❌ Failed to fetch athlete info:', athleteResponse.status);
+      return res.status(400).json({ error: 'Failed to fetch athlete info' });
     }
 
     const athlete = await athleteResponse.json();
     console.log('✅ Athlete info received:', athlete.firstname, athlete.lastname);
 
+    // Simple database operations using raw SQL
+    const prisma = new PrismaClient();
+
     try {
-      // Create or update user using stravaId for consistent identification
+      await prisma.$connect();
+      console.log('✅ Database connected successfully');
+
+      // Create user using raw SQL
       const userId = `user_${athlete.id}`;
-      
-      console.log('🔧 Creating/updating user with ID:', userId);
-      console.log('📝 User data:', {
-        name: `${athlete.firstname} ${athlete.lastname}`,
-        stravaId: athlete.id.toString(),
-        hasTokens: !!tokens.access_token
-      });
-      
-      // First, ensure the User table exists with proper constraints
-      console.log('🔧 Ensuring User table exists...');
+      console.log('🔧 Creating user with ID:', userId);
+
       await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS "User" (
-          id TEXT PRIMARY KEY,
-          name TEXT,
-          email TEXT UNIQUE,
-          "emailVerified" TIMESTAMP,
-          image TEXT,
-          "stravaId" TEXT UNIQUE,
-          "stravaTokens" JSONB,
-          "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-          "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+        INSERT INTO "User" (
+          "id", "name", "email", "image", "stravaId", 
+          "stravaTokens", "createdAt", "updatedAt"
+        ) VALUES (
+          ${userId},
+          ${`${athlete.firstname} ${athlete.lastname}`},
+          ${`strava_${athlete.id}@example.com`},
+          ${athlete.profile || 'https://via.placeholder.com/150'},
+          ${athlete.id.toString()},
+          ${JSON.stringify({
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            expires_at: tokens.expires_at,
+            expires_in: tokens.expires_in
+          })}::jsonb,
+          ${new Date()},
+          ${new Date()}
         )
-      `;
-      
-      // Drop and recreate the unique constraint to ensure it exists
-      console.log('🔧 Ensuring unique constraint exists...');
-      try {
-        await prisma.$executeRaw`ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_stravaId_key"`;
-        await prisma.$executeRaw`ALTER TABLE "User" ADD CONSTRAINT "User_stravaId_key" UNIQUE ("stravaId")`;
-      } catch (constraintError) {
-        console.log('⚠️ Constraint already exists or error:', constraintError.message);
-      }
-      
-      // Use simple SQL raw to avoid Prisma ORM issues
-      console.log('🔧 Creating/updating user with SQL raw...');
-      const userResult = await prisma.$executeRaw`
-        INSERT INTO "User" (id, name, email, image, "stravaId", "stravaTokens", "createdAt", "updatedAt")
-        VALUES (${userId}, ${`${athlete.firstname} ${athlete.lastname}`}, ${`strava_${athlete.id}@example.com`}, ${athlete.profile}, ${athlete.id.toString()}, ${JSON.stringify({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: tokens.expires_at,
-          expires_in: tokens.expires_in
-        })}::jsonb, ${new Date()}, ${new Date()})
-        ON CONFLICT ("stravaId") 
-        DO UPDATE SET
-          name = EXCLUDED.name,
-          image = EXCLUDED.image,
-          "stravaTokens" = EXCLUDED."stravaTokens",
+        ON CONFLICT ("stravaId") DO UPDATE SET
+          "name" = EXCLUDED."name",
+          "image" = EXCLUDED."image",
+          "stravaTokens" = EXCLUDED."stravaTokens"::jsonb,
           "updatedAt" = EXCLUDED."updatedAt"
-        RETURNING id, name, "stravaId"
       `;
-      
-      console.log('✅ User created/updated successfully with SQL raw');
-      
-      // Create a mock user object for compatibility
-      const user = {
-        id: userId,
-        name: `${athlete.firstname} ${athlete.lastname}`,
-        stravaId: athlete.id.toString()
-      };
 
-      console.log('✅ User created/updated successfully:', user.id);
-      console.log('📋 User details:', {
-        id: user.id,
-        name: user.name,
-        stravaId: user.stravaId,
-        hasTokens: !!user.stravaTokens
-      });
+      console.log('✅ User created/updated successfully');
 
-      // Create a session for the user
+      // Create session using raw SQL
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       console.log('🔧 Creating session with token:', sessionToken);
-      console.log('📝 Session data:', {
-        id: sessionToken,
-        userId: user.id,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      });
-      
-      const session = await prisma.session.create({
-        data: {
-          id: sessionToken, // Use sessionToken as the ID
-          sessionToken: sessionToken,
-          userId: user.id,
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-        }
-      });
 
-      console.log('✅ Session created successfully:', session.id);
-      console.log('📋 Session details:', {
-        id: session.id,
-        sessionToken: session.sessionToken,
-        userId: session.userId,
-        expires: session.expires
-      });
+      await prisma.$executeRaw`
+        INSERT INTO "Session" (
+          "id", "sessionToken", "userId", "expires"
+        ) VALUES (
+          ${sessionToken},
+          ${sessionToken},
+          ${userId},
+          ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
+        )
+      `;
+
+      console.log('✅ Session created successfully');
 
       await prisma.$disconnect();
       console.log('✅ Prisma disconnected successfully');
 
       // Redirect to frontend with session token
-      const redirectUrl = `${getFrontendUrl()}?session=${sessionToken}`;
-      
+      const frontendUrl = 'https://project-felixbcs-projects.vercel.app';
+      const redirectUrl = `${frontendUrl}?session=${sessionToken}`;
+
       console.log('✅ Redirecting to:', redirectUrl);
-      res.redirect(redirectUrl);
+      res.redirect(302, redirectUrl);
 
     } catch (dbError) {
       console.error('❌ Database error:', dbError);
-      console.error('❌ Error details:', {
-        message: dbError.message,
-        code: dbError.code,
-        meta: dbError.meta
-      });
       await prisma.$disconnect();
-      res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to create user/session',
-        details: dbError.message 
+        details: dbError.message
       });
     }
 
   } catch (error) {
     console.error('❌ Error in OAuth callback:', error);
-    await prisma.$disconnect();
-    res.status(500).json({ 
+    return res.status(500).json({
       error: 'OAuth callback failed',
-      details: error.message 
+      details: error.message
     });
   }
 }

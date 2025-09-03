@@ -24,6 +24,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [apiCallCount, setApiCallCount] = useState<number>(0);
 
   useEffect(() => {
+    // Check for session token in URL parameters (from Strava callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionTokenFromUrl = urlParams.get('session');
+    
+    if (sessionTokenFromUrl) {
+      console.log('🔑 Session token found in URL, storing it...');
+      localStorage.setItem('session_token', sessionTokenFromUrl);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Check for existing user session on app load
     const checkExistingSession = async () => {
       try {

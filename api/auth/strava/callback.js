@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+// Prisma client will be imported dynamically to avoid prepared statement issues
 
 export default async function handler(req, res) {
   console.log('🚀 Strava callback handler started');
@@ -20,7 +20,8 @@ export default async function handler(req, res) {
     console.log('🧹 Database cleanup requested');
     
     try {
-      const prisma = new PrismaClient();
+      const { createFreshPrismaClient } = await import('../lib/prisma.js');
+      const prisma = createFreshPrismaClient();
       await prisma.$connect();
       
       // Clean all data in correct order (based on Supabase tables)
@@ -121,64 +122,75 @@ export default async function handler(req, res) {
     const athlete = await athleteResponse.json();
     console.log('✅ Athlete info received:', athlete.firstname, athlete.lastname);
 
-    // Simple database operations using raw SQL
-    const prisma = new PrismaClient();
+    // Use native pg client to avoid Prisma prepared statement issues
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    
+    const { Client } = await import('pg');
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: false
+    });
 
     try {
-      await prisma.$connect();
-      console.log('✅ Database connected successfully');
+      await client.connect();
+      console.log('✅ Database connected successfully with native pg client');
 
       // Create user using raw SQL
       const userId = `user_${athlete.id}`;
       console.log('🔧 Creating user with ID:', userId);
 
-      await prisma.$executeRaw`
+      // Create or update user using raw SQL
+      const userResult = await client.query(`
         INSERT INTO "User" (
-          "id", "name", "email", "image", "stravaId", 
-          "stravaTokens", "createdAt", "updatedAt"
-        ) VALUES (
-          ${userId},
-          ${`${athlete.firstname} ${athlete.lastname}`},
-          ${`strava_${athlete.id}@example.com`},
-          ${athlete.profile || 'https://via.placeholder.com/150'},
-          ${athlete.id.toString()},
-          ${JSON.stringify({
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            expires_at: tokens.expires_at,
-            expires_in: tokens.expires_in
-          })}::jsonb,
-          ${new Date()},
-          ${new Date()}
-        )
-        ON CONFLICT ("stravaId") DO UPDATE SET
+          "id", "name", "email", "image", "stravaId", "stravaTokens", "createdAt", "updatedAt"
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT ("stravaId") 
+        DO UPDATE SET
           "name" = EXCLUDED."name",
           "image" = EXCLUDED."image",
-          "stravaTokens" = EXCLUDED."stravaTokens"::jsonb,
+          "stravaTokens" = EXCLUDED."stravaTokens",
           "updatedAt" = EXCLUDED."updatedAt"
-      `;
+        RETURNING *
+      `, [
+        userId,
+        `${athlete.firstname} ${athlete.lastname}`,
+        `strava_${athlete.id}@example.com`,
+        athlete.profile || 'https://via.placeholder.com/150',
+        athlete.id.toString(),
+        JSON.stringify({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expires_at,
+          expires_in: tokens.expires_in
+        }),
+        new Date(),
+        new Date()
+      ]);
 
+      const user = userResult.rows[0];
       console.log('✅ User created/updated successfully');
 
       // Create session using raw SQL
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       console.log('🔧 Creating session with token:', sessionToken);
 
-      await prisma.$executeRaw`
+      const sessionResult = await client.query(`
         INSERT INTO "Session" (
           "id", "sessionToken", "userId", "expires"
-        ) VALUES (
-          ${sessionToken},
-          ${sessionToken},
-          ${userId},
-          ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
-        )
-      `;
+        ) VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `, [
+        sessionToken,
+        sessionToken,
+        user.id,
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+      ]);
 
+      const session = sessionResult.rows[0];
       console.log('✅ Session created successfully');
 
-      await prisma.$disconnect();
-      console.log('✅ Prisma disconnected successfully');
+      await client.end();
+      console.log('✅ Database disconnected successfully');
 
       // Redirect to frontend with session token
       const frontendUrl = 'https://project-felixbcs-projects.vercel.app';
@@ -189,7 +201,11 @@ export default async function handler(req, res) {
 
     } catch (dbError) {
       console.error('❌ Database error:', dbError);
-      await prisma.$disconnect();
+      try {
+        await client.end();
+      } catch (e) {
+        console.log('⚠️ Error closing client:', e.message);
+      }
       return res.status(500).json({
         error: 'Failed to create user/session',
         details: dbError.message

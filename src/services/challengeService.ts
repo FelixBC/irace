@@ -49,8 +49,8 @@ export class ChallengeService {
         throw new Error(`Failed to create challenge: ${response.statusText}`);
       }
 
-      const challenge = await response.json();
-      return challenge;
+      const responseData = await response.json();
+      return responseData.data;
     } catch (error) {
       console.error('Error creating challenge:', error);
       throw new Error('Failed to create challenge. Please try again.');

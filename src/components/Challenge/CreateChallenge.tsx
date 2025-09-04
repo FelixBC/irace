@@ -354,7 +354,7 @@ const CreateChallenge: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600">Sports</p>
-                    <p className="font-medium">{createdChallenge.sports.join(', ')}</p>
+                    <p className="font-medium">{createdChallenge.sports?.join(', ') || 'No sports selected'}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Duration</p>

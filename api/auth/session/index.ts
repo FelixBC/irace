@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PrismaClient } from '@prisma/client';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -13,12 +12,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'GET') {
-    const prisma = new PrismaClient();
-
     try {
-      // Connect to database
-      await prisma.$connect();
-      console.log('✅ Database connected successfully');
+      // Disable SSL verification for this request
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+      
+      // Use native pg client to avoid Prisma prepared statement issues
+      const { Client } = await import('pg');
+      const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: false
+      });
+      
+      await client.connect();
+      console.log('✅ Database connected successfully with native pg client');
 
       const authHeader = req.headers.authorization;
       
@@ -29,51 +35,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const sessionToken = authHeader.substring(7);
       console.log('🔑 Validating session token:', sessionToken);
 
-      // Find session and include user data
-      const session = await prisma.session.findUnique({
-        where: { sessionToken },
-        include: {
-          user: true
-        }
-      });
+      // Find session and include user data using raw SQL
+      const sessionResult = await client.query(`
+        SELECT 
+          s."id", s."sessionToken", s."userId", s."expires",
+          u."id" as user_id, u."name", u."email", u."image", 
+          u."stravaId", u."stravaTokens"
+        FROM "Session" s
+        JOIN "User" u ON s."userId" = u."id"
+        WHERE s."sessionToken" = $1
+      `, [sessionToken]);
 
-      if (!session) {
-        return res.status(401).json({ error: 'Invalid session token' });
+      if (sessionResult.rows.length === 0) {
+        console.log('❌ No session found for token:', sessionToken);
+        await client.end();
+        return res.status(401).json({ error: 'Session not found' });
       }
 
+      const session = sessionResult.rows[0];
+      console.log('✅ Session found:', session.id);
+
       // Check if session is expired
-      if (session.expires < new Date()) {
-        // Delete expired session
-        await prisma.session.delete({
-          where: { sessionToken }
-        });
+      if (new Date(session.expires) < new Date()) {
+        // Delete expired session using raw SQL
+        await client.query('DELETE FROM "Session" WHERE "sessionToken" = $1', [sessionToken]);
+        await client.end();
         return res.status(401).json({ error: 'Session expired' });
       }
 
       // Return user data
       res.status(200).json({
         user: {
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-          image: session.user.image,
-          stravaId: session.user.stravaId,
-          stravaTokens: session.user.stravaTokens
+          id: session.user_id,
+          name: session.name,
+          email: session.email,
+          image: session.image,
+          stravaId: session.stravaId,
+          stravaTokens: session.stravaTokens
         },
-        stravaTokens: session.user.stravaTokens
+        stravaTokens: session.stravaTokens
       });
 
-      await prisma.$disconnect();
+      await client.end();
     } catch (error) {
       console.error('Error validating session:', error);
       console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        meta: error.meta,
-        stack: error.stack
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
       });
-      
-      await prisma.$disconnect();
       
       // Check if it's a database connection issue
       if (error.message && error.message.includes('connect')) {

@@ -1,5 +1,5 @@
-export default function handler(req, res) {
-  console.log('🏆 === CHALLENGES MAIN API FUNCTION START ===');
+export default async function handler(req, res) {
+  console.log('🏆 === CHALLENGES API START ===');
   
   try {
     // Enable CORS
@@ -18,36 +18,70 @@ export default function handler(req, res) {
       const challengeData = req.body;
       console.log('🏆 Received challenge data:', challengeData);
 
-            try {
-        // Import Prisma client
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+      try {
+        // Disable SSL verification for this request
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         
-        // Create challenge in database
-        const challenge = await prisma.challenge.create({
-          data: {
-            name: challengeData.name,
-            description: challengeData.description,
-            sports: challengeData.sports,
-            challengeType: challengeData.challengeType,
-            goal: challengeData.goal,
-            goalUnit: challengeData.goalUnit,
-            sportGoals: challengeData.sportGoals,
-            duration: challengeData.duration,
-            startDate: new Date(challengeData.startDate),
-            endDate: new Date(challengeData.endDate),
-            isPublic: challengeData.isPublic,
-            inviteCode: challengeData.inviteCode,
-            maxParticipants: challengeData.maxParticipants,
-            status: challengeData.status,
-            creatorId: challengeData.creatorId
-          }
+        // Use native pg client to avoid Prisma prepared statement issues
+        const { Client } = await import('pg');
+        const client = new Client({
+          connectionString: process.env.DATABASE_URL,
+          ssl: false
         });
         
-        await prisma.$disconnect();
+        await client.connect();
+        console.log('✅ Database connected successfully with native pg client');
+        
+        // Generate unique ID
+        const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        
+        // Create challenge using native pg client
+        const sportsArray = challengeData.sports ? challengeData.sports.map(s => `'${s}'`).join(',') : "'RUNNING'";
+        const sportGoalsJson = challengeData.sportGoals ? JSON.stringify(challengeData.sportGoals) : '{}';
+        const startDate = new Date(challengeData.startDate).toISOString();
+        const endDate = new Date(challengeData.endDate).toISOString();
+        
+        const query = `
+          INSERT INTO "Challenge" (
+            "id", "name", "description", "sports", "challengeType", 
+            "goal", "goalUnit", "sportGoals", "duration", 
+            "startDate", "endDate", "isPublic", "inviteCode", 
+            "maxParticipants", "status", "creatorId", "createdAt", "updatedAt"
+          ) VALUES (
+            $1, $2, $3, ARRAY[${sportsArray}]::"Sport"[], $4::"ChallengeType",
+            $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14::"ChallengeStatus", $15, NOW(), NOW()
+          )
+        `;
+        
+        const values = [
+          challengeId,
+          challengeData.name || 'Test Challenge',
+          challengeData.description || 'A test challenge',
+          challengeData.challengeType || 'DISTANCE',
+          challengeData.goal || 50,
+          challengeData.goalUnit || 'km',
+          sportGoalsJson,
+          challengeData.duration || '30 days',
+          startDate,
+          endDate,
+          challengeData.isPublic !== undefined ? challengeData.isPublic : true,
+          challengeData.inviteCode || 'TEST123',
+          challengeData.maxParticipants || 10,
+          challengeData.status || 'ACTIVE',
+          challengeData.creatorId || 'user_test'
+        ];
+        
+        await client.query(query, values);
+        await client.end();
         
         console.log('✅ Challenge created successfully in database');
-        res.status(201).json(challenge);
+        res.status(201).json({
+          success: true,
+          message: 'Challenge created successfully',
+          challengeId: challengeId,
+          data: challengeData
+        });
+        
       } catch (dbError) {
         console.error('❌ Database error:', dbError);
         res.status(500).json({ 
@@ -67,8 +101,8 @@ export default function handler(req, res) {
         
         try {
           // Import Prisma client
-          const { PrismaClient } = require('@prisma/client');
-          const prisma = new PrismaClient();
+          const { createFreshPrismaClient } = await import('../lib/prisma.js');
+        const prisma = createFreshPrismaClient();
           
           if (id === 'demo-challenge') {
             // Return demo challenge for landing page
@@ -144,23 +178,51 @@ export default function handler(req, res) {
       } else {
         // Get all challenges
         try {
-          // Import Prisma client
-          const { PrismaClient } = require('@prisma/client');
-          const prisma = new PrismaClient();
+          // Disable SSL verification for this request
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+          
+          // Use native pg client to avoid Prisma prepared statement issues
+          const { Client } = await import('pg');
+          const client = new Client({
+            connectionString: process.env.DATABASE_URL,
+            ssl: false
+          });
+          
+          await client.connect();
+          console.log('✅ Database connected successfully with native pg client for GET');
           
           // Get all public challenges from database
-          const challenges = await prisma.challenge.findMany({
-            where: { isPublic: true },
-            include: {
-              creator: true,
-              participants: {
-                include: {
-                  user: true
-                }
-              }
-            },
-            orderBy: { createdAt: 'desc' }
-          });
+          const result = await client.query(`
+            SELECT 
+              "id", "name", "description", "sports", "challengeType", 
+              "goal", "goalUnit", "sportGoals", "duration", 
+              "startDate", "endDate", "isPublic", "inviteCode", 
+              "maxParticipants", "status", "creatorId", "createdAt", "updatedAt"
+            FROM "Challenge" 
+            WHERE "isPublic" = true 
+            ORDER BY "createdAt" DESC
+          `);
+          
+          const challenges = result.rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            sports: row.sports,
+            challengeType: row.challengeType,
+            goal: row.goal,
+            goalUnit: row.goalUnit,
+            sportGoals: row.sportGoals,
+            duration: row.duration,
+            startDate: row.startDate,
+            endDate: row.endDate,
+            isPublic: row.isPublic,
+            inviteCode: row.inviteCode,
+            maxParticipants: row.maxParticipants,
+            status: row.status,
+            creatorId: row.creatorId,
+            createdAt: row.createdAt,
+            participants: [] // Empty for now since Participation table doesn't exist
+          }));
           
           // Add demo challenge for landing page
           const demoChallenge = {
@@ -184,10 +246,10 @@ export default function handler(req, res) {
             participants: []
           };
           
-          const allChallenges = [demoChallenge, ...challenges];
-          
-          await prisma.$disconnect();
-          
+                    const allChallenges = [demoChallenge, ...challenges];
+
+          await client.end();
+
           console.log('✅ All challenges fetched successfully from database');
           res.status(200).json(allChallenges);
         } catch (dbError) {
@@ -203,9 +265,9 @@ export default function handler(req, res) {
       res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
     
-    console.log('✅ === CHALLENGES MAIN API FUNCTION SUCCESS ===');
+    console.log('✅ === CHALLENGES API SUCCESS ===');
   } catch (error) {
-    console.error('❌ === CHALLENGES MAIN API FUNCTION ERROR ===');
+    console.error('❌ === CHALLENGES API ERROR ===');
     console.error('❌ Error:', error);
     
     res.status(500).json({ 

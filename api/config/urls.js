@@ -3,16 +3,16 @@
 
 const PRODUCTION_URLS = {
   // URL principal de la aplicación
-  MAIN_APP: 'https://project-felixbcs-projects.vercel.app',
+  MAIN_APP: 'https://project-ghv4kh72s-felixbcs-projects.vercel.app',
 
   // URL del callback de Strava (debe coincidir con Strava)
-  STRAVA_CALLBACK: 'https://project-felixbcs-projects.vercel.app/api/auth/strava/callback',
+  STRAVA_CALLBACK: 'https://project-ghv4kh72s-felixbcs-projects.vercel.app/api/auth/strava/callback',
 
   // URL base para APIs
-  API_BASE: 'https://project-felixbcs-projects.vercel.app/api',
+  API_BASE: 'https://project-ghv4kh72s-felixbcs-projects.vercel.app/api',
 
   // URL para el frontend
-  FRONTEND: 'https://project-felixbcs-projects.vercel.app'
+  FRONTEND: 'https://project-ghv4kh72s-felixbcs-projects.vercel.app'
 };
 
 // URLs para desarrollo local

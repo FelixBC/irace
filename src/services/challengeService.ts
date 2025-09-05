@@ -110,16 +110,17 @@ export class ChallengeService {
 
   static async joinChallenge(challengeId: string, userId: string): Promise<void> {
     try {
-              const response = await fetch(JOIN_CHALLENGE(challengeId), {
+      const response = await fetch(`${CHALLENGES}?action=join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ challengeId, userId }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to join challenge: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to join challenge: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error joining challenge:', error);
@@ -143,6 +144,28 @@ export class ChallengeService {
     } catch (error) {
       console.error('Error updating challenge progress:', error);
       throw new Error('Failed to update progress. Please try again.');
+    }
+  }
+
+  static async syncStravaActivities(userId: string, challengeId?: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/strava/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, challengeId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to sync Strava activities: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error syncing Strava activities:', error);
+      throw new Error('Failed to sync Strava activities. Please try again.');
     }
   }
 

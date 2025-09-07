@@ -84,6 +84,13 @@ const CreateChallenge: React.FC = () => {
       return;
     }
 
+    // Validate that all selected sports have goals
+    const missingGoals = formData.sports.filter(sport => !formData.goals[sport]);
+    if (missingGoals.length > 0) {
+      showToast('error', 'Missing Goals', 'Please set goals for all selected sports');
+      return;
+    }
+
     setIsCreating(true);
 
     const challengeData: CreateChallengeData = {
@@ -303,6 +310,32 @@ const CreateChallenge: React.FC = () => {
                   </label>
                 </div>
               </div>
+
+              {/* Goals Validation Message */}
+              {(() => {
+                const missingGoals = formData.sports.filter(sport => !formData.goals[sport]);
+                if (missingGoals.length > 0) {
+                  return (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center">
+                        <AlertCircle className="w-5 h-5 text-amber-600 mr-2" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">
+                            Goals Required
+                          </p>
+                          <p className="text-sm text-amber-700">
+                            Please set goals for: {missingGoals.map(sport => {
+                              const sportOption = sportOptions.find(s => s.id === sport);
+                              return sportOption?.name || sport;
+                            }).join(', ')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               <div className="flex space-x-4">
                 <motion.button

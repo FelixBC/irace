@@ -179,7 +179,7 @@ const RaceView: React.FC = () => {
     const tracks: RaceTrackType[] = challenge.sports.map((sport) => {
       // Create empty tracks with 0 progress
       const participantProgress: ParticipantProgress[] = [{
-        user: user || { id: '1', name: 'You', image: 'https://via.placeholder.com/40' },
+        user: user || { id: '1', name: 'You', image: 'https://ui-avatars.com/api/?name=You&size=40&background=random' },
         distance: 0,
         percentage: 0,
         dailyProgress: [],

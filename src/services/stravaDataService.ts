@@ -45,8 +45,18 @@ export class StravaDataService {
       sport: this.mapStravaTypeToSport(stravaActivity.type),
       distance: stravaActivity.distance / 1000, // Convert meters to kilometers
       duration: stravaActivity.moving_time,
+      unit: this.getUnitForSport(this.mapStravaTypeToSport(stravaActivity.type)),
       date: new Date(stravaActivity.start_date),
       synced: true,
+      heartRate: stravaActivity.average_heartrate && stravaActivity.max_heartrate ? {
+        average: stravaActivity.average_heartrate,
+        max: stravaActivity.max_heartrate
+      } : undefined,
+      elevation: stravaActivity.total_elevation_gain ? {
+        gain: stravaActivity.total_elevation_gain,
+        loss: stravaActivity.total_elevation_gain * 0.8 // Approximate loss as 80% of gain
+      } : undefined,
+      calories: stravaActivity.calories || undefined,
     }));
   }
 
@@ -85,6 +95,24 @@ export class StravaDataService {
       return Sport.WEIGHT_TRAINING;
     } else {
       return Sport.RUNNING; // Default fallback
+    }
+  }
+
+  private getUnitForSport(sport: Sport): string {
+    switch (sport) {
+      case Sport.RUNNING:
+      case Sport.CYCLING:
+      case Sport.WALKING:
+      case Sport.HIKING:
+        return 'km';
+      case Sport.SWIMMING:
+        return 'm';
+      case Sport.WEIGHT_TRAINING:
+        return 'min';
+      case Sport.YOGA:
+        return 'min';
+      default:
+        return 'km';
     }
   }
 

@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
+import { Sport } from '../../types';
+
+// Utility function to format duration
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}h`;
+  }
+  return `${minutes}m`;
+};
+
 import { 
   Trophy, 
   Activity, 
@@ -112,7 +126,7 @@ const Profile: React.FC = () => {
                 className="relative"
               >
                 <img
-                  src={user.image || 'https://via.placeholder.com/120x120'}
+                  src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=120&background=random`}
                   alt={user.name || 'User'}
                   className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
                 />
@@ -315,9 +329,29 @@ const Profile: React.FC = () => {
                         <span className="text-2xl">{sportConfig[activity.sport]?.icon}</span>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">
-                            {activity.distance.toFixed(1)} {activity.unit} {activity.sport.toLowerCase()}
+                            {activity.sport === Sport.WEIGHT_TRAINING 
+                              ? (activity.calories ? `${activity.calories} calories ${activity.sport.toLowerCase()}` : `${activity.sport.toLowerCase()}`)
+                              : `${activity.distance.toFixed(1)} ${activity.unit || 'km'} ${activity.sport.toLowerCase()}`
+                            }
                           </p>
-                          <p className="text-sm text-gray-600">{activity.date}</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                            {activity.heartRate && (
+                              <span className="flex items-center">
+                                ❤️ {activity.heartRate.average}-{activity.heartRate.max} bpm
+                              </span>
+                            )}
+                            {activity.sport === Sport.WEIGHT_TRAINING && activity.calories && (
+                              <span className="flex items-center">
+                                🔥 {activity.calories} cal
+                              </span>
+                            )}
+                            {activity.elevation && (
+                              <span className="flex items-center">
+                                📈 +{activity.elevation.gain.toFixed(0)}m
+                              </span>
+                            )}
+                            <span>{formatDistanceToNow(activity.date, { addSuffix: true })}</span>
+                          </div>
                         </div>
                       </motion.div>
                     ))}

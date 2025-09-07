@@ -1,8 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Activity as ActivityIcon, Clock } from 'lucide-react';
+import { Activity as ActivityIcon, Clock, Heart, TrendingUp, Flame } from 'lucide-react';
 import { Activity, User, Sport } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
+
+// Utility function to format duration
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}h`;
+  }
+  return `${minutes}m`;
+};
 
 interface ActivityFeedProps {
   activities: Activity[];
@@ -52,7 +63,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
               className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
             >
                               <img
-                  src={user.image}
+                  src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=40&background=random`}
                   alt={user.name}
                   className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
@@ -65,11 +76,23 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                     {sportConfig[activity.sport]?.icon || '🏃‍♂️'}
                   </span>
                 </div>
+                
+                {/* Heart Rate */}
+                {activity.heartRate && (
+                  <div className="flex items-center text-xs text-red-600 mb-1">
+                    <Heart className="w-3 h-3 mr-1" />
+                    <span className="font-medium">
+                      {activity.heartRate.average}-{activity.heartRate.max} bpm
+                    </span>
+                  </div>
+                )}
+                
+                {/* Main Activity Info */}
                 <p className="text-sm text-gray-600 mb-1">
                   <span className={`font-semibold ${sportConfig[activity.sport]?.color || 'text-gray-600'}`}>
                     {activity.sport === Sport.WEIGHT_TRAINING 
-                      ? `${activity.distance} ${activity.unit}` // Show "12 sets" for strength training
-                      : `${activity.distance.toFixed(1)}${activity.unit}` // Show "8.2km" for distance sports
+                      ? (activity.calories ? `${activity.calories} calories` : 'strength training') // Show calories if available, otherwise just "strength training"
+                      : `${activity.distance.toFixed(1)}${activity.unit || 'km'}` // Show "8.2km" for distance sports
                     }
                   </span>{' '}
                   {activity.sport === Sport.RUNNING ? 'run' : 
@@ -77,11 +100,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                    activity.sport === Sport.SWIMMING ? 'swim' :
                    activity.sport === Sport.WALKING ? 'walk' :
                    activity.sport === Sport.HIKING ? 'hike' :
-                   activity.sport === Sport.WEIGHT_TRAINING ? 'strength training' : 'activity'}
+                   activity.sport === Sport.WEIGHT_TRAINING ? '' : 'activity'} {/* Empty string for weight training since we already show "strength training" above */}
                 </p>
-                <div className="flex items-center text-xs text-gray-500">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {formatDistanceToNow(activity.date, { addSuffix: true })}
+                
+                {/* Elevation */}
+                {activity.elevation && (
+                  <div className="flex items-center text-xs text-green-600 mb-1">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    <span className="font-medium">
+                      +{activity.elevation.gain.toFixed(0)}m elevation
+                    </span>
+                  </div>
+                )}
+                
+                {/* Duration and Time */}
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <Clock className="w-3 h-3 mr-1" />
+                    <span className="font-medium">{formatDuration(activity.duration)}</span>
+                  </div>
+                  <span>{formatDistanceToNow(activity.date, { addSuffix: true })}</span>
                 </div>
               </div>
             </motion.div>

@@ -14,6 +14,13 @@ export interface StravaActivity {
   start_date: string;
   manual: boolean;
   sport_type?: string;
+  average_heartrate?: number;
+  max_heartrate?: number;
+  total_elevation_gain?: number;
+  calories?: number;
+  athlete?: {
+    id: number;
+  };
 }
 
 export interface StravaAthlete {
@@ -79,6 +86,15 @@ export interface Activity {
   unit: string; // Unit of measurement (km, sets, minutes, etc.)
   date: Date;
   synced: boolean;
+  heartRate?: {
+    average: number;
+    max: number;
+  };
+  elevation?: {
+    gain: number; // meters
+    loss: number; // meters
+  };
+  calories?: number;
 }
 
 export enum Sport {

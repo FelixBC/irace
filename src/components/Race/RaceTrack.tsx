@@ -162,7 +162,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
               {/* Avatar */}
               <div className="relative">
                 <img
-                  src={participant.user.image}
+                  src={participant.user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.user.name || 'User')}&size=32&background=random`}
                   alt={participant.user.name}
                   className="w-8 h-8 rounded-full border-2 border-white shadow-lg object-cover"
                 />

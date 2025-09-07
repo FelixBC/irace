@@ -237,6 +237,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Reset rate limiting
     setLastApiCall(0);
     setApiCallCount(0);
+    // Redirect to dashboard after disconnect
+    window.location.href = '/';
   };
 
   const logout = () => {
@@ -246,6 +248,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Reset rate limiting
     setLastApiCall(0);
     setApiCallCount(0);
+    // Redirect to dashboard after logout
+    window.location.href = '/';
   };
 
   const refreshUserProfile = async (): Promise<void> => {

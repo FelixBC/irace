@@ -1,5 +1,6 @@
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
 import { CHALLENGES, CHALLENGE, USER_CHALLENGES, JOIN_CHALLENGE, UPDATE_PROGRESS } from '../config/api';
+import { getApiBaseUrl } from '../config/urls';
 import { addDays } from 'date-fns';
 
 export interface CreateChallengeData {
@@ -94,7 +95,7 @@ export class ChallengeService {
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
-              const response = await fetch(USER_CHALLENGES(userId));
+      const response = await fetch(`${getApiBaseUrl()}/challenges/user-challenges?userId=${userId}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch user challenges: ${response.statusText}`);
@@ -149,7 +150,7 @@ export class ChallengeService {
 
   static async syncStravaActivities(userId: string, challengeId?: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE}/strava/sync`, {
+      const response = await fetch(`${getApiBaseUrl()}/strava/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

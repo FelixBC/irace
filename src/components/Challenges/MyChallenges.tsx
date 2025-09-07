@@ -73,8 +73,8 @@ const MyChallenges: React.FC = () => {
           goalUnit: dbChallenge.goalUnit,
           sportGoals: dbChallenge.sportGoals || {},
           duration: dbChallenge.duration,
-          startDate: dbChallenge.startDate,
-          endDate: dbChallenge.endDate,
+          startDate: new Date(dbChallenge.startDate),
+          endDate: new Date(dbChallenge.endDate),
           isPublic: dbChallenge.isPublic,
           inviteCode: dbChallenge.inviteCode,
           maxParticipants: dbChallenge.maxParticipants,
@@ -177,8 +177,8 @@ const MyChallenges: React.FC = () => {
     window.location.href = '/create';
   };
 
-  const handleViewChallenge = (challengeId: string) => {
-    window.location.href = `/race/${challengeId}`;
+  const handleViewChallenge = (challenge: Challenge) => {
+    window.location.href = `/race/${challenge.inviteCode}`;
   };
 
   const handleEditChallenge = (challengeId: string) => {
@@ -576,7 +576,7 @@ const MyChallenges: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleViewChallenge(challenge.id)}
+                        onClick={() => handleViewChallenge(challenge)}
                         className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         <Eye className="w-4 h-4" />

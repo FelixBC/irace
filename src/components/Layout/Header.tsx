@@ -76,7 +76,7 @@ const Header: React.FC = () => {
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <Link
-                to="/challenges"
+                to="/my-challenges"
                 className="text-gray-600 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50"
               >
                 My Challenges
@@ -96,7 +96,7 @@ const Header: React.FC = () => {
                   className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <img
-                    src={user.image || 'https://via.placeholder.com/32x32'}
+                    src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=32&background=random`}
                     alt={user.name || 'User'}
                     className="w-8 h-8 rounded-full object-cover"
                   />
@@ -130,7 +130,7 @@ const Header: React.FC = () => {
                       className="hover:bg-gray-100 transition-colors duration-200"
                     >
                       <Link
-                        to="/challenges"
+                        to="/my-challenges"
                         className="block px-4 py-2 text-sm text-gray-700"
                         onClick={() => setIsUserMenuOpen(false)}
                       >

@@ -23,6 +23,7 @@ const RaceView: React.FC = () => {
   const [stravaData, setStravaData] = useState<RealTimeStravaData | null>(null);
   const [isLoadingStrava, setIsLoadingStrava] = useState(false);
   const [stravaError, setStravaError] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     // Check if this is a demo challenge or a real challenge
@@ -317,10 +318,26 @@ const RaceView: React.FC = () => {
     setIsRefreshing(false);
   };
 
-  const copyShareLink = () => {
-          const shareUrl = `${getMainAppUrl()}/race/${challenge?.inviteCode}`;
-    navigator.clipboard.writeText(shareUrl);
-    // In a real app, show success toast
+  const copyShareLink = async () => {
+    if (!challenge?.inviteCode) {
+      console.error('No invite code available');
+      return;
+    }
+    
+    try {
+      const shareUrl = `${getMainAppUrl()}/join/${challenge.inviteCode}`;
+      await navigator.clipboard.writeText(shareUrl);
+      console.log('Share link copied to clipboard:', shareUrl);
+      
+      // Show visual feedback
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy share link:', error);
+      // Fallback: show the URL in an alert
+      const shareUrl = `${getMainAppUrl()}/join/${challenge.inviteCode}`;
+      alert(`Share this link: ${shareUrl}`);
+    }
   };
 
   if (!challenge) {
@@ -428,10 +445,23 @@ const RaceView: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={copyShareLink}
-              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg transition-colors"
+              className={`flex items-center space-x-2 backdrop-blur px-4 py-2 rounded-lg transition-colors ${
+                shareCopied 
+                  ? 'bg-green-500/80 text-white' 
+                  : 'bg-white/20 hover:bg-white/30'
+              }`}
             >
-              <Share2 className="w-4 h-4" />
-              <span>Share</span>
+              {shareCopied ? (
+                <>
+                  <span className="w-4 h-4">✓</span>
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </>
+              )}
             </motion.button>
             {isConnectedToStrava && (
               <motion.button

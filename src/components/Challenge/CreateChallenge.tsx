@@ -116,7 +116,7 @@ const CreateChallenge: React.FC = () => {
 
   const copyShareLink = () => {
     if (createdChallenge) {
-      const shareUrl = `${getMainAppUrl()}/race/${createdChallenge.inviteCode}`;
+      const shareUrl = `${getMainAppUrl()}/join/${createdChallenge.inviteCode}`;
       navigator.clipboard.writeText(shareUrl);
       showToast('success', 'Link Copied!', 'Share link copied to clipboard');
     }
@@ -433,7 +433,7 @@ const CreateChallenge: React.FC = () => {
                     className="bg-white p-6 rounded-lg border border-gray-200"
                   >
                     <QRCode
-                      value={`${getMainAppUrl()}/race/${createdChallenge.inviteCode}`}
+                      value={`${getMainAppUrl()}/join/${createdChallenge.inviteCode}`}
                       size={200}
                       className="mx-auto"
                     />

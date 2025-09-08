@@ -194,9 +194,22 @@ export default async function handler(req, res) {
 
       // Redirect to frontend with session token
       const frontendUrl = 'https://project-felixbcs-projects.vercel.app';
-      const redirectUrl = `${frontendUrl}?session=${sessionToken}`;
+      
+      // Check if there's a state parameter for return URL
+      const state = req.query.state;
+      let redirectUrl;
+      
+      if (state) {
+        // Decode the state parameter and redirect to the intended page
+        const returnTo = decodeURIComponent(state);
+        redirectUrl = `${frontendUrl}${returnTo}?session=${sessionToken}`;
+        console.log('✅ Redirecting to intended page:', redirectUrl);
+      } else {
+        // Default redirect to home page
+        redirectUrl = `${frontendUrl}?session=${sessionToken}`;
+        console.log('✅ Redirecting to home page:', redirectUrl);
+      }
 
-      console.log('✅ Redirecting to:', redirectUrl);
       res.redirect(302, redirectUrl);
 
     } catch (dbError) {

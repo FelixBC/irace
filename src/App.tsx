@@ -8,6 +8,7 @@ import RaceView from './components/Race/RaceView';
 import CreateChallenge from './components/Challenge/CreateChallenge';
 import Profile from './components/Profile/Profile';
 import MyChallenges from './components/Challenges/MyChallenges';
+import JoinChallenge from './components/Challenge/JoinChallenge';
 import AuthCallback from './components/Auth/AuthCallback';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
@@ -22,6 +23,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/race/:challengeId" element={<RaceView />} />
+                <Route path="/join/:inviteCode" element={<JoinChallenge />} />
                 <Route path="/create" element={<CreateChallenge />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/my-challenges" element={<MyChallenges />} />

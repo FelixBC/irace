@@ -313,13 +313,17 @@ export default async function handler(req, res) {
               `, [challenge.id]);
               
               const participants = participantsResult.rows.map(row => ({
-                id: row.userId,
-                name: row.name,
-                image: row.image,
-                stravaId: row.stravaId,
+                user: {
+                  id: row.userId,
+                  name: row.name,
+                  image: row.image,
+                  stravaId: row.stravaId
+                },
+                distance: row.currentDistance || 0,
+                percentage: 0, // Will be calculated on frontend
+                dailyProgress: [],
                 joinedAt: row.joinedAt,
                 progress: row.progress || {},
-                currentDistance: row.currentDistance,
                 lastActivityDate: row.lastActivityDate
               }));
               

@@ -19,37 +19,78 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Return mock data based on the database structure you showed me
-    const challenges = [
-      {
-        id: 'challenge_1757107899806_0boie9n',
-        name: 'fafa',
-        description: 'fafa - A fitness challenge with 1 sports',
-        sports: ['RUNNING'],
-        challengeType: 'DISTANCE',
-        goal: 21,
-        goalUnit: 'km',
-        sportGoals: { 'RUNNING': 21 },
-        duration: '7 days',
-        startDate: '2025-09-05T21:31:39.178Z',
-        endDate: '2025-09-12T21:31:39.178Z',
-        isPublic: true,
-        inviteCode: 'OIASB9',
-        maxParticipants: 10,
-        status: 'ACTIVE',
-        creatorId: userId,
-        participants: 1,
-        isCreator: true,
-        createdAt: '2025-09-05T21:31:39.806Z',
-        updatedAt: '2025-09-05T21:31:39.806Z'
-      }
-    ];
+    // Disable SSL verification for this request
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    
+    // Use native pg client to avoid Prisma prepared statement issues
+    const { Client } = await import('pg');
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: false
+    });
+    
+    await client.connect();
+    console.log('✅ Database connected successfully for user challenges');
 
-    res.status(200).json(challenges);
+    // Fetch challenges where user is the creator
+    const createdChallengesResult = await client.query(`
+      SELECT 
+        c.*,
+        COUNT(p."id") as participants,
+        true as "isCreator"
+      FROM "Challenge" c
+      LEFT JOIN "Participation" p ON c."id" = p."challengeId"
+      WHERE c."creatorId" = $1
+      GROUP BY c."id"
+      ORDER BY c."createdAt" DESC
+    `, [userId]);
+
+    // Fetch challenges where user is a participant (but not creator)
+    const joinedChallengesResult = await client.query(`
+      SELECT 
+        c.*,
+        COUNT(p."id") as participants,
+        false as "isCreator"
+      FROM "Challenge" c
+      INNER JOIN "Participation" p ON c."id" = p."challengeId"
+      WHERE p."userId" = $1 AND c."creatorId" != $1
+      GROUP BY c."id", c."name", c."description", c."sports", c."challengeType", c."goal", c."goalUnit", c."sportGoals", c."duration", c."startDate", c."endDate", c."isPublic", c."inviteCode", c."maxParticipants", c."status", c."creatorId", c."createdAt", c."updatedAt"
+      ORDER BY MAX(p."joinedAt") DESC
+    `, [userId]);
+
+    await client.end();
+
+    // Combine and format the results
+    const createdChallenges = createdChallengesResult.rows.map(challenge => ({
+      ...challenge,
+      startDate: new Date(challenge.startDate).toISOString(),
+      endDate: new Date(challenge.endDate).toISOString(),
+      createdAt: new Date(challenge.createdAt).toISOString(),
+      updatedAt: new Date(challenge.updatedAt).toISOString(),
+      sportGoals: typeof challenge.sportGoals === 'string' 
+        ? JSON.parse(challenge.sportGoals) 
+        : challenge.sportGoals
+    }));
+
+    const joinedChallenges = joinedChallengesResult.rows.map(challenge => ({
+      ...challenge,
+      startDate: new Date(challenge.startDate).toISOString(),
+      endDate: new Date(challenge.endDate).toISOString(),
+      createdAt: new Date(challenge.createdAt).toISOString(),
+      updatedAt: new Date(challenge.updatedAt).toISOString(),
+      sportGoals: typeof challenge.sportGoals === 'string' 
+        ? JSON.parse(challenge.sportGoals) 
+        : challenge.sportGoals
+    }));
+
+    // Combine both lists
+    const allChallenges = [...createdChallenges, ...joinedChallenges];
+
+    res.status(200).json(allChallenges);
   } catch (error) {
-    console.error('Error fetching challenges:', error);
+    console.error('Error fetching user challenges:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch challenges',
+      error: 'Failed to fetch user challenges',
       details: error.message 
     });
   }

@@ -7,6 +7,9 @@ const SPORTS = [
   { name: 'biking' },
 ] as const;
 
+/** Bump when replacing GIF files so browsers refetch from `/public/animations`. */
+const ANIMATION_ASSET_VERSION = '2';
+
 const SportAnimation: React.FC = () => {
   const [currentSport, setCurrentSport] = useState(0);
   const [position, setPosition] = useState(0);
@@ -62,7 +65,7 @@ const SportAnimation: React.FC = () => {
           className="absolute bottom-1 left-4 flex items-end"
         >
           <img
-            src={`/animations/${sport.name}.gif`}
+            src={`/animations/${sport.name}.gif?v=${ANIMATION_ASSET_VERSION}`}
             alt={`${sport.name} sport animation`}
             className="h-8 w-8 object-contain object-bottom select-none pointer-events-none"
             draggable={false}

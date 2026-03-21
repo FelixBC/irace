@@ -3,7 +3,7 @@ import { resolveBearerUserId } from '../lib/authSession.js';
 import { ensureWebPushConfigured, webpush } from '../lib/webPushConfig.js';
 
 /**
- * POST /api/push/test — Send a test notification to all subscriptions for the current user (dev / QA).
+ * POST /api/push/:action — subscribe | unsubscribe | test (one serverless fn for Hobby plan limits).
  */
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,6 +12,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  const action = typeof req.query?.action === 'string' ? req.query.action : '';
+  if (!['subscribe', 'unsubscribe', 'test'].includes(action)) {
+    return res.status(404).json({ error: 'Unknown action' });
   }
 
   if (req.method !== 'POST') {
@@ -25,6 +30,42 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    if (action === 'subscribe') {
+      const body = req.body || {};
+      const { endpoint, keys } = body;
+      const p256dh = keys?.p256dh;
+      const auth = keys?.auth;
+
+      if (!endpoint || !p256dh || !auth) {
+        return res.status(400).json({ error: 'Missing endpoint or keys' });
+      }
+
+      const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null;
+
+      await prisma.pushSubscription.upsert({
+        where: { endpoint },
+        create: { userId, endpoint, p256dh, auth, userAgent },
+        update: { userId, p256dh, auth, userAgent },
+      });
+
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'unsubscribe') {
+      const body = req.body || {};
+      const { endpoint } = body;
+      if (!endpoint) {
+        return res.status(400).json({ error: 'Missing endpoint' });
+      }
+
+      const result = await prisma.pushSubscription.deleteMany({
+        where: { userId, endpoint },
+      });
+
+      return res.status(200).json({ ok: true, removed: result.count });
+    }
+
+    // test
     try {
       ensureWebPushConfigured();
     } catch (e) {
@@ -65,7 +106,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, sent, errors });
   } catch (err) {
-    console.error('push/test:', err);
+    console.error('push/[action]:', action, err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
     await prisma.$disconnect().catch(() => {});

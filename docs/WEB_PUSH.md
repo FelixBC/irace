@@ -40,11 +40,13 @@ HTTPS is required for push except on `localhost`.
 | `POST` | `/api/push/unsubscribe` | Bearer session | Remove subscription by `endpoint` |
 | `POST` | `/api/push/test` | Bearer session | Send a test notification to the current user’s stored subscriptions |
 
+These are implemented as a **single** serverless function (`api/push/[action].js`) so Vercel **Hobby** stays within the 12-function limit.
+
 ## Files
 
 - `public/sw.js` — service worker (push + notification click).
 - `src/lib/pushNotifications.ts` — register SW, subscribe/unsubscribe, test helper.
-- `api/push/*.js` — server routes; uses `web-push` and Prisma `PushSubscription`.
+- `api/push/[action].js` — server route; uses `web-push` and Prisma `PushSubscription`.
 
 ## Next steps (not implemented here)
 

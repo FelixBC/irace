@@ -98,7 +98,7 @@ export class ChallengeService {
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
-      const response = await fetch(`${getApiBaseUrl()}/challenges/user-challenges?userId=${userId}`);
+      const response = await fetch(USER_CHALLENGES(userId));
       
       if (!response.ok) {
         throw new Error(`Failed to fetch user challenges: ${response.statusText}`);

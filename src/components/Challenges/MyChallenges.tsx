@@ -82,7 +82,12 @@ const MyChallenges: React.FC = () => {
           maxParticipants: dbChallenge.maxParticipants,
           status: dbChallenge.status,
           creatorId: dbChallenge.creatorId,
-          participants: dbChallenge.participants?.length || 0,
+          participants:
+            typeof dbChallenge.participants === 'number'
+              ? dbChallenge.participants
+              : Array.isArray(dbChallenge.participants)
+                ? dbChallenge.participants.length
+                : 0,
           progress: 0, // TODO: Calculate real progress
           isCreator: dbChallenge.isCreator || false,
         }));

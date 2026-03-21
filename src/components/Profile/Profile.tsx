@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -19,6 +19,13 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Sport } from '../../types';
 import { getStravaAuthUrl } from '../../services/stravaService';
+import { getApiBaseUrl } from '../../config/urls';
+import {
+  isWebPushConfigured,
+  enableWebPush,
+  disableWebPush,
+  sendTestPushNotification,
+} from '../../lib/pushNotifications';
 
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -35,6 +42,38 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [stravaActionError, setStravaActionError] = useState<string | null>(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  type PushUiState = 'unsupported' | 'denied' | 'off' | 'on';
+  const [pushUiState, setPushUiState] = useState<PushUiState>('unsupported');
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMessage, setPushMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'settings') return;
+
+    const refreshPushUi = async () => {
+      if (!isWebPushConfigured()) {
+        setPushUiState('unsupported');
+        return;
+      }
+      if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+        setPushUiState('unsupported');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        setPushUiState('denied');
+        return;
+      }
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/');
+        const sub = await reg?.pushManager.getSubscription();
+        setPushUiState(sub ? 'on' : 'off');
+      } catch {
+        setPushUiState('off');
+      }
+    };
+
+    void refreshPushUi();
+  }, [activeTab]);
 
   // Real data will be loaded from database and Strava
   const [stats, setStats] = useState({
@@ -479,19 +518,111 @@ const Profile: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
                 
                 <div className="space-y-4">
-                  {/* Notifications */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <Bell className="w-5 h-5 text-gray-600" />
-                      <div>
-                        <p className="font-medium text-gray-900">Push Notifications</p>
-                        <p className="text-sm text-gray-600">Get notified about challenge updates</p>
+                  {/* Notifications (Web Push) */}
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <Bell className="w-5 h-5 text-gray-600 shrink-0" />
+                        <div>
+                          <p className="font-medium text-gray-900">Push notifications</p>
+                          <p className="text-sm text-gray-600">
+                            {pushUiState === 'unsupported' &&
+                              'Not configured for this build (add VITE_VAPID_PUBLIC_KEY).'}
+                            {pushUiState === 'denied' &&
+                              'Blocked in browser settings — enable notifications for this site.'}
+                            {(pushUiState === 'off' || pushUiState === 'on') &&
+                              'Challenge updates and nudges in your browser (when we wire events).'}
+                          </p>
+                        </div>
                       </div>
+                      <label
+                        className={`relative inline-flex items-center shrink-0 ${
+                          pushBusy || pushUiState === 'unsupported' || pushUiState === 'denied'
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'cursor-pointer'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={pushUiState === 'on'}
+                          disabled={
+                            pushBusy || pushUiState === 'unsupported' || pushUiState === 'denied'
+                          }
+                          onChange={async (e) => {
+                            const token = localStorage.getItem('session_token');
+                            if (!token) {
+                              setPushMessage('Sign in to enable notifications.');
+                              return;
+                            }
+                            const baseUrl = getApiBaseUrl();
+                            setPushBusy(true);
+                            setPushMessage(null);
+                            try {
+                              if (e.target.checked) {
+                                const perm = await Notification.requestPermission();
+                                if (perm !== 'granted') {
+                                  setPushUiState('denied');
+                                  setPushMessage('Notifications were blocked.');
+                                  return;
+                                }
+                                const ok = await enableWebPush(token, baseUrl);
+                                setPushUiState(ok ? 'on' : 'off');
+                                if (!ok) {
+                                  setPushMessage(
+                                    'Could not subscribe. Check VAPID env vars and run DB migrations.'
+                                  );
+                                }
+                              } else {
+                                await disableWebPush(token, baseUrl);
+                                setPushUiState('off');
+                              }
+                            } catch {
+                              setPushMessage('Something went wrong.');
+                              setPushUiState('off');
+                            } finally {
+                              setPushBusy(false);
+                            }
+                          }}
+                        />
+                        <div
+                          className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all relative ${
+                            pushUiState === 'on'
+                              ? 'bg-orange-500 after:translate-x-full after:border-white'
+                              : 'bg-gray-200'
+                          }`}
+                        />
+                      </label>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                    </label>
+                    {pushMessage && <p className="text-sm text-red-600">{pushMessage}</p>}
+                    {import.meta.env.DEV && isWebPushConfigured() && (
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className="text-xs text-gray-500">Dev only:</span>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          disabled={pushBusy || pushUiState !== 'on'}
+                          onClick={async () => {
+                            const token = localStorage.getItem('session_token');
+                            if (!token) return;
+                            setPushBusy(true);
+                            setPushMessage(null);
+                            try {
+                              const r = await sendTestPushNotification(token, getApiBaseUrl());
+                              if (!r.ok) setPushMessage(r.error || 'Test failed');
+                            } catch {
+                              setPushMessage('Test request failed');
+                            } finally {
+                              setPushBusy(false);
+                            }
+                          }}
+                          className="text-xs px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          Send test notification
+                        </motion.button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Privacy */}

@@ -48,8 +48,22 @@ model User {
   accounts       Account[]
   activities     Activity[]
   challenges     Challenge[]     @relation("ChallengeCreator")
-  participations Participation[]
-  sessions       Session[]
+  participations     Participation[]
+  sessions           Session[]
+  pushSubscriptions  PushSubscription[]
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {

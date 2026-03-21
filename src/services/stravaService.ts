@@ -1,7 +1,11 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
-import { getStravaCallbackUrl } from '../config/urls';
+import { getApiBaseUrl, getStravaCallbackUrl } from '../config/urls';
 
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
+
+function getClientId(): string {
+  return import.meta.env.VITE_STRAVA_CLIENT_ID || '';
+}
 
 export class StravaService {
   private accessToken: string;
@@ -15,17 +19,16 @@ export class StravaService {
   }
 
   private async refreshAccessToken(): Promise<void> {
-    const response = await fetch('https://www.strava.com/oauth/token', {
+    const sessionToken = typeof localStorage !== 'undefined' ? localStorage.getItem('session_token') : null;
+    if (!sessionToken) {
+      throw new Error('No session — sign in again');
+    }
+
+    const response = await fetch(`${getApiBaseUrl()}/strava/refresh-token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionToken}`,
       },
-      body: JSON.stringify({
-        client_id: '169822',
-        client_secret: 'ac6921be29eb6fadaec73dc5bd2803dc5ee1b62c',
-        grant_type: 'refresh_token',
-        refresh_token: this.refreshToken,
-      }),
     });
 
     if (!response.ok) {
@@ -33,9 +36,10 @@ export class StravaService {
     }
 
     const data = await response.json();
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
-    this.expiresAt = data.expires_at;
+    const t = data.stravaTokens;
+    this.accessToken = t.access_token;
+    this.refreshToken = t.refresh_token;
+    this.expiresAt = t.expires_at;
   }
 
   private async makeAuthenticatedRequest(endpoint: string): Promise<any> {
@@ -83,30 +87,17 @@ export class StravaService {
   }
 }
 
-export function getStravaAuthUrl(): string {
-  const clientId = '169822'; // Your actual Strava Client ID
-  // Use the backend callback URL that handles the OAuth flow
+export function getStravaAuthUrl(returnPath?: string): string {
+  const clientId = getClientId();
+  if (!clientId) {
+    console.error('VITE_STRAVA_CLIENT_ID is not set');
+  }
   const redirectUri = getStravaCallbackUrl();
   const scope = 'read,activity:read_all';
-  
-  console.log('🔗 Generated OAuth URL with redirect URI:', redirectUri);
-  
-  return `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
-}
 
-export async function exchangeCodeForTokens(code: string): Promise<StravaTokens> {
-  // Use relative URL so it works with any production domain
-  const response = await fetch('/api/auth/strava/callback', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ code }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to exchange code for tokens');
+  let url = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+  if (returnPath) {
+    url += `&state=${encodeURIComponent(returnPath)}`;
   }
-
-  return response.json();
+  return url;
 }

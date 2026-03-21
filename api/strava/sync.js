@@ -1,3 +1,5 @@
+import { normalizeSports } from '../lib/normalizeSports.js';
+
 export default async function handler(req, res) {
   console.log('🏃‍♂️ === STRAVA SYNC API ===');
   console.log('📋 Request method:', req.method);
@@ -89,7 +91,7 @@ export default async function handler(req, res) {
       if (challenge) {
         const challengeStartDate = new Date(challenge.startDate);
         const challengeEndDate = new Date(challenge.endDate);
-        const challengeSports = challenge.sports;
+        const challengeSports = normalizeSports(challenge.sports);
 
         relevantActivities = activities.filter(activity => {
           const activityDate = new Date(activity.start_date);

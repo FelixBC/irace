@@ -22,6 +22,7 @@ const CreateChallenge: React.FC = () => {
     duration: 7,
     isPrivate: false,
     goals: {} as Record<Sport, number>,
+    creatorParticipantSharingAck: false,
   });
   const [createdChallenge, setCreatedChallenge] = useState<Challenge | null>(null);
   const [showQR, setShowQR] = useState(false);
@@ -91,6 +92,15 @@ const CreateChallenge: React.FC = () => {
       return;
     }
 
+    if (!formData.creatorParticipantSharingAck) {
+      showToast(
+        'error',
+        'Acknowledgement required',
+        'Please confirm how participant progress is shown in this challenge.'
+      );
+      return;
+    }
+
     setIsCreating(true);
 
     const challengeData: CreateChallengeData = {
@@ -99,6 +109,7 @@ const CreateChallenge: React.FC = () => {
       duration: formData.duration,
       isPrivate: formData.isPrivate,
       goals: formData.goals,
+      creatorParticipantSharingAck: formData.creatorParticipantSharingAck,
     };
 
     try {
@@ -337,6 +348,28 @@ const CreateChallenge: React.FC = () => {
                 return null;
               })()}
 
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    checked={formData.creatorParticipantSharingAck}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, creatorParticipantSharingAck: e.target.checked }))
+                    }
+                  />
+                  <span className="text-sm text-gray-700 leading-relaxed">
+                    I understand that people who join this challenge (via my invite link) will see each
+                    other&apos;s <strong>challenge progress</strong> here — aggregated stats for this challenge
+                    only, not their full Strava profiles. See the{' '}
+                    <a href="/privacy" className="text-orange-600 underline">
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
+                </label>
+              </div>
+
               <div className="flex space-x-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -352,7 +385,7 @@ const CreateChallenge: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={handleCreateChallenge}
-                  disabled={isCreating}
+                  disabled={isCreating || !formData.creatorParticipantSharingAck}
                   className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   {isCreating ? (

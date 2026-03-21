@@ -1,47 +1,65 @@
-// 🚨 IMPORTANTE: Actualizar estas URLs en cada deploy de Vercel
-// 🚨 IMPORTANTE: También actualizar en Strava (Website y Authorization Callback Domain)
+/**
+ * Strava OAuth requires redirect_uri to match the **Authorization Callback Domain** in your Strava app.
+ * Always use one canonical production URL (set `VITE_APP_ORIGIN` on Vercel) so OAuth works even when
+ * users land on a deployment-specific `*.vercel.app` hostname.
+ */
+const PRODUCTION_ORIGIN = 'https://stravaracer.vercel.app';
 
 export const PRODUCTION_URLS = {
-  // URL principal de la aplicación - STANDARDIZED
-  MAIN_APP: 'https://project-felixbcs-projects.vercel.app',
-
-  // URL del callback de Strava (debe coincidir con Strava)
-  STRAVA_CALLBACK: 'https://project-felixbcs-projects.vercel.app/api/auth/strava/callback',
-
-  // URL base para APIs
-  API_BASE: 'https://project-felixbcs-projects.vercel.app/api',
-
-  // URL para el frontend
-  FRONTEND: 'https://project-felixbcs-projects.vercel.app'
+  MAIN_APP: PRODUCTION_ORIGIN,
+  STRAVA_CALLBACK: `${PRODUCTION_ORIGIN}/api/auth/strava/callback`,
+  API_BASE: `${PRODUCTION_ORIGIN}/api`,
+  FRONTEND: PRODUCTION_ORIGIN,
 };
 
-// URLs para desarrollo local
 export const LOCAL_URLS = {
   MAIN_APP: 'http://localhost:5173',
   STRAVA_CALLBACK: 'http://localhost:5173/api/auth/strava/callback',
   API_BASE: 'http://localhost:5173/api',
-  FRONTEND: 'http://localhost:5173'
+  FRONTEND: 'http://localhost:5173',
 };
 
-// Función para obtener las URLs según el entorno
+function urlsFromOrigin(origin: string) {
+  return {
+    MAIN_APP: origin,
+    STRAVA_CALLBACK: `${origin}/api/auth/strava/callback`,
+    API_BASE: `${origin}/api`,
+    FRONTEND: origin,
+  };
+}
+
+function canonicalBrowserOrigin(): string | null {
+  const fromEnv = import.meta.env.VITE_APP_ORIGIN?.trim();
+  if (fromEnv) {
+    return fromEnv.replace(/\/$/, '');
+  }
+  return null;
+}
+
 export function getUrls() {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return LOCAL_URLS;
   }
+
+  if (typeof window !== 'undefined') {
+    const canonical = canonicalBrowserOrigin();
+    if (canonical) {
+      return urlsFromOrigin(canonical);
+    }
+    return urlsFromOrigin(window.location.origin);
+  }
+
   return PRODUCTION_URLS;
 }
 
-// Función específica para obtener la URL del callback de Strava
 export function getStravaCallbackUrl(): string {
   return getUrls().STRAVA_CALLBACK;
 }
 
-// Función para obtener la URL principal
 export function getMainAppUrl(): string {
   return getUrls().MAIN_APP;
 }
 
-// Función para obtener la URL base de la API
 export function getApiBaseUrl(): string {
   return getUrls().API_BASE;
 }

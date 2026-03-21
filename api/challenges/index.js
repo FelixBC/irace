@@ -1,3 +1,5 @@
+import { normalizeSports } from '../lib/normalizeSports.js';
+
 export default async function handler(req, res) {
   console.log('🏆 === CHALLENGES API START ===');
   
@@ -16,11 +18,18 @@ export default async function handler(req, res) {
       // Join challenge functionality
       console.log('🏃‍♂️ Processing JOIN challenge request...');
       
-      const { challengeId, userId } = req.body;
+      const { challengeId, userId, challengeDataConsentAccepted, challengeDataConsentVersion } = req.body;
 
       if (!challengeId || !userId) {
         console.log('❌ Missing required fields');
         return res.status(400).json({ error: 'Challenge ID and User ID are required' });
+      }
+
+      if (!challengeDataConsentAccepted || challengeDataConsentVersion !== '1') {
+        return res.status(400).json({
+          error:
+            'You must agree that aggregated challenge stats may be shown to other participants in this challenge.',
+        });
       }
 
       console.log('🔗 Joining challenge:', challengeId, 'for user:', userId);
@@ -101,16 +110,17 @@ export default async function handler(req, res) {
           
           await client.query(`
             INSERT INTO "Participation" (
-              "id", "userId", "challengeId", "joinedAt", "status", 
-              "progress", "currentDistance", "createdAt", "updatedAt"
-            ) VALUES ($1, $2, $3, NOW(), $4, $5, $6, NOW(), NOW())
+              "id", "userId", "challengeId", "joinedAt", "status",
+              "progress", "currentDistance", "challengeDataConsentAt", "challengeDataConsentVersion"
+            ) VALUES ($1, $2, $3, NOW(), $4, $5, $6, NOW(), $7)
           `, [
             participationId,
             userId,
             challengeId,
             'ACTIVE',
-            '{}', // Empty progress object
-            0 // Current distance
+            '{}',
+            0,
+            challengeDataConsentVersion || '1',
           ]);
 
           await client.end();
@@ -146,10 +156,17 @@ export default async function handler(req, res) {
     } else if (req.method === 'POST') {
       console.log('🏆 Processing POST request to create challenge...');
       
-      const challengeData = req.body;
-      console.log('🏆 Received challenge data:', challengeData);
+        const challengeData = req.body;
+        console.log('🏆 Received challenge data:', challengeData);
 
-      try {
+        if (!challengeData.creatorParticipantSharingAck) {
+          return res.status(400).json({
+            error:
+              'You must acknowledge that participants in this challenge will see each other\'s challenge progress (aggregated stats for this challenge only).',
+          });
+        }
+
+        try {
         // Disable SSL verification for this request
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         
@@ -175,16 +192,16 @@ export default async function handler(req, res) {
         
         const query = `
           INSERT INTO "Challenge" (
-            "id", "name", "description", "sports", "challengeType", 
-            "goal", "goalUnit", "sportGoals", "duration", 
-            "startDate", "endDate", "isPublic", "inviteCode", 
-            "maxParticipants", "status", "creatorId", "createdAt", "updatedAt"
+            "id", "name", "description", "sports", "challengeType",
+            "goal", "goalUnit", "sportGoals", "duration",
+            "startDate", "endDate", "isPublic", "inviteCode",
+            "maxParticipants", "status", "creatorId", "creatorParticipantSharingAckAt", "createdAt", "updatedAt"
           ) VALUES (
             $1, $2, $3, ARRAY[${sportsArray}]::"Sport"[], $4::"ChallengeType",
-            $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14::"ChallengeStatus", $15, NOW(), NOW()
+            $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14::"ChallengeStatus", $15, NOW(), NOW(), NOW()
           )
         `;
-        
+
         const values = [
           challengeId,
           challengeData.name || 'Test Challenge',
@@ -200,7 +217,7 @@ export default async function handler(req, res) {
           inviteCode,
           challengeData.maxParticipants || 10,
           challengeData.status || 'ACTIVE',
-          challengeData.creatorId || 'user_test'
+          challengeData.creatorId || 'user_test',
         ];
         
         await client.query(query, values);
@@ -331,6 +348,7 @@ export default async function handler(req, res) {
               
               const challengeWithParticipants = {
                 ...challenge,
+                sports: normalizeSports(challenge.sports),
                 participants: participants
               };
               
@@ -381,7 +399,7 @@ export default async function handler(req, res) {
             id: row.id,
             name: row.name,
             description: row.description,
-            sports: row.sports,
+            sports: normalizeSports(row.sports),
             challengeType: row.challengeType,
             goal: row.goal,
             goalUnit: row.goalUnit,

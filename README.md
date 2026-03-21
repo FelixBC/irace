@@ -57,11 +57,23 @@ npm install
 ```
 
 ### 3. Set Up Environment Variables
-Create a `.env.local` file:
+Copy `.env.example` to `.env.local` and fill in values. **Never put `STRAVA_CLIENT_SECRET` in Vite env** — it must only exist on the server (e.g. Vercel).
+
 ```env
 VITE_STRAVA_CLIENT_ID=your_strava_client_id
-VITE_STRAVA_CLIENT_SECRET=your_strava_client_secret
+VITE_SUPPORT_EMAIL=you@yourdomain.com
 ```
+
+Server / Vercel:
+
+```env
+STRAVA_CLIENT_ID=your_strava_client_id
+STRAVA_CLIENT_SECRET=your_strava_client_secret
+DATABASE_URL=postgresql://...
+FRONTEND_URL=https://your-app.vercel.app
+```
+
+Strava OAuth callback URL in the Strava app settings must match your deployed API route, e.g. `https://your-app.vercel.app/api/auth/strava/callback`.
 
 ### 4. Start Development Server
 ```bash
@@ -119,10 +131,11 @@ docker-compose down
 ## 🔧 Configuration
 
 ### Environment Variables
-- `VITE_STRAVA_CLIENT_ID` - Strava OAuth client ID
-- `VITE_STRAVA_CLIENT_SECRET` - Strava OAuth client secret
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Authentication secret
+- `VITE_STRAVA_CLIENT_ID` — public Strava client ID (browser)
+- `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET` — server-only OAuth & token refresh
+- `DATABASE_URL` — PostgreSQL connection string
+- `FRONTEND_URL` — canonical site URL for OAuth redirects after `/api/auth/strava/callback`
+- `VITE_SUPPORT_EMAIL` — shown in Privacy Policy and footer
 
 ### Strava API Limits
 - **Rate Limiting**: 1000 requests per 15 minutes

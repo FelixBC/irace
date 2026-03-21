@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   isConnectedToStrava: boolean;
   connectStrava: () => void;
-  disconnectStrava: () => void;
+  disconnectStrava: () => Promise<void>;
   logout: () => void;
   refreshUserProfile: () => Promise<void>;
   isLoading: boolean;
@@ -230,15 +230,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // The actual connection happens in the callback component
   };
 
-  const disconnectStrava = () => {
-    setUser(null);
-    setStravaTokens(null);
-    localStorage.removeItem('session_token');
-    // Reset rate limiting
-    setLastApiCall(0);
-    setApiCallCount(0);
-    // Redirect to dashboard after disconnect
-    window.location.href = '/';
+  const disconnectStrava = async () => {
+    const sessionToken = localStorage.getItem('session_token');
+    if (!sessionToken) {
+      setStravaTokens(null);
+      setUser(null);
+      return;
+    }
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/strava/disconnect`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to disconnect Strava');
+      }
+      localStorage.removeItem('strava_tokens');
+      const sessionRes = await fetch(SESSION, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
+      if (sessionRes.ok) {
+        const data = await sessionRes.json();
+        setUser(data.user);
+        setStravaTokens(data.stravaTokens ?? null);
+      } else {
+        setStravaTokens(null);
+        setUser((prev) => (prev ? { ...prev, stravaTokens: undefined } : null));
+      }
+      setLastApiCall(0);
+      setApiCallCount(0);
+    } catch (e) {
+      console.error('disconnectStrava:', e);
+      throw e;
+    }
   };
 
   const logout = () => {

@@ -1,4 +1,5 @@
-const { Pool } = require('pg');
+import { Pool } from 'pg';
+import { normalizeSports } from '../../lib/normalizeSports.js';
 
 // Disable SSL verification for Vercel
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
       id: challenge.id,
       name: challenge.name,
       description: challenge.description || '',
-      sports: challenge.sports || [],
+      sports: normalizeSports(challenge.sports),
       challengeType: challenge.challengeType,
       goal: challenge.goal,
       goalUnit: challenge.goalUnit,

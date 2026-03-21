@@ -1,3 +1,5 @@
+import { normalizeSports } from '../lib/normalizeSports.js';
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -63,6 +65,7 @@ export default async function handler(req, res) {
     // Combine and format the results
     const createdChallenges = createdChallengesResult.rows.map(challenge => ({
       ...challenge,
+      sports: normalizeSports(challenge.sports),
       startDate: new Date(challenge.startDate).toISOString(),
       endDate: new Date(challenge.endDate).toISOString(),
       createdAt: new Date(challenge.createdAt).toISOString(),
@@ -74,6 +77,7 @@ export default async function handler(req, res) {
 
     const joinedChallenges = joinedChallengesResult.rows.map(challenge => ({
       ...challenge,
+      sports: normalizeSports(challenge.sports),
       startDate: new Date(challenge.startDate).toISOString(),
       endDate: new Date(challenge.endDate).toISOString(),
       createdAt: new Date(challenge.createdAt).toISOString(),

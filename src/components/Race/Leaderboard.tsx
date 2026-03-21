@@ -36,10 +36,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
       animate={{ opacity: 1, x: 0 }}
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
         <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
         Leaderboard
       </h3>
+      <p className="text-xs text-gray-500 mb-6">
+        Progress shown only to participants in this challenge, per your consent when joining.
+      </p>
 
       <div className="space-y-6">
         {raceTracks.map((track) => (

@@ -1,41 +1,40 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { Sport } from '../../types';
-
-// Utility function to format duration
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}h`;
-  }
-  return `${minutes}m`;
-};
-
-import { 
-  Trophy, 
-  Activity, 
-  Settings, 
-  Calendar, 
-  Target, 
-  TrendingUp, 
+import {
+  Trophy,
+  Activity,
+  Settings,
+  Calendar,
+  Target,
+  TrendingUp,
   Award,
   Edit3,
   Camera,
   Bell,
   Shield,
   LogOut,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Sport } from '../../types';
+import { getStravaAuthUrl } from '../../services/stravaService';
+
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}h`;
+  }
+  return `${minutes}m`;
+}
 
 const Profile: React.FC = () => {
-  const { user, logout, isConnectedToStrava } = useAuth();
+  const { user, logout, isConnectedToStrava, disconnectStrava } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const [stravaActionError, setStravaActionError] = useState<string | null>(null);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // Real data will be loaded from database and Strava
   const [stats, setStats] = useState({
@@ -512,28 +511,74 @@ const Profile: React.FC = () => {
                   </div>
 
                   {/* Strava Connection */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <ExternalLink className="w-5 h-5 text-gray-600" />
-                      <div>
-                        <p className="font-medium text-gray-900">Strava Connection</p>
-                        <p className="text-sm text-gray-600">
-                          {isConnectedToStrava ? 'Connected' : 'Not connected'}
-                        </p>
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <ExternalLink className="w-5 h-5 text-gray-600 shrink-0" />
+                        <div>
+                          <p className="font-medium text-gray-900">Strava Connection</p>
+                          <p className="text-sm text-gray-600">
+                            {isConnectedToStrava ? 'Connected' : 'Not connected'}
+                          </p>
+                        </div>
                       </div>
+                      {isConnectedToStrava ? (
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                            disabled={isDisconnecting}
+                            onClick={async () => {
+                              setStravaActionError(null);
+                              setIsDisconnecting(true);
+                              try {
+                                await disconnectStrava();
+                              } catch {
+                                setStravaActionError('Disconnect failed. You can also remove the app in Strava settings.');
+                              } finally {
+                                setIsDisconnecting(false);
+                              }
+                            }}
+                            className="px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+                          >
+                            {isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                          onClick={() => {
+                            setStravaActionError(null);
+                            window.location.href = getStravaAuthUrl('/profile');
+                          }}
+                          className="px-4 py-2 rounded-lg font-medium bg-orange-500 hover:bg-orange-600 text-white shrink-0"
+                        >
+                          Connect Strava
+                        </motion.button>
+                      )}
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        isConnectedToStrava 
-                          ? 'bg-green-500 hover:bg-green-600 text-white' 
-                          : 'bg-orange-500 hover:bg-orange-600 text-white'
-                      }`}
-                    >
-                      {isConnectedToStrava ? 'Manage' : 'Connect'}
-                    </motion.button>
+                    {isConnectedToStrava && (
+                      <p className="text-xs text-gray-500">
+                        Manage or revoke access in{' '}
+                        <a
+                          href="https://www.strava.com/settings/apps"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-orange-600 underline"
+                        >
+                          Strava → Settings → My Apps
+                        </a>
+                        .
+                      </p>
+                    )}
+                    {stravaActionError && (
+                      <p className="text-sm text-red-600">{stravaActionError}</p>
+                    )}
                   </div>
 
                   {/* Logout */}

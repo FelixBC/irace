@@ -6,15 +6,15 @@ import { useAuth } from '../../context/AuthContext';
 import { getStravaAuthUrl } from '../../services/stravaService';
 
 const Header: React.FC = () => {
-  const { user, logout, isConnectedToStrava, connectStrava } = useAuth();
+  const { user, logout, isConnectedToStrava, disconnectStrava } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleStravaLogin = () => {
     if (!isConnectedToStrava) {
-      const authUrl = getStravaAuthUrl();
-      window.location.href = authUrl;
+      const returnTo = `${location.pathname}${location.search}` || '/';
+      window.location.href = getStravaAuthUrl(returnTo);
     }
   };
 
@@ -144,10 +144,14 @@ const Header: React.FC = () => {
                         className="hover:bg-gray-100 transition-colors duration-200"
                       >
                         <button
-                          onClick={() => {
-                            // This will disconnect from Strava but keep the user logged in
-                            // You might want to implement a proper disconnect function
+                          type="button"
+                          onClick={async () => {
                             setIsUserMenuOpen(false);
+                            try {
+                              await disconnectStrava();
+                            } catch {
+                              window.alert('Could not disconnect Strava. Try again or remove the app in Strava settings.');
+                            }
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700"
                         >

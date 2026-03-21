@@ -1,71 +1,22 @@
-// Prisma client will be imported dynamically to avoid prepared statement issues
+function getFrontendBaseUrl() {
+  const explicit = process.env.FRONTEND_URL;
+  if (explicit) return explicit.replace(/\/$/, '');
+  // Stable production hostname (Vercel injects); prefer over VERCEL_URL (unique per deployment)
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (production) return production.replace(/\/$/, '');
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`.replace(/\/$/, '');
+  return 'http://localhost:5173';
+}
+
+/** Must match the redirect_uri sent to Strava on /oauth/authorize (RFC 6749). */
+function getStravaRedirectUri() {
+  return `${getFrontendBaseUrl()}/api/auth/strava/callback`;
+}
 
 export default async function handler(req, res) {
   console.log('🚀 Strava callback handler started');
   console.log('📋 Request method:', req.method);
   console.log('📋 Request query:', req.query);
-
-  // Simple test endpoint
-  if (req.query.test === 'true') {
-    console.log('🧪 Test endpoint requested');
-    return res.status(200).json({
-      success: true,
-      message: 'Test endpoint working',
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  // Clean database endpoint
-  if (req.query.clean === 'true') {
-    console.log('🧹 Database cleanup requested');
-    
-    try {
-      const { createFreshPrismaClient } = await import('../lib/prisma.js');
-      const prisma = createFreshPrismaClient();
-      await prisma.$connect();
-      
-      // Clean all data in correct order (based on Supabase tables)
-      try {
-        await prisma.challengeParticipant.deleteMany();
-        console.log('✅ ChallengeParticipants deleted');
-      } catch (e) { console.log('⚠️ ChallengeParticipant table not found'); }
-      
-      try {
-        await prisma.activity.deleteMany();
-        console.log('✅ Activities deleted');
-      } catch (e) { console.log('⚠️ Activity table not found'); }
-      
-      try {
-        await prisma.challenge.deleteMany();
-        console.log('✅ Challenges deleted');
-      } catch (e) { console.log('⚠️ Challenge table not found'); }
-      
-      try {
-        await prisma.session.deleteMany();
-        console.log('✅ Sessions deleted');
-      } catch (e) { console.log('⚠️ Session table not found'); }
-      
-      try {
-        await prisma.user.deleteMany();
-        console.log('✅ Users deleted');
-      } catch (e) { console.log('⚠️ User table not found'); }
-      
-      await prisma.$disconnect();
-      
-      return res.status(200).json({
-        success: true,
-        message: 'Database cleaned successfully',
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('❌ Database cleanup failed:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Database cleanup failed',
-        details: error.message
-      });
-    }
-  }
 
   if (req.method !== 'GET') {
     console.log('❌ Method not allowed:', req.method);
@@ -93,7 +44,8 @@ export default async function handler(req, res) {
         client_id: process.env.STRAVA_CLIENT_ID,
         client_secret: process.env.STRAVA_CLIENT_SECRET,
         code: code,
-        grant_type: 'authorization_code'
+        grant_type: 'authorization_code',
+        redirect_uri: getStravaRedirectUri(),
       })
     });
 
@@ -192,8 +144,7 @@ export default async function handler(req, res) {
       await client.end();
       console.log('✅ Database disconnected successfully');
 
-      // Redirect to frontend with session token
-      const frontendUrl = 'https://project-felixbcs-projects.vercel.app';
+      const frontendUrl = getFrontendBaseUrl();
       
       // Check if there's a state parameter for return URL
       const state = req.query.state;

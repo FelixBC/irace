@@ -10,6 +10,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.vercel.pull
 
 # Build outputs
 dist/
@@ -104,3 +105,4 @@ jspm_packages/
 # Docker
 docker-compose.override.yml
 .vercel
+.env*.local

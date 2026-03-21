@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ChallengeService } from '../../services/challengeService';
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../../types';
 import { getMainAppUrl } from '../../config/urls';
+import { CHALLENGE_DATA_CONSENT_VERSION } from '../../config/consent';
 
 const JoinChallenge: React.FC = () => {
   const { inviteCode } = useParams<{ inviteCode: string }>();
@@ -16,6 +17,7 @@ const JoinChallenge: React.FC = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [peerSharingConsent, setPeerSharingConsent] = useState(false);
 
   useEffect(() => {
     if (inviteCode) {
@@ -23,17 +25,6 @@ const JoinChallenge: React.FC = () => {
     }
   }, [inviteCode]);
 
-  // Auto-join challenge when user becomes authenticated after Strava OAuth
-  useEffect(() => {
-    if (user && challenge && !success && !isJoining) {
-      // Check if user is already in the challenge
-      const isAlreadyJoined = challenge.participants?.some(p => p.user.id === user.id);
-      if (!isAlreadyJoined) {
-        console.log('🔄 User authenticated, auto-joining challenge...');
-        handleJoinChallenge();
-      }
-    }
-  }, [user, challenge, success, isJoining]);
 
   const loadChallenge = async () => {
     try {
@@ -56,7 +47,10 @@ const JoinChallenge: React.FC = () => {
       setError(null);
 
       // Join the challenge
-      await ChallengeService.joinChallenge(challenge.id, user.id);
+      await ChallengeService.joinChallenge(challenge.id, user.id, {
+        challengeDataConsentAccepted: true,
+        challengeDataConsentVersion: CHALLENGE_DATA_CONSENT_VERSION,
+      });
       
       setSuccess(true);
       
@@ -73,14 +67,24 @@ const JoinChallenge: React.FC = () => {
     }
   };
 
+  const isAlreadyJoined =
+    !!user &&
+    !!challenge &&
+    Array.isArray(challenge.participants) &&
+    challenge.participants.some((p) => p.user?.id === user.id);
+
   const handleJoinWithStrava = () => {
-    // Redirect to Strava OAuth using the correct callback URL
-    const clientId = '169822';
+    if (!peerSharingConsent) return;
+    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
+    if (!clientId) {
+      setError('App misconfiguration: VITE_STRAVA_CLIENT_ID is missing.');
+      return;
+    }
     const redirectUri = `${getMainAppUrl()}/api/auth/strava/callback`;
     const scope = 'read,activity:read_all';
     const state = encodeURIComponent(`/join/${inviteCode}`);
-    
-    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
+
+    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`;
     window.location.href = stravaAuthUrl;
   };
 
@@ -154,7 +158,12 @@ const JoinChallenge: React.FC = () => {
             <div className="mt-4 flex items-center justify-center space-x-4 text-orange-100">
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-1" />
-                <span>{challenge.participants || 0} participants</span>
+                <span>
+                  {Array.isArray(challenge.participants)
+                    ? challenge.participants.length
+                    : challenge.participants ?? 0}{' '}
+                  participants
+                </span>
               </div>
               <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-1" />
@@ -219,24 +228,57 @@ const JoinChallenge: React.FC = () => {
                 </div>
               )}
               
-              <div className="mb-6 p-6 bg-orange-50 rounded-lg border border-orange-200">
-                <h3 className="text-lg font-semibold text-orange-900 mb-2">
+              <div className="mb-6 p-6 bg-orange-50 rounded-lg border border-orange-200 text-left">
+                <h3 className="text-lg font-semibold text-orange-900 mb-2 text-center">
                   Join This Challenge
                 </h3>
-                <p className="text-orange-700 mb-4">
-                  Click below to connect with Strava and automatically join this challenge. Your activities will be tracked and synced.
+                <p className="text-orange-800 mb-4 text-sm leading-relaxed">
+                  StravaRacer is a <strong>community challenge</strong> app: other people in this invite-only
+                  challenge can see <strong>aggregated progress</strong> (e.g. distances toward the challenge goal)
+                  and the display name/avatar you use here — not your full private Strava feed. We only use Strava
+                  data as needed to run this challenge.
                 </p>
-                <button
-                  onClick={handleJoinWithStrava}
-                  disabled={isJoining}
-                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-                >
-                  {isJoining ? 'Joining...' : 'Join Challenge with Strava'}
-                </button>
+                <label className="flex items-start gap-3 cursor-pointer mb-4">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    checked={peerSharingConsent}
+                    onChange={(e) => setPeerSharingConsent(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-800">
+                    I agree that my challenge stats may be shown to other participants in this challenge, as
+                    described in the{' '}
+                    <a href="/privacy" className="text-orange-600 underline">
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
+                </label>
+                <div className="text-center space-y-3">
+                  {user && isConnectedToStrava ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleJoinChallenge()}
+                      disabled={isJoining || !peerSharingConsent || !!isAlreadyJoined}
+                      className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                    >
+                      {isJoining ? 'Joining...' : isAlreadyJoined ? 'Already in this challenge' : 'Join challenge'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleJoinWithStrava}
+                      disabled={isJoining || !peerSharingConsent}
+                      className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                    >
+                      {isJoining ? 'Joining...' : 'Connect Strava & join'}
+                    </button>
+                  )}
+                </div>
               </div>
-              
-              <p className="text-sm text-gray-600">
-                By joining, you agree to share your Strava activities for this challenge.
+
+              <p className="text-xs text-gray-500 text-center">
+                Strava® is a registered trademark. This app uses the Strava API but is not endorsed by Strava.
               </p>
             </div>
           </div>

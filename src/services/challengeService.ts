@@ -9,6 +9,8 @@ export interface CreateChallengeData {
   duration: number;
   isPrivate: boolean;
   goals: Record<Sport, number>;
+  /** Required for Strava API compliance — creator acknowledges peer visibility in this challenge. */
+  creatorParticipantSharingAck: boolean;
 }
 
 export class ChallengeService {
@@ -43,6 +45,7 @@ export class ChallengeService {
           maxParticipants: 10,
           status: ChallengeStatus.ACTIVE,
           creatorId,
+          creatorParticipantSharingAck: data.creatorParticipantSharingAck,
         }),
       });
 
@@ -109,14 +112,23 @@ export class ChallengeService {
     }
   }
 
-  static async joinChallenge(challengeId: string, userId: string): Promise<void> {
+  static async joinChallenge(
+    challengeId: string,
+    userId: string,
+    consent: { challengeDataConsentAccepted: boolean; challengeDataConsentVersion: string }
+  ): Promise<void> {
     try {
       const response = await fetch(`${CHALLENGES}?action=join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ challengeId, userId }),
+        body: JSON.stringify({
+          challengeId,
+          userId,
+          challengeDataConsentAccepted: consent.challengeDataConsentAccepted,
+          challengeDataConsentVersion: consent.challengeDataConsentVersion,
+        }),
       });
 
       if (!response.ok) {

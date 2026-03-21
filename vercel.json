@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "prisma generate && vite build",
   "rewrites": [
     {
       "source": "/api/(.*)",

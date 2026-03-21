@@ -16,12 +16,6 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  const handleClearTokens = () => {
-    localStorage.removeItem('strava_tokens');
-    localStorage.removeItem('current_user');
-    window.location.reload();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       {/* Hero Section */}
@@ -79,15 +73,17 @@ const LandingPage: React.FC = () => {
                 <Play className="w-5 h-5" />
                 <span>View Demo Race</span>
               </Link>
-              
-              {/* Debug button - remove in production */}
-              <button
-                onClick={handleClearTokens}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-              >
-                Clear Tokens (Debug)
-              </button>
             </motion.div>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              <a href="/privacy" className="text-orange-600 hover:underline">
+                Privacy
+              </a>
+              {' · '}
+              <a href="/terms" className="text-orange-600 hover:underline">
+                Terms
+              </a>
+            </p>
 
             {/* Sport Animation */}
             <motion.div

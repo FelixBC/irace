@@ -3,8 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled (Neon / Vercel serverless); migrations use direct connection below
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Account {
@@ -77,6 +79,8 @@ model Challenge {
   updatedAt       DateTime        @updatedAt
   creatorId       String
   sportGoals      Json?
+  /// Creator acknowledged that invitees will see peer progress in this challenge (community app model).
+  creatorParticipantSharingAckAt DateTime?
   activities      Activity[]
   creator         User            @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants    Participation[]
@@ -99,6 +103,9 @@ model Participation {
   lastActivityDate DateTime?
   currentDistance  Float               @default(0)
   lastActivityAt   DateTime?
+  /// When set, this user agreed that aggregated challenge stats may be shown to other participants in this challenge (Strava API / community-challenge model).
+  challengeDataConsentAt      DateTime?
+  challengeDataConsentVersion String              @default("1")
   challenge        Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -9,7 +9,7 @@ const TermsOfService: React.FC = () => {
         <p className="text-sm text-gray-500 mb-8">Last updated: March 2026</p>
 
         <p className="text-gray-700 mb-4">
-          By using StravaRacer, you agree to these terms and to comply with{' '}
+          By using iRace, you agree to these terms and to comply with{' '}
           <a href="https://www.strava.com/legal/api" className="text-orange-600 underline" target="_blank" rel="noreferrer">
             Strava&apos;s API Agreement
           </a>
@@ -26,7 +26,7 @@ const TermsOfService: React.FC = () => {
 
         <h2 className="text-xl font-semibold mt-8 mb-2">The service</h2>
         <p className="text-gray-700 mb-4">
-          StravaRacer provides invite-only group challenges. It is not affiliated with or endorsed by Strava. Strava®
+          iRace provides invite-only group challenges. It is not affiliated with or endorsed by Strava. Strava®
           is a registered trademark of Strava, Inc.
         </p>
 

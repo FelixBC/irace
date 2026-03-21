@@ -1,6 +1,6 @@
-# 🏃‍♂️ Race Your Friends - Strava Fitness Challenge App
+# 🏃‍♂️ iRace — invite-only fitness challenges (Strava)
 
-A real-time fitness competition app that lets you race against friends using actual Strava data. Think TypeRacer meets fitness challenges!
+**iRace** is a real-time fitness challenge app: race friends using your Strava activities. Think TypeRacer meets group goals. Not affiliated with Strava.
 
 ## ✨ Features
 

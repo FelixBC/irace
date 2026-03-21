@@ -11,7 +11,7 @@ const PrivacyPolicy: React.FC = () => {
         <p className="text-sm text-gray-500 mb-8">Last updated: March 2026</p>
 
         <p className="text-gray-700 mb-4">
-          StravaRacer (“we”, “our”) helps small groups run invite-only fitness challenges. This policy describes
+          iRace (“we”, “our”) helps small groups run invite-only fitness challenges. This policy describes
           how we handle personal data when you use our app with the{' '}
           <a href="https://www.strava.com/legal/api" className="text-orange-600 underline" target="_blank" rel="noreferrer">
             Strava API
@@ -46,7 +46,7 @@ const PrivacyPolicy: React.FC = () => {
 
         <h2 className="text-xl font-semibold mt-8 mb-2">Sharing with other users</h2>
         <p className="text-gray-700 mb-4">
-          StravaRacer is built as a <strong>community challenge</strong> product. When you join or create a challenge,
+          iRace is built as a <strong>community challenge</strong> product. When you join or create a challenge,
           you agree that <strong>aggregated challenge progress</strong> and a display name/avatar you use in the app
           may be visible to <strong>other participants in that same challenge</strong>. We do not show your full
           private Strava feed to other users.

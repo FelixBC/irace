@@ -2,9 +2,11 @@
 
 Use this when you fill out Strava’s application / review form and when you email reviewers. Copy sections below verbatim or trim to field limits.
 
-**Live app (production):** https://stravaracer.vercel.app  
+**Product display name:** **iRace** (do not use “Strava” in the app name; Strava’s branding guidelines require a distinct product name.)
 
-**Legal pages:** https://stravaracer.vercel.app/privacy · https://stravaracer.vercel.app/terms  
+**Live app (production):** https://iraceapp.vercel.app  
+
+**Legal pages:** https://iraceapp.vercel.app/privacy · https://iraceapp.vercel.app/terms  
 
 **Support email:** set in `VITE_SUPPORT_EMAIL` (shown in footer and Privacy).
 
@@ -18,13 +20,13 @@ Use this when you fill out Strava’s application / review form and when you ema
 
 ## 2. What the application does (longer description)
 
-> StravaRacer lets a small group run private challenges (running, cycling, etc.) with a shared goal (e.g. distance over a date range). Users sign in with Strava OAuth. We read each athlete’s activities to compute progress toward the challenge goals they joined. Other users only see **aggregated challenge stats** (e.g. distance toward the goal) and **display name / avatar** inside **that** challenge—not their full Strava feed or global rankings across all Strava users.
+> **iRace** lets a small group run private challenges (running, cycling, etc.) with a shared goal (e.g. distance over a date range). Users sign in with Strava OAuth. We read each athlete’s activities to compute progress toward the challenge goals they joined. Other users only see **aggregated challenge stats** (e.g. distance toward the goal) and **display name / avatar** inside **that** challenge—not their full Strava feed or global rankings across all Strava users.
 
 ---
 
 ## 3. How this differs from Strava’s own product
 
-> We do not replicate Strava’s global social graph, segment leaderboards, or Strava’s official Challenges product at platform scale. We are a **narrow, opt-in tool** for **invite-only groups** who already know each other, similar to a private spreadsheet with automatic Strava sync—implemented with explicit consent before joining or creating a challenge.
+> **iRace** does not replicate Strava’s global social graph, segment leaderboards, or Strava’s official Challenges product at platform scale. We are a **narrow, opt-in tool** for **invite-only groups** who already know each other, similar to a private spreadsheet with automatic Strava sync—implemented with explicit consent before joining or creating a challenge.
 
 ---
 
@@ -54,13 +56,13 @@ If Strava asks you to justify further, add:
 
 ## 6. Reviewer test plan (paste into “notes” or email)
 
-1. Open https://stravaracer.vercel.app/privacy and confirm contact email and Strava attribution.
+1. Open https://iraceapp.vercel.app/privacy and confirm contact email and Strava attribution.
 2. Click **Connect Strava** (or complete OAuth from join/create flow); authorize the app.
 3. **Create challenge:** acknowledge participant visibility; create a challenge and note the invite link.
 4. **Second account or incognito:** open invite link, accept consent, join challenge.
 5. Open **race** view; confirm you see challenge UI and (if connected) progress behavior.
 6. **Profile → Settings → Disconnect:** confirm Strava shows the app removed or tokens cleared; confirm app shows “Not connected” after refresh.
-7. Optional: confirm `Authorization Callback Domain` in your Strava app settings is `stravaracer.vercel.app` (hostname only).
+7. Optional: confirm `Authorization Callback Domain` in your Strava app settings is `iraceapp.vercel.app` (hostname only).
 
 ---
 
@@ -83,6 +85,7 @@ If Strava asks you to justify further, add:
 ## 9. Internal cross-links
 
 - Implementation checklist: [`STRAVA_REVIEW.md`](./STRAVA_REVIEW.md)  
-- DB / Vercel: [`DATABASE_VERCEL.md`](./DATABASE_VERCEL.md)
+- DB / Vercel: [`DATABASE_VERCEL.md`](./DATABASE_VERCEL.md)  
+- Canonical production hostname: [`VERCEL_DOMAIN.md`](./VERCEL_DOMAIN.md)
 
 This document is guidance only, not legal advice.

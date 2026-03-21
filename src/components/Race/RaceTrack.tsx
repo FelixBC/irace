@@ -8,6 +8,10 @@ interface RaceTrackProps {
   timeRemaining: string;
 }
 
+const avatarUrl = (name?: string | null, image?: string | null, size = 32) =>
+  image ||
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&size=${size}&background=f97316&color=fff`;
+
 const sportConfig = {
   RUNNING: {
     icon: '🏃‍♂️',
@@ -162,7 +166,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
               {/* Avatar */}
               <div className="relative">
                 <img
-                  src={participant.user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.user.name || 'User')}&size=32&background=random`}
+                  src={avatarUrl(participant.user.name, participant.user.image, 32)}
                   alt={participant.user.name}
                   className="w-8 h-8 rounded-full border-2 border-white shadow-lg object-cover"
                 />
@@ -204,7 +208,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
         {track.participants.map((participant) => (
           <div key={participant.user.id} className="flex items-center space-x-3">
             <img
-              src={participant.user.image}
+              src={avatarUrl(participant.user.name, participant.user.image, 40)}
               alt={participant.user.name}
               className="w-4 h-4 rounded-full object-cover"
             />

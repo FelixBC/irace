@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     await client.connect();
 
     const userId = `user_${stravaId}`;
-    const emailSafe = email || `strava_${stravaId}@users.stravaracer.invalid`;
+    const emailSafe = email || `strava_${stravaId}@users.irace.invalid`;
     const imageSafe = image || 'https://via.placeholder.com/150';
     const tokenJson = JSON.stringify({
       access_token: stravaTokens.access_token,

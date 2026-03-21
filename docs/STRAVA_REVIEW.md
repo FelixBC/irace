@@ -2,6 +2,8 @@
 
 Use this when you re-apply or reply to Strava’s developer review.
 
+**App name in the UI:** **iRace** — avoids putting “Strava” in the product name (Strava trademark / developer guidelines).
+
 **Ready-to-paste copy for the submission form, scope justification, and a reviewer test plan:** see [`STRAVA_SUBMISSION.md`](./STRAVA_SUBMISSION.md).
 
 ## Product positioning (use in the submission form)
@@ -34,28 +36,28 @@ Use this when you re-apply or reply to Strava’s developer review.
 In [My API Application](https://www.strava.com/settings/api) (Strava → Settings → My API Application):
 
 1. **Authorization Callback Domain** — enter **only the hostname**, no `https://` and no path.  
-   For production: `stravaracer.vercel.app`  
+   For production: `iraceapp.vercel.app`  
    (This allows any path on that host, including `/api/auth/strava/callback`.)
-2. **Website** — set to your public site URL, e.g. `https://stravaracer.vercel.app`.
+2. **Website** — set to your public site URL, e.g. `https://iraceapp.vercel.app`.
 
 `localhost` and `127.0.0.1` are always allowed for local dev; production **must** use the domain above (or Strava returns `redirect_uri` **invalid** on authorize).
 
 **Verify before testing in the browser** (replace `CLIENT_ID` with your app id):
 
 ```bash
-curl -sS "https://www.strava.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=https%3A%2F%2Fstravaracer.vercel.app%2Fapi%2Fauth%2Fstrava%2Fcallback&response_type=code&scope=read%2Cactivity%3Aread_all"
+curl -sS "https://www.strava.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=https%3A%2F%2Firaceapp.vercel.app%2Fapi%2Fauth%2Fstrava%2Fcallback&response_type=code&scope=read%2Cactivity%3Aread_all"
 ```
 
 - **Success:** HTTP `302` (redirect to Strava login).
 - **Failure:** HTTP `400` JSON with `"field":"redirect_uri","code":"invalid"` → fix the callback domain in Strava, then save.
 
-Also ensure **`FRONTEND_URL`** and **`VITE_APP_ORIGIN`** on Vercel both resolve to `https://stravaracer.vercel.app` so the same `redirect_uri` is used in the browser and in the server token exchange.
+Also ensure **`FRONTEND_URL`** and **`VITE_APP_ORIGIN`** on Vercel both resolve to `https://iraceapp.vercel.app` so the same `redirect_uri` is used in the browser and in the server token exchange.
 
 ## Before you resubmit
 
 - [ ] Run DB migration (`challengeDataConsentAt`, `creatorParticipantSharingAckAt`).
 - [ ] Set all env vars on Vercel; redeploy.
-- [ ] Strava **Authorization Callback Domain** = `stravaracer.vercel.app` (hostname only); verify with the curl above.
+- [ ] Strava **Authorization Callback Domain** = `iraceapp.vercel.app` (hostname only); verify with the curl above.
 - [ ] Screenshot: join flow with consent + Privacy link; challenge create acknowledgement; Privacy page.
 - [ ] Optional: email `developers@strava.com` to confirm your use case fits a **community / group** app if you want written clarity.
 

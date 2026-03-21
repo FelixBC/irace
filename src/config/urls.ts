@@ -3,7 +3,7 @@
  * Always use one canonical production URL (set `VITE_APP_ORIGIN` on Vercel) so OAuth works even when
  * users land on a deployment-specific `*.vercel.app` hostname.
  */
-const PRODUCTION_ORIGIN = 'https://stravaracer.vercel.app';
+const PRODUCTION_ORIGIN = 'https://iraceapp.vercel.app';
 
 export const PRODUCTION_URLS = {
   MAIN_APP: PRODUCTION_ORIGIN,

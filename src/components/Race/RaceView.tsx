@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Share2, Copy, QrCode, RefreshCw, Users, Clock, AlertCircle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
@@ -13,6 +13,152 @@ import { useAuth } from '../../context/AuthContext';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { getMainAppUrl } from '../../config/urls';
 
+const DEMO_ROUTE_ID = 'demo-challenge';
+
+function isDemoChallengeId(id: string | undefined): boolean {
+  return id != null && id.toLowerCase() === DEMO_ROUTE_ID;
+}
+
+function demoAvatar(name: string): string {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&background=f97316&color=fff`;
+}
+
+/** Sample feed for /race/demo-challenge (sidebar looks empty without Strava). */
+function getDemoActivityFeed(): { activities: Activity[]; users: User[] } {
+  const now = Date.now();
+  const users: User[] = [
+    { id: 'demo-user-1', name: 'Alex', image: demoAvatar('Alex') },
+    { id: 'demo-user-2', name: 'Jordan', image: demoAvatar('Jordan') },
+    { id: 'demo-user-3', name: 'Sam', image: demoAvatar('Sam') },
+  ];
+  const activities: Activity[] = [
+    {
+      id: 'demo-act-1',
+      stravaActivityId: '0',
+      userId: 'demo-user-1',
+      sport: Sport.RUNNING,
+      distance: 8.2,
+      duration: 2400,
+      unit: 'km',
+      date: new Date(now - 36 * 3600000),
+      synced: false,
+    },
+    {
+      id: 'demo-act-2',
+      stravaActivityId: '0',
+      userId: 'demo-user-2',
+      sport: Sport.RUNNING,
+      distance: 5.1,
+      duration: 1800,
+      unit: 'km',
+      date: new Date(now - 50 * 3600000),
+      synced: false,
+    },
+    {
+      id: 'demo-act-3',
+      stravaActivityId: '0',
+      userId: 'demo-user-3',
+      sport: Sport.CYCLING,
+      distance: 22.4,
+      duration: 3600,
+      unit: 'km',
+      date: new Date(now - 28 * 3600000),
+      synced: false,
+    },
+    {
+      id: 'demo-act-4',
+      stravaActivityId: '0',
+      userId: 'demo-user-1',
+      sport: Sport.CYCLING,
+      distance: 14.0,
+      duration: 2700,
+      unit: 'km',
+      date: new Date(now - 60 * 3600000),
+      synced: false,
+    },
+  ];
+  return { activities, users };
+}
+
+function buildDemoChallenge(): Challenge {
+  const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  return {
+    id: DEMO_ROUTE_ID,
+    name: 'Demo Challenge',
+    description: 'A demo fitness challenge with running and cycling',
+    sports: [Sport.RUNNING, Sport.CYCLING],
+    challengeType: ChallengeType.DISTANCE,
+    goal: 50,
+    goalUnit: 'km',
+    sportGoals: {
+      [Sport.RUNNING]: 30,
+      [Sport.CYCLING]: 20,
+      [Sport.SWIMMING]: 0,
+      [Sport.WALKING]: 0,
+      [Sport.HIKING]: 0,
+      [Sport.YOGA]: 0,
+      [Sport.WEIGHT_TRAINING]: 0,
+    },
+    duration: '30 days',
+    startDate: new Date(),
+    endDate: end,
+    isPublic: true,
+    inviteCode: 'DEMO123',
+    maxParticipants: 10,
+    status: ChallengeStatus.ACTIVE,
+    creatorId: 'demo-user',
+  };
+}
+
+function buildDemoRaceTracks(ch: Challenge): RaceTrackType[] {
+  const demoBySport: Partial<Record<Sport, { name: string; id: string; km: number }[]>> = {
+    [Sport.RUNNING]: [
+      { id: 'demo-user-1', name: 'Alex', km: 18 },
+      { id: 'demo-user-2', name: 'Jordan', km: 12 },
+      { id: 'demo-user-3', name: 'Sam', km: 22 },
+    ],
+    [Sport.CYCLING]: [
+      { id: 'demo-user-1', name: 'Alex', km: 14 },
+      { id: 'demo-user-2', name: 'Jordan', km: 9 },
+      { id: 'demo-user-3', name: 'Sam', km: 17 },
+    ],
+  };
+
+  return ch.sports.map((sport) => {
+    const goalKm = ch.sportGoals?.[sport] || ch.goal || 1;
+    const rows = demoBySport[sport] || [
+      { id: 'demo-a', name: 'Runner A', km: 10 },
+      { id: 'demo-b', name: 'Runner B', km: 6 },
+      { id: 'demo-c', name: 'Runner C', km: 12 },
+    ];
+    const demoParticipants: ParticipantProgress[] = rows.map((row) => {
+      const pct = Math.min(100, (row.km / goalKm) * 100);
+      return {
+        user: {
+          id: row.id,
+          name: row.name,
+          image: demoAvatar(row.name),
+        },
+        distance: row.km,
+        percentage: pct,
+        dailyProgress: [],
+      };
+    });
+
+    const leaderRow = demoParticipants.reduce(
+      (best, cur) => (cur.distance > best.distance ? cur : best),
+      demoParticipants[0]
+    );
+
+    return {
+      sport,
+      participants: demoParticipants,
+      maxDistance: goalKm,
+      leader: leaderRow?.user ?? null,
+    };
+  });
+}
+
 const RaceView: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
   const { user, stravaTokens, isConnectedToStrava } = useAuth();
@@ -25,83 +171,52 @@ const RaceView: React.FC = () => {
   const [stravaError, setStravaError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  useEffect(() => {
-    // Check if this is a demo challenge or a real challenge
+  // Demo: apply challenge + tracks before paint. Real routes: clear stale demo state here too (same frame).
+  useLayoutEffect(() => {
     if (!challengeId) return;
-    
-    if (challengeId === 'demo-challenge') {
-      // Demo challenge - create a demo challenge for landing page
-      const demoChallenge: Challenge = {
-        id: 'demo-challenge',
-        name: 'Demo Challenge',
-        description: 'This is a demo challenge for the landing page',
-        sports: [Sport.RUNNING, Sport.CYCLING],
-        challengeType: ChallengeType.DISTANCE,
-        goal: 100,
-        goalUnit: 'km',
-        sportGoals: { 
-          [Sport.RUNNING]: 42, 
-          [Sport.CYCLING]: 100,
-          [Sport.SWIMMING]: 0,
-          [Sport.WALKING]: 0,
-          [Sport.HIKING]: 0,
-          [Sport.YOGA]: 0,
-          [Sport.WEIGHT_TRAINING]: 0
-        },
-        duration: '1_MONTH',
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        isPublic: true,
-        inviteCode: 'DEMO123',
-        maxParticipants: 10,
-        status: ChallengeStatus.ACTIVE,
-        creatorId: 'demo-user'
-      };
-      setChallenge(demoChallenge);
-      generateDemoRaceTracks();
+    setStravaData(null);
+    if (isDemoChallengeId(challengeId)) {
+      const dc = buildDemoChallenge();
+      setChallenge(dc);
+      setRaceTracks(buildDemoRaceTracks(dc));
     } else {
-      // Real challenge - fetch from ChallengeService
-      const loadRealChallenge = async () => {
-        try {
-          const realChallenge = await ChallengeService.getChallenge(challengeId);
-          console.log('🏆 Loading real challenge:', challengeId, realChallenge);
-          
-          if (realChallenge) {
-            setChallenge(realChallenge);
-            // If user is connected to Strava, load real data
-            if (isConnectedToStrava && stravaTokens) {
-              console.log('🏃‍♂️ User connected to Strava, loading real data...');
-              loadStravaData();
-            } else {
-              console.log('🔗 User not connected to Strava, showing empty tracks');
-              // Show empty tracks but still generate the structure
-              generateEmptyRaceTracks(realChallenge);
-            }
-          } else {
-            // Challenge not found - could show error or redirect
-            console.error('Challenge not found:', challengeId);
-            setChallenge(null);
-          }
-        } catch (error) {
-          console.error('Error loading challenge:', error);
+      setChallenge(null);
+      setRaceTracks([]);
+    }
+  }, [challengeId]);
+
+  useEffect(() => {
+    if (!challengeId || isDemoChallengeId(challengeId)) return;
+    const loadRealChallenge = async () => {
+      try {
+        const realChallenge = await ChallengeService.getChallenge(challengeId);
+        if (realChallenge) {
+          setChallenge(realChallenge);
+        } else {
+          console.error('Challenge not found:', challengeId);
           setChallenge(null);
         }
-      };
-      
-      loadRealChallenge();
-    }
-  }, [challengeId]); // Remove isConnectedToStrava and stravaTokens to prevent infinite loops
-
-  // Load real Strava data when user is connected (but only once)
-  useEffect(() => {
-    if (isConnectedToStrava && stravaTokens && challenge && challengeId !== 'demo-challenge') {
-      // Only load Strava data if we have a real challenge and haven't loaded it yet
-      if (!stravaData) {
-        console.log('🔄 Auto-loading Strava data for real challenge...');
-        loadStravaData();
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+        setChallenge(null);
       }
+    };
+    void loadRealChallenge();
+  }, [challengeId]);
+
+  // After real challenge loads (or Strava / user becomes available), sync tracks — avoids stale
+  // `isConnectedToStrava` inside the async fetch callback so a just-created challenge shows data without refresh.
+  useEffect(() => {
+    if (!challengeId || isDemoChallengeId(challengeId) || !challenge) return;
+
+    if (isConnectedToStrava && stravaTokens) {
+      console.log('🔄 Loading Strava data for challenge', challenge.inviteCode);
+      void loadStravaData();
+    } else {
+      console.log('🔗 No Strava session — empty tracks for challenge', challenge.inviteCode);
+      generateEmptyRaceTracks(challenge);
     }
-  }, [isConnectedToStrava, stravaTokens, challenge, stravaData]);
+  }, [challengeId, challenge, isConnectedToStrava, stravaTokens, user?.id]);
 
   const loadStravaData = async () => {
     if (!stravaTokens) return;
@@ -133,43 +248,10 @@ const RaceView: React.FC = () => {
     }
   };
 
-  const generateDemoRaceTracks = () => {
-    if (!challenge) return;
-
-    const tracks: RaceTrackType[] = challenge.sports.map((sport) => {
-      // For demo, create sample participant progress
-      const demoParticipants: ParticipantProgress[] = [
-        {
-          user: { id: 'demo-user-1', name: 'Demo Runner 1' },
-          distance: 25,
-          percentage: 60,
-          dailyProgress: []
-        },
-        {
-          user: { id: 'demo-user-2', name: 'Demo Runner 2' },
-          distance: 18,
-          percentage: 43,
-          dailyProgress: []
-        },
-        {
-          user: { id: 'demo-user-3', name: 'Demo Runner 3' },
-          distance: 32,
-          percentage: 76,
-          dailyProgress: []
-        }
-      ];
-      
-      return {
-        sport,
-        participants: demoParticipants,
-        maxDistance: challenge.sportGoals?.[sport] || 100,
-        leader: demoParticipants.reduce((leader, current) => 
-          current.distance > (leader?.distance || 0) ? current : leader
-        , null as ParticipantProgress | null)?.user || null
-      };
-    });
-
-    setRaceTracks(tracks);
+  const generateDemoRaceTracks = (source?: Challenge | null) => {
+    const ch = source ?? challenge;
+    if (!ch) return;
+    setRaceTracks(buildDemoRaceTracks(ch));
   };
 
   const generateEmptyRaceTracks = (challenge: Challenge) => {
@@ -281,7 +363,7 @@ const RaceView: React.FC = () => {
 
   const getTotalParticipants = (): number => {
     // For demo challenge, show the demo users count
-    if (challengeId === 'demo-challenge') {
+    if (isDemoChallengeId(challengeId)) {
       return 3; // Demo has 3 participants
     }
     
@@ -301,20 +383,17 @@ const RaceView: React.FC = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    
-    if (challengeId === 'demo-challenge') {
-      // Demo mode - refresh demo data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      generateDemoRaceTracks();
+
+    if (isDemoChallengeId(challengeId)) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      generateDemoRaceTracks(challenge);
     } else if (isConnectedToStrava && stravaTokens) {
-      // Real challenge mode - refresh Strava data
       await loadStravaData();
-    } else {
-      // Fallback - refresh demo data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      generateDemoRaceTracks();
+    } else if (challenge) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      generateEmptyRaceTracks(challenge);
     }
-    
+
     setIsRefreshing(false);
   };
 
@@ -340,6 +419,12 @@ const RaceView: React.FC = () => {
     }
   };
 
+  const isDemo = isDemoChallengeId(challengeId);
+  const demoFeed = useMemo(() => (isDemo ? getDemoActivityFeed() : null), [isDemo]);
+  const feedActivities = demoFeed?.activities ?? stravaData?.activities ?? [];
+  const feedUsers =
+    demoFeed?.users ?? (stravaData?.user ? [stravaData.user] : []);
+
   if (!challenge) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -363,7 +448,7 @@ const RaceView: React.FC = () => {
               className="text-4xl font-bold mb-4"
             >
               {challenge.name}
-              {challengeId === 'demo-challenge' && (
+              {isDemo && (
                 <span className="block text-lg font-normal text-orange-200 mt-2">
                   🎮 Demo Challenge
                 </span>
@@ -386,7 +471,7 @@ const RaceView: React.FC = () => {
           </div>
 
           {/* Challenge Mode Status */}
-          {challengeId === 'demo-challenge' ? (
+          {isDemo ? (
             <div className="flex justify-center mt-6">
               <div className="bg-orange-500/20 backdrop-blur rounded-lg px-4 py-2">
                 <div className="flex items-center space-x-2 text-orange-200">
@@ -503,13 +588,13 @@ const RaceView: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             <Leaderboard raceTracks={raceTracks} />
-            <ActivityFeed 
-              activities={stravaData?.activities || []} 
-              users={stravaData?.user ? [stravaData.user] : []} 
-            />
-            
+            <ActivityFeed activities={feedActivities} users={feedUsers} />
+
             {/* Show message when no Strava data */}
-            {isConnectedToStrava && !stravaData && !isLoadingStrava && (
+            {isConnectedToStrava &&
+              !stravaData &&
+              !isLoadingStrava &&
+              !isDemo && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
                 <p className="text-gray-500 mb-2">No Strava activities found</p>
                 <p className="text-sm text-gray-400">Your recent activities will appear here</p>

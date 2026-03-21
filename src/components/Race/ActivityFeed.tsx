@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity as ActivityIcon, Clock, Heart, TrendingUp, Flame } from 'lucide-react';
 import { Activity, User, Sport } from '../../types';
@@ -33,6 +33,11 @@ const sportConfig = {
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+
+  const activityKey = useMemo(() => activities.map((a) => a.id).join(','), [activities]);
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [activityKey]);
 
   // Sort activities by date and group by user
   const sortedActivities = activities
@@ -146,7 +151,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                   className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <img
-                    src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=40&background=random`}
+                    src={
+                      user.image ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=80&background=f97316&color=fff`
+                    }
                     alt={user.name}
                     className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                   />

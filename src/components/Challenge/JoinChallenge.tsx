@@ -233,7 +233,7 @@ const JoinChallenge: React.FC = () => {
                   Join This Challenge
                 </h3>
                 <p className="text-orange-800 mb-4 text-sm leading-relaxed">
-                  StravaRacer is a <strong>community challenge</strong> app: other people in this invite-only
+                  iRace is a <strong>community challenge</strong> app: other people in this invite-only
                   challenge can see <strong>aggregated progress</strong> (e.g. distances toward the challenge goal)
                   and the display name/avatar you use here — not your full private Strava feed. We only use Strava
                   data as needed to run this challenge.

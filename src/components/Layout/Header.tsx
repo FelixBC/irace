@@ -36,7 +36,7 @@ const Header: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              StravaRacer
+              iRace
             </motion.span>
           </Link>
 

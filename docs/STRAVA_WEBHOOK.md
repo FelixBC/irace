@@ -4,6 +4,8 @@ Strava can **POST** events to your app when an activity is created/updated/delet
 
 Official docs: [Webhooks](https://developers.strava.com/docs/webhooks/).
 
+**Implementation note:** Other open-source apps (Express, Ruby, GCP, etc.) only illustrate the **same Strava contract** (GET challenge echo, POST events, `push_subscriptions` registration). This repo’s code is **written for our stack**: Vercel Node serverless routes under `api/`, shared modules in `server/`, `pg` + existing `User` / `Activity` / `Participation` tables, and `@vercel/functions` `waitUntil` for async work—not a port of any sample repo.
+
 ## What we implemented
 
 | Piece | Purpose |

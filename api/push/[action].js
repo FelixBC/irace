@@ -1,6 +1,6 @@
-import { createFreshPrismaClient } from '../lib/prisma.js';
-import { resolveBearerUserId } from '../lib/authSession.js';
-import { ensureWebPushConfigured, webpush } from '../lib/webPushConfig.js';
+import { createFreshPrismaClient } from '../../server/prisma.js';
+import { resolveBearerUserId } from '../../server/authSession.js';
+import { ensureWebPushConfigured, webpush } from '../../server/webPushConfig.js';
 
 /**
  * POST /api/push/:action — subscribe | unsubscribe | test (one serverless fn for Hobby plan limits).

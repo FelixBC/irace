@@ -2,7 +2,7 @@ import {
   handleStravaSync,
   handleStravaDisconnect,
   handleStravaRefreshToken,
-} from '../lib/stravaHandlers.js';
+} from '../../server/stravaHandlers.js';
 
 /**
  * /api/strava/:action — sync | disconnect | refresh-token (single fn for Vercel Hobby limits).

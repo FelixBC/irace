@@ -1,4 +1,4 @@
-import { normalizeSports } from '../lib/normalizeSports.js';
+import { normalizeSports } from '../../server/normalizeSports.js';
 
 export default async function handler(req, res) {
   console.log('🏆 === CHALLENGES API START ===');

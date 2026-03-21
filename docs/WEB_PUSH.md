@@ -47,6 +47,7 @@ These are implemented as a **single** serverless function (`api/push/[action].js
 - `public/sw.js` — service worker (push + notification click).
 - `src/lib/pushNotifications.ts` — register SW, subscribe/unsubscribe, test helper.
 - `api/push/[action].js` — server route; uses `web-push` and Prisma `PushSubscription`.
+- `server/` — shared Node modules for API routes (**not** under `api/`, so Vercel does not create extra serverless endpoints for each file).
 
 ## Next steps (not implemented here)
 

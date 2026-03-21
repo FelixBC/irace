@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { normalizeSports } from '../../lib/normalizeSports.js';
+import { normalizeSports } from '../../../../server/normalizeSports.js';
 
 // Disable SSL verification for Vercel
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';

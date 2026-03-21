@@ -32,6 +32,8 @@ Shipping push is a **product** decision, not a Strava API requirement. Many team
 
 HTTPS is required for push except on `localhost`.
 
+**Vercel SPA routing:** the catch-all rewrite to `index.html` must **not** match `/api/*` (see `vercel.json`), otherwise API routes (including push) return the HTML shell or `405` instead of JSON.
+
 ## API
 
 | Method | Path | Auth | Purpose |

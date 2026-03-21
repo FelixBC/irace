@@ -8,11 +8,13 @@
     "build": "prisma generate && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-vapid": "node scripts/generate-vapid-keys.mjs"
+    "generate-vapid": "node scripts/generate-vapid-keys.mjs",
+    "strava:webhook-register": "node scripts/register-strava-webhook.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
     "@prisma/client": "^6.14.0",
+    "@vercel/functions": "^3.4.3",
     "@vercel/node": "^5.3.12",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.9",

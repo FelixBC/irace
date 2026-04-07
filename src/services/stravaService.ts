@@ -45,7 +45,7 @@ export class StravaService {
     this.expiresAt = t.expires_at;
   }
 
-  private async makeAuthenticatedRequest(endpoint: string): Promise<any> {
+  private async makeAuthenticatedRequest<T>(endpoint: string): Promise<T> {
     if (Date.now() >= this.expiresAt * 1000) {
       await this.refreshAccessToken();
     }
@@ -60,24 +60,28 @@ export class StravaService {
       throw new Error(`Strava API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   async getAthlete(): Promise<StravaAthlete> {
-    return this.makeAuthenticatedRequest('/athlete');
+    return this.makeAuthenticatedRequest<StravaAthlete>('/athlete');
   }
 
   async getActivities(page: number = 1, perPage: number = 30): Promise<StravaActivity[]> {
-    return this.makeAuthenticatedRequest(`/athlete/activities?page=${page}&per_page=${perPage}`);
+    return this.makeAuthenticatedRequest<StravaActivity[]>(
+      `/athlete/activities?page=${page}&per_page=${perPage}`
+    );
   }
 
   async getActivity(id: number): Promise<StravaActivity> {
-    return this.makeAuthenticatedRequest(`/activities/${id}`);
+    return this.makeAuthenticatedRequest<StravaActivity>(`/activities/${id}`);
   }
 
   async getActivitiesAfterDate(after: Date): Promise<StravaActivity[]> {
     const afterTimestamp = Math.floor(after.getTime() / 1000);
-    return this.makeAuthenticatedRequest(`/athlete/activities?after=${afterTimestamp}`);
+    return this.makeAuthenticatedRequest<StravaActivity[]>(
+      `/athlete/activities?after=${afterTimestamp}`
+    );
   }
 
   getUpdatedTokens(): StravaTokens {

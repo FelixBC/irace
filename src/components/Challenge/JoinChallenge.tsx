@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Trophy, Clock, Target, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ChallengeService } from '../../services/challengeService';
-import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../../types';
+import { Challenge } from '../../types';
 import { getMainAppUrl } from '../../config/urls';
 import { CHALLENGE_DATA_CONSENT_VERSION } from '../../config/consent';
 import { createLogger } from '../../lib/logger';
@@ -22,17 +22,11 @@ const JoinChallenge: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [peerSharingConsent, setPeerSharingConsent] = useState(false);
 
-  useEffect(() => {
-    if (inviteCode) {
-      loadChallenge();
-    }
-  }, [inviteCode]);
-
-
-  const loadChallenge = async () => {
+  const loadChallenge = useCallback(async () => {
+    if (!inviteCode) return;
     try {
       setIsLoading(true);
-      const challengeData = await ChallengeService.getChallenge(inviteCode!);
+      const challengeData = await ChallengeService.getChallenge(inviteCode);
       setChallenge(challengeData);
       if (!challengeData) {
         setError('Challenge not found or expired');
@@ -45,7 +39,11 @@ const JoinChallenge: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inviteCode]);
+
+  useEffect(() => {
+    void loadChallenge();
+  }, [loadChallenge]);
 
   const handleJoinChallenge = async () => {
     if (!user || !challenge) return;

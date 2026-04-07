@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Calendar, 
-  Users, 
-  Trophy, 
-  Clock, 
+import {
+  Search,
+  Plus,
+  Calendar,
+  Users,
+  Trophy,
+  Clock,
   Target,
   MoreVertical,
   Edit3,
@@ -16,8 +15,7 @@ import {
   Eye,
   TrendingUp,
   Award,
-  MapPin,
-  Star
+  Star,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Sport, ChallengeStatus, ChallengeType } from '../../types';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award } from 'lucide-react';
-import { RaceTrack, Sport } from '../../types';
+import { RaceTrack } from '../../types';
 
 interface LeaderboardProps {
   raceTracks: RaceTrack[];

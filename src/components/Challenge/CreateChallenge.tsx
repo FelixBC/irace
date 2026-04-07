@@ -4,7 +4,6 @@ import { Plus, Copy, QrCode, Share2, ArrowRight, AlertCircle, CheckCircle } from
 import { useNavigate } from 'react-router-dom';
 import { Sport, Challenge } from '../../types';
 import { ChallengeService, CreateChallengeData } from '../../services/challengeService';
-import { addDays } from 'date-fns';
 import QRCode from 'react-qr-code';
 import GoalSettingModal from './GoalSettingModal';
 import { useAuth } from '../../context/AuthContext';

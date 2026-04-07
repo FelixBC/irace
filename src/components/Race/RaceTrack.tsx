@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Activity } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { RaceTrack as RaceTrackType, Sport } from '../../types';
 
 interface RaceTrackProps {
@@ -66,7 +66,6 @@ const sportConfig = {
 
 const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
   const config = sportConfig[track.sport];
-  const trackWidth = 100; // percentage
 
   return (
     <div className={`${config.bgColor} ${config.borderColor} border rounded-xl p-6 mb-6`}>

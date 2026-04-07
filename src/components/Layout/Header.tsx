@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Menu, X, Trophy, Plus, LogOut, Home } from 'lucide-react';
+import { Menu, X, Trophy, Plus, LogOut, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getStravaAuthUrl } from '../../services/stravaService';
 

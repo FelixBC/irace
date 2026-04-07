@@ -20,6 +20,8 @@
 - **Database**: PostgreSQL + Prisma (ready for production)
 - **Docker**: Containerized development environment
 
+**Architecture** (data layer, logging, doc index): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## 🏗️ Project Structure
 
 ```

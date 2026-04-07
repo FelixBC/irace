@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity as ActivityIcon, Clock, Heart, TrendingUp, Flame } from 'lucide-react';
+import { Activity as ActivityIcon, Clock, Heart, TrendingUp } from 'lucide-react';
 import { Activity, User, Sport } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 

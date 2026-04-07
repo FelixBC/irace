@@ -6,7 +6,6 @@ import {
   Activity,
   Settings,
   Calendar,
-  Target,
   TrendingUp,
   Award,
   Edit3,
@@ -26,15 +25,6 @@ import {
   disableWebPush,
   sendTestPushNotification,
 } from '../../lib/pushNotifications';
-
-function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}h`;
-  }
-  return `${minutes}m`;
-}
 
 const Profile: React.FC = () => {
   const { user, logout, isConnectedToStrava, disconnectStrava } = useAuth();
@@ -76,7 +66,7 @@ const Profile: React.FC = () => {
   }, [activeTab]);
 
   // Real data will be loaded from database and Strava
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     totalChallenges: 0,
     completedChallenges: 0,
     currentChallenges: 0,
@@ -84,24 +74,28 @@ const Profile: React.FC = () => {
     totalActivities: 0,
     longestStreak: 0,
     achievements: 0,
-    rank: 'Bronze'
+    rank: 'Bronze',
   });
 
-  const [recentChallenges, setRecentChallenges] = useState<Array<{
-    id: string;
-    name: string;
-    status: string;
-    progress: number;
-    sport: Sport;
-  }>>([]);
+  const [recentChallenges] = useState<
+    Array<{
+      id: string;
+      name: string;
+      status: string;
+      progress: number;
+      sport: Sport;
+    }>
+  >([]);
 
-  const [recentActivities, setRecentActivities] = useState<Array<{
-    id: string;
-    sport: Sport;
-    distance: number;
-    date: string;
-    unit: string;
-  }>>([]);
+  const [recentActivities] = useState<
+    Array<{
+      id: string;
+      sport: Sport;
+      distance: number;
+      date: string;
+      unit: string;
+    }>
+  >([]);
 
   const sportConfig = {
     RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50' },

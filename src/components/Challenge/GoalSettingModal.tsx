@@ -16,6 +16,61 @@ interface SportGoal {
   unit: string;
 }
 
+const SPORT_GOAL_CONFIG: Record<
+  Sport,
+  { icon: string; name: string; unit: string; presets: number[]; defaultGoal: number }
+> = {
+  [Sport.RUNNING]: {
+    icon: '🏃‍♂️',
+    name: 'Running',
+    unit: 'km',
+    presets: [5, 10, 21, 42, 50, 100],
+    defaultGoal: 21,
+  },
+  [Sport.CYCLING]: {
+    icon: '🚴‍♂️',
+    name: 'Cycling',
+    unit: 'km',
+    presets: [25, 50, 100, 150, 200, 300],
+    defaultGoal: 100,
+  },
+  [Sport.SWIMMING]: {
+    icon: '🏊‍♂️',
+    name: 'Swimming',
+    unit: 'km',
+    presets: [1, 2, 5, 10, 20, 50],
+    defaultGoal: 5,
+  },
+  [Sport.WALKING]: {
+    icon: '🚶‍♂️',
+    name: 'Walking',
+    unit: 'km',
+    presets: [5, 10, 20, 30, 50, 100],
+    defaultGoal: 20,
+  },
+  [Sport.HIKING]: {
+    icon: '🥾',
+    name: 'Hiking',
+    unit: 'km',
+    presets: [5, 10, 20, 30, 50, 100],
+    defaultGoal: 20,
+  },
+  [Sport.WEIGHT_TRAINING]: {
+    icon: '💪',
+    name: 'Strength Training',
+    unit: 'sessions',
+    presets: [5, 10, 15, 20, 30, 50],
+    defaultGoal: 15,
+  },
+  [Sport.YOGA]: {
+    icon: '🧘‍♀️',
+    name: 'Yoga',
+    unit: 'sessions',
+    presets: [5, 10, 15, 20, 30, 50],
+    defaultGoal: 10,
+  },
+};
+
 const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
   isOpen,
   onClose,
@@ -24,59 +79,12 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
 }) => {
   const [sportGoals, setSportGoals] = useState<SportGoal[]>([]);
 
-  // Sport-specific presets and units
-  const sportConfig = {
-    [Sport.RUNNING]: {
-      icon: '🏃‍♂️',
-      name: 'Running',
-      unit: 'km',
-      presets: [5, 10, 21, 42, 50, 100],
-      defaultGoal: 21,
-    },
-    [Sport.CYCLING]: {
-      icon: '🚴‍♂️',
-      name: 'Cycling',
-      unit: 'km',
-      presets: [25, 50, 100, 150, 200, 300],
-      defaultGoal: 100,
-    },
-    [Sport.SWIMMING]: {
-      icon: '🏊‍♂️',
-      name: 'Swimming',
-      unit: 'km',
-      presets: [1, 2, 5, 10, 20, 50],
-      defaultGoal: 5,
-    },
-    [Sport.WALKING]: {
-      icon: '🚶‍♂️',
-      name: 'Walking',
-      unit: 'km',
-      presets: [5, 10, 20, 30, 50, 100],
-      defaultGoal: 20,
-    },
-    [Sport.HIKING]: {
-      icon: '🥾',
-      name: 'Hiking',
-      unit: 'km',
-      presets: [5, 10, 20, 30, 50, 100],
-      defaultGoal: 20,
-    },
-    [Sport.WEIGHT_TRAINING]: {
-      icon: '💪',
-      name: 'Strength Training',
-      unit: 'sessions',
-      presets: [5, 10, 15, 20, 30, 50],
-      defaultGoal: 15,
-    },
-  };
-
-  // Initialize sport goals when modal opens
   React.useEffect(() => {
     if (isOpen && sports.length > 0) {
-      const initialGoals: SportGoal[] = sports.map(sport => ({
+      const initialGoals: SportGoal[] = sports.map((sport) => ({
         sport,
-        goal: sportConfig[sport].defaultGoal,
-        unit: sportConfig[sport].unit,
+        goal: SPORT_GOAL_CONFIG[sport].defaultGoal,
+        unit: SPORT_GOAL_CONFIG[sport].unit,
       }));
       setSportGoals(initialGoals);
     }
@@ -133,9 +141,9 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
           <div className="px-6 pb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
-                <span className="text-2xl">{sportGoals[0]?.sport ? sportConfig[sportGoals[0].sport].icon : '🎯'}</span>
+                <span className="text-2xl">{sportGoals[0]?.sport ? SPORT_GOAL_CONFIG[sportGoals[0].sport].icon : '🎯'}</span>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Set {sportGoals[0]?.sport ? sportConfig[sportGoals[0].sport].name : 'Sport'} Goal
+                  Set {sportGoals[0]?.sport ? SPORT_GOAL_CONFIG[sportGoals[0].sport].name : 'Sport'} Goal
                 </h2>
               </div>
               <button
@@ -153,7 +161,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
           {/* Content */}
           <div className="px-6 pb-6 max-h-[60vh] overflow-y-auto">
             {sportGoals.map((sportGoal) => {
-              const config = sportConfig[sportGoal.sport];
+              const config = SPORT_GOAL_CONFIG[sportGoal.sport];
               return (
                 <motion.div
                   key={sportGoal.sport}

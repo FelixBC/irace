@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
 import { ChallengeService } from '../../services/challengeService';
@@ -24,7 +24,7 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
 
   const canSend = useMemo(() => !!localStorage.getItem('session_token'), []);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const data = await ChallengeService.getTaunts(inviteCode, 20);
       setPresets(Array.isArray(data.presets) ? data.presets : []);
@@ -35,11 +35,11 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inviteCode]);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       await load();
       if (cancelled) return;
     })();
@@ -50,7 +50,7 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [inviteCode, pollMs]);
+  }, [inviteCode, pollMs, load]);
 
   const send = async (presetKey: string) => {
     try {

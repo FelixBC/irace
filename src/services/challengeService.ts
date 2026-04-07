@@ -16,6 +16,37 @@ export interface CreateChallengeData {
   creatorParticipantSharingAck: boolean;
 }
 
+export type ChallengeProgressPayload = Record<string, unknown>;
+
+/** Response shape from POST /api/strava/sync (server may extend fields). */
+export interface StravaSyncApiResponse {
+  success?: boolean;
+  message?: string;
+  syncedCount?: number;
+  totalDistance?: number;
+  activities?: number;
+  error?: string;
+  [key: string]: unknown;
+}
+
+export interface TauntPresetDto {
+  key: string;
+  text: string;
+}
+
+export interface TauntMessageDto {
+  id: string;
+  presetKey: string;
+  text: string;
+  createdAt: string;
+  user: { id: string; name: string | null; image: string | null };
+}
+
+export interface TauntsListResponse {
+  presets: TauntPresetDto[];
+  taunts: TauntMessageDto[];
+}
+
 export class ChallengeService {
   static async createChallenge(data: CreateChallengeData, creatorId: string): Promise<Challenge> {
     const shareCode = this.generateShareCode();
@@ -147,7 +178,11 @@ export class ChallengeService {
     }
   }
 
-  static async updateChallengeProgress(challengeId: string, userId: string, progress: any): Promise<void> {
+  static async updateChallengeProgress(
+    challengeId: string,
+    userId: string,
+    progress: ChallengeProgressPayload
+  ): Promise<void> {
     try {
               const response = await fetch(UPDATE_PROGRESS(challengeId), {
         method: 'PUT',
@@ -166,7 +201,7 @@ export class ChallengeService {
     }
   }
 
-  static async syncStravaActivities(userId: string, challengeId?: string): Promise<any> {
+  static async syncStravaActivities(userId: string, challengeId?: string): Promise<StravaSyncApiResponse> {
     try {
       const response = await fetch(`${getApiBaseUrl()}/strava/sync`, {
         method: 'POST',
@@ -188,7 +223,7 @@ export class ChallengeService {
     }
   }
 
-  static async getTaunts(inviteCode: string, limit = 20): Promise<any> {
+  static async getTaunts(inviteCode: string, limit = 20): Promise<TauntsListResponse> {
     const url = `${getApiBaseUrl()}/challenges/taunts?id=${encodeURIComponent(inviteCode)}&limit=${limit}`;
     const res = await fetch(url);
     if (!res.ok) {

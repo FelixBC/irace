@@ -7,7 +7,7 @@ import { getStravaAuthUrl } from '../../services/stravaService';
 import SportAnimation from './SportAnimation';
 
 const LandingPage: React.FC = () => {
-  const { user, isConnectedToStrava } = useAuth();
+  const { isConnectedToStrava } = useAuth();
 
   const handleStravaConnect = () => {
     if (!isConnectedToStrava) {

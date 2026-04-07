@@ -2,8 +2,38 @@ import { prisma } from '@/lib/db';
 import { StravaAPI } from '@/lib/strava';
 import { isActivityRelevant } from '@/lib/strava';
 import { createLogger } from '@/lib/logger';
+import type { Challenge, Participation, User } from '@prisma/client';
+import type { StravaActivity } from '@/types';
 
 const log = createLogger('strava-sync');
+
+/** Map Strava activity `type` to our Prisma `Sport` enum name. */
+function stravaActivityTypeToSportName(type: string): string {
+  const map: Record<string, string> = {
+    Run: 'RUNNING',
+    Ride: 'CYCLING',
+    Swim: 'SWIMMING',
+    Walk: 'WALKING',
+    Hike: 'HIKING',
+    Yoga: 'YOGA',
+    WeightTraining: 'WEIGHT_TRAINING',
+    VirtualRide: 'CYCLING',
+    EBikeRide: 'CYCLING',
+  };
+  return map[type] || 'RUNNING';
+}
+
+export type ChallengeProgressSnapshot = {
+  challenge: Challenge & { participants: (Participation & { user: User })[] };
+  participants: Array<{
+    id: string;
+    userId: string;
+    user: User;
+    progress: number;
+    rank: number;
+    lastActivityDate: Date | null;
+  }>;
+};
 
 export interface StravaSyncResult {
   success: boolean;
@@ -155,50 +185,39 @@ export class StravaSyncService {
    * Calculate progress for a specific challenge based on activities
    */
   private static async calculateChallengeProgress(
-    activities: any[],
-    challenge: any,
+    activities: StravaActivity[],
+    challenge: Pick<Challenge, 'startDate' | 'endDate' | 'challengeType' | 'goal' | 'sports'>,
     participationDate: Date
   ): Promise<number> {
     let totalProgress = 0;
 
-    // Filter activities that are relevant to this challenge
-    const relevantActivities = activities.filter(activity => {
-      // Only count activities after joining the challenge
+    const relevantActivities = activities.filter((activity) => {
       const activityDate = new Date(activity.start_date);
-      if (activityDate < participationDate) {
-        return false;
-      }
+      if (activityDate < participationDate) return false;
+      if (activityDate < new Date(challenge.startDate)) return false;
+      if (activityDate > new Date(challenge.endDate)) return false;
+      if (!isActivityRelevant(activity)) return false;
 
-      // Only count activities within challenge date range
-      if (challenge.startDate && activityDate < new Date(challenge.startDate)) {
-        return false;
-      }
-      if (challenge.endDate && activityDate > new Date(challenge.endDate)) {
-        return false;
-      }
-
-      // Check if activity is relevant to the challenge sport
-      return isActivityRelevant(activity, challenge.sport);
+      const sportName = stravaActivityTypeToSportName(activity.type);
+      return (challenge.sports as readonly string[]).includes(sportName);
     });
 
-    // Calculate total distance/progress based on challenge type
     for (const activity of relevantActivities) {
       switch (challenge.challengeType) {
-        case 'DISTANCE':
-          // Convert to kilometers
+        case 'DISTANCE': {
           const distanceKm = activity.distance / 1000;
           totalProgress += distanceKm;
           break;
-        
-        case 'TIME':
-          // Convert to hours
+        }
+        case 'TIME': {
           const timeHours = activity.moving_time / 3600;
           totalProgress += timeHours;
           break;
-        
+        }
         case 'FREQUENCY':
-          // Count activities
           totalProgress += 1;
+          break;
+        default:
           break;
       }
     }
@@ -209,7 +228,7 @@ export class StravaSyncService {
   /**
    * Get real-time progress for a challenge
    */
-  static async getChallengeProgress(challengeId: string): Promise<any> {
+  static async getChallengeProgress(challengeId: string): Promise<ChallengeProgressSnapshot> {
     const challenge = await prisma.challenge.findUnique({
       where: { id: challengeId },
       include: {

@@ -3,7 +3,8 @@ export interface StravaTokens {
   refresh_token: string;
   expires_at: number;
   expires_in: number;
-  athlete?: any;
+  /** Strava athlete payload; shape varies by scope — narrow at call sites if needed. */
+  athlete?: Record<string, unknown>;
 }
 
 export interface StravaActivity {
@@ -84,7 +85,7 @@ export interface Participation {
   avatarId?: string;
   joinedAt: Date;
   status: ParticipationStatus;
-  progress?: any;
+  progress?: Record<string, unknown> | null;
   lastActivityDate?: Date;
   currentDistance: number;
   lastActivityAt?: Date;
@@ -146,7 +147,8 @@ export interface ParticipantProgress {
   user: User;
   distance: number;
   percentage: number;
-  dailyProgress: any[];
+  /** Per-day buckets for charts — structure defined by UI consumer. */
+  dailyProgress: unknown[];
 }
 
 export interface RaceTrack {

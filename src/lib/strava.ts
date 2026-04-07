@@ -61,7 +61,7 @@ export class StravaAPI {
     this.expiresAt = data.expires_at;
   }
 
-  private async makeAuthenticatedRequest(endpoint: string): Promise<any> {
+  private async makeAuthenticatedRequest<T>(endpoint: string): Promise<T> {
     // Check if token needs refresh
     if (Date.now() >= this.expiresAt * 1000) {
       await this.refreshAccessToken();
@@ -77,30 +77,34 @@ export class StravaAPI {
       throw new Error(`Strava API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   async getAthlete(): Promise<StravaAthlete> {
-    return this.makeAuthenticatedRequest('/athlete');
+    return this.makeAuthenticatedRequest<StravaAthlete>('/athlete');
   }
 
   async getActivities(page: number = 1, perPage: number = 30): Promise<StravaActivity[]> {
-    return this.makeAuthenticatedRequest(`/athlete/activities?page=${page}&per_page=${perPage}`);
+    return this.makeAuthenticatedRequest<StravaActivity[]>(
+      `/athlete/activities?page=${page}&per_page=${perPage}`
+    );
   }
 
   async getActivity(id: number): Promise<StravaActivity> {
-    return this.makeAuthenticatedRequest(`/activities/${id}`);
+    return this.makeAuthenticatedRequest<StravaActivity>(`/activities/${id}`);
   }
 
   async getActivitiesAfterDate(after: Date): Promise<StravaActivity[]> {
     const afterTimestamp = Math.floor(after.getTime() / 1000);
-    return this.makeAuthenticatedRequest(`/athlete/activities?after=${afterTimestamp}`);
+    return this.makeAuthenticatedRequest<StravaActivity[]>(
+      `/athlete/activities?after=${afterTimestamp}`
+    );
   }
 
   async getActivitiesByDateRange(startDate: Date, endDate: Date): Promise<StravaActivity[]> {
     const afterTimestamp = Math.floor(startDate.getTime() / 1000);
     const beforeTimestamp = Math.floor(endDate.getTime() / 1000);
-    return this.makeAuthenticatedRequest(
+    return this.makeAuthenticatedRequest<StravaActivity[]>(
       `/athlete/activities?after=${afterTimestamp}&before=${beforeTimestamp}`
     );
   }

@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { createLogger } from './server/logger.js';
 
 const prisma = new PrismaClient();
@@ -22,8 +20,8 @@ async function setupDatabase() {
           email: 'test@example.com',
           image: 'https://via.placeholder.com/150',
           stravaId: null,
-          stravaTokens: null
-        }
+          stravaTokens: Prisma.DbNull,
+        },
       });
       creatorId = testUser.id;
       log.info('test user created', creatorId);
@@ -42,14 +40,14 @@ async function setupDatabase() {
           challengeType: 'DISTANCE',
           goal: 100,
           goalUnit: 'km',
-          sportGoals: { 
-            RUNNING: 50, 
+          sportGoals: {
+            RUNNING: 50,
             CYCLING: 50,
             SWIMMING: 0,
             WALKING: 0,
             HIKING: 0,
             YOGA: 0,
-            WEIGHT_TRAINING: 0
+            WEIGHT_TRAINING: 0,
           },
           duration: '1_MONTH',
           startDate: new Date(),
@@ -58,8 +56,8 @@ async function setupDatabase() {
           inviteCode: 'TEST123',
           maxParticipants: 10,
           status: 'ACTIVE',
-          creatorId
-        }
+          creatorId,
+        },
       });
       log.info('test challenge created', testChallenge.id);
     } else {
@@ -75,4 +73,4 @@ async function setupDatabase() {
   }
 }
 
-setupDatabase();
+void setupDatabase();

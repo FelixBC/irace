@@ -2,7 +2,7 @@ import webpush from 'web-push';
 
 let configured = false;
 
-export function ensureWebPushConfigured() {
+export function ensureWebPushConfigured(): void {
   if (configured) return;
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;

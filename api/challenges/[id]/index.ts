@@ -1,10 +1,11 @@
-import { createLogger } from '../../server/logger.js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createLogger } from '../../../server/logger.js';
+import { getQueryString } from '../../../server/vercelQuery.js';
 
 const log = createLogger('challengeById');
 
-export default function handler(req, res) {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -15,12 +16,10 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const { id } = req.query;
+      const id = getQueryString(req, 'id');
       log.debug('GET', id);
 
-      // For now, return mock challenges based on ID
-      // In the future, this would fetch from the database
-      let challenge = null;
+      let challenge: Record<string, unknown> | null = null;
 
       if (id === 'demo-challenge') {
         challenge = {
@@ -45,23 +44,23 @@ export default function handler(req, res) {
             {
               id: 'user_1',
               name: 'Felix Jose',
-              image: 'https://lh3.googleusercontent.com/a/ACg8ocJhdQhIn4JuOOaAD-FxXG-mV6dzX26BjE3b7HufzZWVq6C14R-zSA=s96-c',
+              image:
+                'https://lh3.googleusercontent.com/a/ACg8ocJhdQhIn4JuOOaAD-FxXG-mV6dzX26BjE3b7HufzZWVq6C14R-zSA=s96-c',
               progress: { RUNNING: 15, CYCLING: 10 },
-              totalProgress: 25
+              totalProgress: 25,
             },
             {
               id: 'user_2',
               name: 'Demo User 2',
               image: 'https://via.placeholder.com/32x32',
               progress: { RUNNING: 20, CYCLING: 15 },
-              totalProgress: 35
-            }
-          ]
+              totalProgress: 35,
+            },
+          ],
         };
-      } else if (id.startsWith('challenge_')) {
-        // For newly created challenges, return a basic structure
+      } else if (id?.startsWith('challenge_')) {
         challenge = {
-          id: id,
+          id,
           name: 'New Challenge',
           description: 'A newly created fitness challenge',
           sports: ['RUNNING'],
@@ -78,7 +77,7 @@ export default function handler(req, res) {
           status: 'ACTIVE',
           creatorId: id.split('_')[1] ? 'user_' + id.split('_')[1] : 'user_real',
           createdAt: new Date().toISOString(),
-          participants: []
+          participants: [],
         };
       }
 
@@ -93,10 +92,10 @@ export default function handler(req, res) {
     }
   } catch (error) {
     log.error('handler error', error);
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Challenge API error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

@@ -1,21 +1,27 @@
 # Architecture notes
 
-## Database: Prisma vs `pg`
+## API routes (Vercel)
 
-**You do not need both forever.** The repo currently uses:
+Handlers under **`api/`** are **TypeScript** (`VercelRequest` / `VercelResponse` from `@vercel/node`). Shared helpers live in **`server/`** (mostly JavaScript today). Local API typecheck: `npm run typecheck:api`.
 
-| Layer | Role |
-|--------|------|
-| **Prisma** | Schema, migrations, type-safe queries in newer code paths (`api/challenges/taunts`, `api/push`, `server/prisma.js`, `src/lib/db.ts`, `StravaSyncService`, etc.). |
-| **`pg` (native client)** | Some **legacy Vercel serverless** handlers (`api/challenges/index.js`, OAuth callback, session, Strava sync) that were written when pooled Postgres + serverless had sharp edges with Prisma’s connection model. |
+## Database: Prisma
 
-**Interview-friendly justification:** *“Prisma is our standard for schema and app queries. A few hot paths still use `pg` from an earlier deploy cycle; the plan is to migrate those handlers to Prisma so we have one access layer and simpler connection handling.”*
+The app uses **[Prisma](https://www.prisma.io/)** for the PostgreSQL schema, migrations, and all runtime database access from API routes and server workers.
 
-**North star:** one access pattern (**Prisma**) everywhere; reserve raw SQL only for unusual queries or proven performance needs.
+- Per-request / serverless handlers use **`createFreshPrismaClient()`** from `server/prisma.ts` and **`$disconnect()`** in `finally` blocks.
+- **`src/lib/db.ts`** and other app code use the shared client where appropriate; reserve **`$queryRaw`** only for queries that cannot be expressed cleanly in the Prisma API.
 
 ## Logging
 
-Scoped loggers live in `server/logger.js` (Node) and `src/lib/logger.ts` (browser). See inline comments for `LOG_DEBUG` on the server.
+Scoped loggers live in `server/logger.ts` (Node) and `src/lib/logger.ts` (browser). See inline comments for `LOG_DEBUG` on the server.
+
+## Shared modules
+
+- **`shared/stravaSportType.js`** — maps Strava activity `type` / `sport_type` strings to Prisma `Sport` enum values. Imported from `server/*`, Vite (`src/`), and covered by tests.
+
+## Tests
+
+- **Vitest** (`npm run test`): `shared/*.test.ts`, `server/*.test.ts` — pure helpers (`normalizeSports`, Strava sport mapping, opt-in TLS env). API routes stay integration-tested manually or via staging until you add HTTP-level tests.
 
 ## Docs index
 

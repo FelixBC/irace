@@ -1,181 +1,152 @@
-# 🏃‍♂️ iRace — invite-only fitness challenges (Strava)
+# iRace
 
-**iRace** is a real-time fitness challenge app: race friends using your Strava activities. Think TypeRacer meets group goals. Not affiliated with Strava.
+**iRace** is an invite-only fitness challenge app powered by Strava: create a goal, share a link, and race your crew on real activities. It is not affiliated with Strava.
 
-## ✨ Features
+---
 
-- **🏆 Real Strava Integration**: Connect your Strava account and compete with real activity data
-- **⚡ Real-Time Competition**: See live progress updates as friends complete activities
-- **🎯 Multi-Sport Challenges**: Support for running, cycling, swimming, walking, hiking, and strength training
-- **👥 Social Sharing**: Create challenges and invite friends via shareable links
-- **📱 Responsive Design**: Beautiful, modern UI that works on all devices
-- **🎮 Demo Mode**: Try the app with sample data before connecting Strava
+## Screenshots
 
-## 🚀 Tech Stack
+Captures below live in [`docs/strava-submission-screenshots/`](docs/strava-submission-screenshots/) (same set used for Strava API review). Production deploy example: [iraceapp.vercel.app](https://iraceapp.vercel.app).
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + Framer Motion
-- **Authentication**: Strava OAuth 2.0
-- **State Management**: React Context API
-- **Database**: PostgreSQL + Prisma (ready for production)
-- **Docker**: Containerized development environment
+### Landing and home
 
-**Architecture** (data layer, logging, doc index): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+| Landing page | Signed in |
+| --- | --- |
+| ![Landing — hero, CTAs, footer links](docs/strava-submission-screenshots/01-home-fullpage.png) | ![Home with user in header](docs/strava-submission-screenshots/10-home-logged-in-fullpage.png) |
 
-## 🏗️ Project Structure
+### Challenges: create, join, race
 
-```
-src/
-├── components/          # React components
-│   ├── Auth/           # Authentication components
-│   ├── Challenge/      # Challenge creation and management
-│   ├── Home/           # Landing page and navigation
-│   ├── Layout/         # Header and layout components
-│   ├── Race/           # Race view and competition
-│   ├── Strava/         # Strava integration components
-│   └── ui/             # Reusable UI components
-├── context/            # React Context providers
-├── services/           # Business logic and API services
-├── types/              # TypeScript type definitions
-└── lib/                # Utility functions and database
-```
+| Creator consent (step 2) | Join + participant consent |
+| --- | --- |
+| ![Create challenge — acknowledgement](docs/strava-submission-screenshots/04-create-creator-consent-step2.png) | ![Join flow — consent and Connect Strava](docs/strava-submission-screenshots/05-join-challenge-consent.png) |
 
-## 🚀 Quick Start
+| Demo race / leaderboard |
+| --- |
+| ![Race view — demo challenge](docs/strava-submission-screenshots/06-race-demo-challenge-fullpage.png) |
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Docker (for database)
+### Profile and Strava connection
 
-### 1. Clone the Repository
+| Connected | Not connected |
+| --- | --- |
+| ![Settings — Strava connected, disconnect](docs/strava-submission-screenshots/09-profile-settings-strava-connected.png) | ![Settings — not connected](docs/strava-submission-screenshots/12-not-connected-to-strava.png) |
+
+### Privacy and terms
+
+| Privacy Policy | Terms |
+| --- | --- |
+| ![Privacy Policy (full page)](docs/strava-submission-screenshots/02-privacy-fullpage.png) | ![Terms (full page)](docs/strava-submission-screenshots/03-terms-fullpage.png) |
+
+### Strava OAuth (on Strava)
+
+After you choose **Connect Strava** in the app, Strava handles login and authorization:
+
+| Strava login | Authorize app (scopes) |
+| --- | --- |
+| ![Strava.com login](docs/strava-submission-screenshots/07-strava-oauth-login-step.png) | ![Strava authorize — profile and activities](docs/strava-submission-screenshots/08-strava-authorize-scopes.png) |
+
+---
+
+## Features
+
+- Strava OAuth and activity-based progress for distance challenges
+- Multi-sport challenges (running, cycling, swimming, and more)
+- Shareable invite links; demo challenge for trying the UI without Strava
+- Responsive UI (React, Tailwind, Framer Motion)
+- PostgreSQL with Prisma for schema and app queries
+
+## Tech stack
+
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Framer Motion
+- **Auth:** Strava OAuth 2.0 (server-side token handling)
+- **Data:** PostgreSQL, Prisma ([architecture notes](docs/ARCHITECTURE.md))
+- **API:** Vercel serverless routes under `api/`
+
+## Quick start
+
+**Prerequisites:** Node.js 18+, npm, and a PostgreSQL instance (local or hosted).
+
 ```bash
 git clone <your-repo-url>
-cd project
-```
-
-### 2. Install Dependencies
-```bash
+cd irace   # or whatever your clone folder is named
 npm install
 ```
 
-### 3. Set Up Environment Variables
-Copy `.env.example` to `.env.local` and fill in values. **Never put `STRAVA_CLIENT_SECRET` in Vite env** — it must only exist on the server (e.g. Vercel).
+Copy `.env.example` to `.env` / `.env.local` as needed. **Never expose `STRAVA_CLIENT_SECRET` in Vite** — keep it on the server only (e.g. Vercel).
+
+**Browser (public):**
 
 ```env
 VITE_STRAVA_CLIENT_ID=your_strava_client_id
 VITE_SUPPORT_EMAIL=you@yourdomain.com
 ```
 
-Server / Vercel:
+**Server:**
 
 ```env
 STRAVA_CLIENT_ID=your_strava_client_id
 STRAVA_CLIENT_SECRET=your_strava_client_secret
 DATABASE_URL=postgresql://...
-FRONTEND_URL=https://your-app.vercel.app
+FRONTEND_URL=https://your-app.example.com
 ```
 
-Strava OAuth callback URL in the Strava app settings must match your deployed API route, e.g. `https://your-app.vercel.app/api/auth/strava/callback`.
+In [Strava API Settings](https://www.strava.com/settings/api), set the **Authorization Callback Domain** and redirect URI to match your app, e.g. `https://your-app.example.com/api/auth/strava/callback` (and the localhost equivalent for dev).
 
-### 4. Start Development Server
 ```bash
 npm run dev
 ```
 
-### 5. Open in Browser
-Navigate to `http://localhost:5173`
+Open [http://localhost:5173](http://localhost:5173).
 
-## 🔐 Strava Setup
+**TLS errors to Postgres or APIs:** use a proper `DATABASE_URL` (hosted providers usually document SSL). Do not disable certificate checks in production. For rare local setups only, see `ALLOW_INSECURE_TLS` in [`.env.example`](.env.example) and [`server/optionalInsecureTls.ts`](server/optionalInsecureTls.ts).
 
-1. **Create Strava App**: Go to [Strava API Settings](https://www.strava.com/settings/api)
-2. **Get Credentials**: Note your Client ID and Client Secret
-3. **Set Redirect URI**: Use `http://localhost:5173/api/auth/callback/strava`
-4. **Add to .env**: Update your environment variables
+## Before you push
 
-## 🏆 How to Use
+Run these locally and scan the diff before `git push`:
 
-### Creating a Challenge
-1. **Connect Strava**: Click "Connect Strava" on the landing page
-2. **Create Challenge**: Choose sports, duration, and settings
-3. **Share**: Get a shareable link to invite friends
-4. **Compete**: Track progress in real-time
+1. `npm run build` — Prisma client + Vite production build must succeed.
+2. `npm run test` — Vitest unit tests (shared helpers + server utilities).
+3. `npm run typecheck:api` — TypeScript check for `api/` (and `server/vercelQuery.ts`).
+4. `npm run lint` — ESLint clean (or only known accepted warnings).
+5. `git status` / `git diff` — no accidental files (`.env`, `.env.local`, `dist/`, editor junk).
+6. Secrets — `STRAVA_CLIENT_SECRET`, DB passwords, VAPID private keys, webhook tokens must **not** appear in commits (use Vercel/env vars).
+7. Strava app settings — production **callback URL** still matches your deploy (see [Quick start](#quick-start) above).
+8. **Optional:** smoke the flows you changed (OAuth, join, race, webhook) on staging if you have it.
 
-### Joining a Challenge
-1. **Get Invite Link**: From a friend or challenge creator
-2. **Connect Strava**: If you haven't already
-3. **Join**: Automatically added to the challenge
-4. **Race**: Your activities count toward the challenge goal
+## Scripts
 
-## 🐳 Docker Development
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Vite dev server |
+| `npm run build` | `prisma generate` + production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck:api` | `tsc` for `api/**/*.ts` |
+| `npm run test` | Vitest (run once) |
+| `npm run test:watch` | Vitest watch mode |
 
-### Start Services
+## Docker
+
+Optional local stack (PostgreSQL and Redis) is defined in [`docker-compose.yml`](docker-compose.yml):
+
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-This starts:
-- **PostgreSQL**: Database for challenges and users
-- **Redis**: Caching and session storage
+Adjust `DATABASE_URL` to point at the postgres service if you run the app against that database.
 
-### Stop Services
-```bash
-docker-compose down
-```
+## Documentation
 
-## 📦 Available Scripts
+- [Architecture](docs/ARCHITECTURE.md) — data layer and conventions  
+- Strava: [STRAVA_WEBHOOK.md](docs/STRAVA_WEBHOOK.md), [STRAVA_SUBMISSION.md](docs/STRAVA_SUBMISSION.md)  
+- Deployment: [VERCEL_DOMAIN.md](docs/VERCEL_DOMAIN.md), [DATABASE_VERCEL.md](docs/DATABASE_VERCEL.md)  
+- Screenshot index: [docs/strava-submission-screenshots/README.md](docs/strava-submission-screenshots/README.md)
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Check TypeScript types
+## Contributing
 
-## 🔧 Configuration
+1. Fork and create a branch  
+2. Make focused changes with clear commit messages  
+3. Open a pull request  
 
-### Environment Variables
-- `VITE_STRAVA_CLIENT_ID` — public Strava client ID (browser)
-- `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET` — server-only OAuth & token refresh
-- `DATABASE_URL` — PostgreSQL connection string
-- `FRONTEND_URL` — canonical site URL for OAuth redirects after `/api/auth/strava/callback`
-- `VITE_SUPPORT_EMAIL` — shown in Privacy Policy and footer
+## License
 
-### Strava API Limits
-- **Rate Limiting**: 1000 requests per 15 minutes
-- **Activity Scope**: Read access to your activities
-- **Real-Time**: Shows activities from last 2 days only
-
-## 🚧 Development Notes
-
-- **Demo Mode**: Use `/race/demo-challenge` for testing without Strava
-- **Hot Reload**: Vite provides fast development experience
-- **Type Safety**: Full TypeScript support with strict mode
-- **Responsive**: Mobile-first design approach
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Strava API** for fitness data integration
-- **React Team** for the amazing framework
-- **Tailwind CSS** for the utility-first styling
-- **Framer Motion** for smooth animations
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/project/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/project/discussions)
-- **Email**: your-email@example.com
-
----
-
-**Ready to race? Connect your Strava and start competing! 🏃‍♂️💨**
+[MIT](LICENSE)

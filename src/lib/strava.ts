@@ -1,5 +1,9 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { getApiBaseUrl } from '../config/urls';
+import {
+  mapStravaActivityTypeToSport,
+  STRAVA_ACTIVITY_TYPES_CLIENT_PRIMARY,
+} from '../../shared/stravaSportType.js';
 
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
 
@@ -120,16 +124,7 @@ export class StravaAPI {
 }
 
 export function mapStravaActivityToActivity(stravaActivity: StravaActivity) {
-  // Map Strava activity type to our Sport enum
-  const sportTypeMap: Record<string, 'RUNNING' | 'CYCLING' | 'SWIMMING'> = {
-    Run: 'RUNNING',
-    Ride: 'CYCLING',
-    Swim: 'SWIMMING',
-    VirtualRide: 'CYCLING',
-    EBikeRide: 'CYCLING',
-  };
-
-  const sport = sportTypeMap[stravaActivity.type] || 'RUNNING';
+  const sport = mapStravaActivityTypeToSport(stravaActivity.type);
   const distance = stravaActivity.distance / 1000; // Convert meters to kilometers
 
   return {
@@ -142,6 +137,5 @@ export function mapStravaActivityToActivity(stravaActivity: StravaActivity) {
 }
 
 export function isActivityRelevant(activity: StravaActivity): boolean {
-  const relevantTypes = ['Run', 'Ride', 'Swim', 'VirtualRide', 'EBikeRide'];
-  return relevantTypes.includes(activity.type) && !activity.manual;
+  return STRAVA_ACTIVITY_TYPES_CLIENT_PRIMARY.includes(activity.type) && !activity.manual;
 } 

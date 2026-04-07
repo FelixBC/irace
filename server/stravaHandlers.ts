@@ -1,11 +1,51 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Prisma, type ChallengeStatus, type Sport } from '@prisma/client';
 import { normalizeSports } from './normalizeSports.js';
 import { closeChallengeIfEnded, maybeMarkParticipantFinished } from './challengeLifecycle.js';
+import { getValidStravaAccessToken } from './stravaTokenRefresh.js';
+import { createFreshPrismaClient } from './prisma.js';
+import { applyOptionalInsecureTlsFromEnv } from './optionalInsecureTls.js';
 import { createLogger } from './logger.js';
+import { mapStravaActivityTypeToSport } from '../shared/stravaSportType.js';
 
 const log = createLogger('stravaSync');
 
-export async function handleStravaSync(req, res) {
-  log.debug('request', req.method, req.body?.challengeId);
+type StravaActivitySummary = {
+  id: number;
+  type?: string;
+  sport_type?: string;
+  distance: number;
+  moving_time: number;
+  start_date: string;
+};
+
+function activitySportKey(activity: StravaActivitySummary): string | undefined {
+  return activity.sport_type || activity.type;
+}
+
+type SyncBody = {
+  userId?: string;
+  challengeId?: string;
+};
+
+function jsonAccessToken(tokens: unknown): string | undefined {
+  if (tokens && typeof tokens === 'object' && 'access_token' in tokens) {
+    const t = (tokens as { access_token?: unknown }).access_token;
+    return typeof t === 'string' ? t : undefined;
+  }
+  return undefined;
+}
+
+function jsonRefreshToken(tokens: unknown): string | undefined {
+  if (tokens && typeof tokens === 'object' && 'refresh_token' in tokens) {
+    const t = (tokens as { refresh_token?: unknown }).refresh_token;
+    return typeof t === 'string' ? t : undefined;
+  }
+  return undefined;
+}
+
+export async function handleStravaSync(req: VercelRequest, res: VercelResponse) {
+  log.debug('request', req.method, (req.body as SyncBody | undefined)?.challengeId);
 
   if (req.method !== 'POST') {
     log.warn('method not allowed', req.method);
@@ -13,7 +53,8 @@ export async function handleStravaSync(req, res) {
   }
 
   try {
-    const { userId, challengeId } = req.body;
+    const body = (req.body ?? {}) as SyncBody;
+    const { userId, challengeId } = body;
 
     if (!userId) {
       log.warn('missing userId');
@@ -22,71 +63,65 @@ export async function handleStravaSync(req, res) {
 
     log.debug('sync start', { userId, challengeId });
 
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    applyOptionalInsecureTlsFromEnv();
 
-    const { Client } = await import('pg');
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-      ssl: false,
-    });
+    const prisma = createFreshPrismaClient();
 
     try {
-      await client.connect();
       log.debug('db connected');
 
-      const userResult = await client.query(
-        `
-        SELECT "stravaTokens", "stravaId" 
-        FROM "User" 
-        WHERE "id" = $1
-      `,
-        [userId]
-      );
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, stravaTokens: true, stravaId: true },
+      });
 
-      if (userResult.rows.length === 0) {
-        await client.end();
+      if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      const user = userResult.rows[0];
-      const stravaTokens = user.stravaTokens;
-
-      if (!stravaTokens || !stravaTokens.access_token) {
-        await client.end();
+      if (!user.stravaTokens) {
         return res.status(400).json({ error: 'User not connected to Strava' });
       }
 
-      let challenge = null;
-      if (challengeId) {
-        const challengeResult = await client.query(
-          `
-          SELECT "id", "sports", "startDate", "endDate", "sportGoals", "status"
-          FROM "Challenge" 
-          WHERE "id" = $1
-        `,
-          [challengeId]
-        );
+      const accessToken = await getValidStravaAccessToken(prisma, user);
 
-        if (challengeResult.rows.length > 0) {
-          challenge = challengeResult.rows[0];
-        }
+      type ChallengeForSync = {
+        id: string;
+        sports: Sport[];
+        startDate: Date;
+        endDate: Date;
+        sportGoals: Prisma.JsonValue | null;
+        status: ChallengeStatus;
+      };
+      let challenge: ChallengeForSync | null = null;
+      if (challengeId) {
+        challenge = await prisma.challenge.findUnique({
+          where: { id: challengeId },
+          select: {
+            id: true,
+            sports: true,
+            startDate: true,
+            endDate: true,
+            sportGoals: true,
+            status: true,
+          },
+        });
       }
 
       log.debug('fetching Strava activities');
       const activitiesResponse = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=200', {
         headers: {
-          Authorization: `Bearer ${stravaTokens.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
       if (!activitiesResponse.ok) {
         const errorData = await activitiesResponse.json();
         log.error('Strava activities fetch failed', errorData);
-        await client.end();
         return res.status(500).json({ error: 'Failed to fetch Strava activities', details: errorData });
       }
 
-      const activities = await activitiesResponse.json();
+      const activities = (await activitiesResponse.json()) as StravaActivitySummary[];
       log.debug('activities fetched', activities.length);
 
       let relevantActivities = activities;
@@ -98,7 +133,8 @@ export async function handleStravaSync(req, res) {
         relevantActivities = activities.filter((activity) => {
           const activityDate = new Date(activity.start_date);
           const isInDateRange = activityDate >= challengeStartDate && activityDate <= challengeEndDate;
-          const isRelevantSport = challengeSports.includes(activity.sport_type);
+          const mapped = mapStravaActivityTypeToSport(activitySportKey(activity));
+          const isRelevantSport = challengeSports.includes(mapped);
           return isInDateRange && isRelevantSport;
         });
 
@@ -110,57 +146,35 @@ export async function handleStravaSync(req, res) {
 
       for (const activity of relevantActivities) {
         try {
-          const existingActivityResult = await client.query(
-            `
-            SELECT "id" 
-            FROM "Activity" 
-            WHERE "stravaActivityId" = $1
-          `,
-            [activity.id.toString()]
-          );
+          const existing = await prisma.activity.findUnique({
+            where: { stravaActivityId: String(activity.id) },
+            select: { id: true },
+          });
 
-          if (existingActivityResult.rows.length > 0) {
+          if (existing) {
             log.debug('activity already synced, skip', activity.id);
             continue;
           }
 
-          const sportMapping = {
-            Run: 'RUNNING',
-            Ride: 'CYCLING',
-            Swim: 'SWIMMING',
-            Walk: 'WALKING',
-            Hike: 'HIKING',
-            Yoga: 'YOGA',
-            WeightTraining: 'WEIGHT_TRAINING',
-          };
-
-          const sport = sportMapping[activity.sport_type] || 'RUNNING';
+          const sport = mapStravaActivityTypeToSport(activitySportKey(activity));
           const distance = activity.distance / 1000;
           const duration = activity.moving_time;
 
           const activityId = `activity_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-          await client.query(
-            `
-            INSERT INTO "Activity" (
-              "id", "stravaActivityId", "userId", "challengeId", "sport",
-              "distance", "duration", "date", "synced", "createdAt", "updatedAt"
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-          `,
-            [
-              activityId,
-              activity.id.toString(),
+          await prisma.activity.create({
+            data: {
+              id: activityId,
+              stravaActivityId: String(activity.id),
               userId,
-              challengeId || null,
+              challengeId: challengeId || null,
               sport,
               distance,
               duration,
-              new Date(activity.start_date),
-              true,
-              new Date(),
-              new Date(),
-            ]
-          );
+              date: new Date(activity.start_date),
+              synced: true,
+            },
+          });
 
           totalDistance += distance;
           syncedCount += 1;
@@ -170,37 +184,26 @@ export async function handleStravaSync(req, res) {
       }
 
       if (challengeId && syncedCount > 0) {
-        await client.query('BEGIN');
-        try {
-          const ended = await closeChallengeIfEnded(client, challengeId);
+        await prisma.$transaction(async (tx) => {
+          const ended = await closeChallengeIfEnded(tx, challengeId);
           if (!ended) {
-            await client.query(
-              `
-              UPDATE "Participation" 
-              SET 
-                "currentDistance" = "currentDistance" + $1,
-                "lastActivityDate" = NOW(),
-                "updatedAt" = NOW()
-              WHERE "userId" = $2 AND "challengeId" = $3
-            `,
-              [totalDistance, userId, challengeId]
-            );
-
-            await maybeMarkParticipantFinished(client, { challengeId, userId });
+            await tx.participation.updateMany({
+              where: { userId, challengeId },
+              data: {
+                currentDistance: { increment: totalDistance },
+                lastActivityDate: new Date(),
+              },
+            });
+            await maybeMarkParticipantFinished(tx, { challengeId, userId });
             log.info('participation distance updated', {
               userId,
               challengeId,
               deltaKm: totalDistance.toFixed(2),
             });
           }
-          await client.query('COMMIT');
-        } catch (e) {
-          await client.query('ROLLBACK').catch(() => {});
-          throw e;
-        }
+        });
       }
 
-      await client.end();
       log.info('sync complete', { syncedCount, totalDistanceKm: totalDistance.toFixed(2) });
 
       return res.status(200).json({
@@ -212,28 +215,29 @@ export async function handleStravaSync(req, res) {
       });
     } catch (dbError) {
       log.error('database error', dbError);
-      try {
-        await client.end();
-      } catch (e) {
-        log.warn('pg client close failed', e?.message ?? e);
-      }
+      const message = dbError instanceof Error ? dbError.message : 'Unknown error';
       return res.status(500).json({
         error: 'Failed to sync Strava activities',
-        details: dbError.message,
+        details: message,
+      });
+    } finally {
+      await prisma.$disconnect().catch((e) => {
+        log.warn('prisma disconnect failed', e?.message ?? e);
       });
     }
   } catch (error) {
     log.error('sync handler error', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
       error: 'Strava sync failed',
-      details: error.message,
+      details: message,
     });
   }
 }
 
 const logDisconnect = createLogger('stravaDisconnect');
 
-export async function handleStravaDisconnect(req, res) {
+export async function handleStravaDisconnect(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -252,35 +256,30 @@ export async function handleStravaDisconnect(req, res) {
   }
 
   const sessionToken = authHeader.slice(7);
-  const { Client } = await import('pg');
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : false,
-  });
+  const prisma = createFreshPrismaClient();
 
   try {
-    await client.connect();
+    const session = await prisma.session.findFirst({
+      where: {
+        sessionToken,
+        expires: { gt: new Date() },
+      },
+      include: { user: true },
+    });
 
-    const sessionResult = await client.query(
-      `SELECT s."userId", u."stravaTokens"
-       FROM "Session" s
-       JOIN "User" u ON u."id" = s."userId"
-       WHERE s."sessionToken" = $1 AND s."expires" > NOW()`,
-      [sessionToken]
-    );
-
-    if (sessionResult.rows.length === 0) {
+    if (!session) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const { userId, stravaTokens } = sessionResult.rows[0];
-    const tokens = stravaTokens;
+    const userId = session.userId;
+    const tokens = session.user.stravaTokens;
+    const accessToken = jsonAccessToken(tokens);
 
-    if (tokens?.access_token) {
+    if (accessToken) {
       const deauthRes = await fetch('https://www.strava.com/oauth/deauthorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ access_token: tokens.access_token }),
+        body: new URLSearchParams({ access_token: accessToken }),
       });
       if (!deauthRes.ok) {
         const text = await deauthRes.text();
@@ -288,23 +287,24 @@ export async function handleStravaDisconnect(req, res) {
       }
     }
 
-    await client.query(`DELETE FROM "Activity" WHERE "userId" = $1`, [userId]);
-    await client.query(`UPDATE "User" SET "stravaTokens" = NULL, "updatedAt" = NOW() WHERE "id" = $1`, [userId]);
+    await prisma.activity.deleteMany({ where: { userId } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stravaTokens: Prisma.DbNull },
+    });
 
     return res.status(200).json({ success: true });
   } catch (err) {
     logDisconnect.error('disconnect error', err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
-    try {
-      await client.end();
-    } catch (_) {}
+    await prisma.$disconnect().catch(() => {});
   }
 }
 
 const logRefresh = createLogger('stravaRefresh');
 
-export async function handleStravaRefreshToken(req, res) {
+export async function handleStravaRefreshToken(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -323,30 +323,24 @@ export async function handleStravaRefreshToken(req, res) {
   }
 
   const sessionToken = authHeader.slice(7);
-  const { Client } = await import('pg');
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : false,
-  });
+  const prisma = createFreshPrismaClient();
 
   try {
-    await client.connect();
+    const session = await prisma.session.findFirst({
+      where: {
+        sessionToken,
+        expires: { gt: new Date() },
+      },
+      include: { user: true },
+    });
 
-    const sessionResult = await client.query(
-      `SELECT s."userId", u."stravaTokens"
-       FROM "Session" s
-       JOIN "User" u ON u."id" = s."userId"
-       WHERE s."sessionToken" = $1 AND s."expires" > NOW()`,
-      [sessionToken]
-    );
-
-    if (sessionResult.rows.length === 0) {
+    if (!session) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const row = sessionResult.rows[0];
-    const tokens = row.stravaTokens;
-    if (!tokens?.refresh_token) {
+    const user = session.user;
+    const tokens = user.stravaTokens;
+    if (!tokens || typeof tokens !== 'object' || !jsonRefreshToken(tokens)) {
       return res.status(400).json({ error: 'No refresh token stored' });
     }
 
@@ -354,10 +348,10 @@ export async function handleStravaRefreshToken(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.STRAVA_CLIENT_ID,
-        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        client_id: process.env.STRAVA_CLIENT_ID ?? '',
+        client_secret: process.env.STRAVA_CLIENT_SECRET ?? '',
         grant_type: 'refresh_token',
-        refresh_token: tokens.refresh_token,
+        refresh_token: jsonRefreshToken(tokens)!,
       }),
     });
 
@@ -367,7 +361,12 @@ export async function handleStravaRefreshToken(req, res) {
       return res.status(502).json({ error: 'Strava token refresh failed' });
     }
 
-    const data = await tokenResponse.json();
+    const data = (await tokenResponse.json()) as {
+      access_token: string;
+      refresh_token: string;
+      expires_at: number;
+      expires_in: number;
+    };
     const newTokens = {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
@@ -375,18 +374,16 @@ export async function handleStravaRefreshToken(req, res) {
       expires_in: data.expires_in,
     };
 
-    await client.query(`UPDATE "User" SET "stravaTokens" = $1::jsonb, "updatedAt" = NOW() WHERE "id" = $2`, [
-      JSON.stringify(newTokens),
-      row.userId,
-    ]);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { stravaTokens: newTokens },
+    });
 
     return res.status(200).json({ stravaTokens: newTokens });
   } catch (err) {
     logRefresh.error('refresh handler error', err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
-    try {
-      await client.end();
-    } catch (_) {}
+    await prisma.$disconnect().catch(() => {});
   }
 }

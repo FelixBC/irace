@@ -16,8 +16,7 @@ async function migrateDatabase() {
     log.info('database connected');
 
     log.debug('pushing schema');
-    
-    // Create Challenge table if it doesn't exist
+
     await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Challenge" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -40,10 +39,9 @@ async function migrateDatabase() {
         "sportGoals" JSONB
       );
     `;
-    
+
     log.info('Challenge table created/verified');
-    
-    // Create indexes
+
     await prisma.$executeRaw`
       CREATE INDEX IF NOT EXISTS "Challenge_creatorId_idx" ON "Challenge"("creatorId");
       CREATE INDEX IF NOT EXISTS "Challenge_startDate_endDate_idx" ON "Challenge"("startDate", "endDate");
@@ -51,17 +49,16 @@ async function migrateDatabase() {
       CREATE INDEX IF NOT EXISTS "Challenge_status_idx" ON "Challenge"("status");
       CREATE INDEX IF NOT EXISTS "Challenge_isPublic_idx" ON "Challenge"("isPublic");
     `;
-    
+
     log.info('indexes created/verified');
-    
-    // Test if we can query the table
+
     const testResult = await prisma.$queryRaw`
       SELECT column_name, data_type 
       FROM information_schema.columns 
       WHERE table_name = 'Challenge' 
       ORDER BY ordinal_position;
     `;
-    
+
     log.debug('Challenge columns', testResult);
   } catch (error) {
     log.error('migration failed', error);
@@ -71,4 +68,4 @@ async function migrateDatabase() {
   }
 }
 
-migrateDatabase();
+void migrateDatabase();

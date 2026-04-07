@@ -2,26 +2,11 @@ import { prisma } from '@/lib/db';
 import { StravaAPI } from '@/lib/strava';
 import { isActivityRelevant } from '@/lib/strava';
 import { createLogger } from '@/lib/logger';
+import { mapStravaActivityTypeToSport } from '../../shared/stravaSportType.js';
 import type { Challenge, Participation, User } from '@prisma/client';
 import type { StravaActivity } from '@/types';
 
 const log = createLogger('strava-sync');
-
-/** Map Strava activity `type` to our Prisma `Sport` enum name. */
-function stravaActivityTypeToSportName(type: string): string {
-  const map: Record<string, string> = {
-    Run: 'RUNNING',
-    Ride: 'CYCLING',
-    Swim: 'SWIMMING',
-    Walk: 'WALKING',
-    Hike: 'HIKING',
-    Yoga: 'YOGA',
-    WeightTraining: 'WEIGHT_TRAINING',
-    VirtualRide: 'CYCLING',
-    EBikeRide: 'CYCLING',
-  };
-  return map[type] || 'RUNNING';
-}
 
 export type ChallengeProgressSnapshot = {
   challenge: Challenge & { participants: (Participation & { user: User })[] };
@@ -198,7 +183,7 @@ export class StravaSyncService {
       if (activityDate > new Date(challenge.endDate)) return false;
       if (!isActivityRelevant(activity)) return false;
 
-      const sportName = stravaActivityTypeToSportName(activity.type);
+      const sportName = mapStravaActivityTypeToSport(activity.sport_type || activity.type);
       return (challenge.sports as readonly string[]).includes(sportName);
     });
 

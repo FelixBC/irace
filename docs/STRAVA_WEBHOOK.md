@@ -12,8 +12,8 @@ Official docs: [Webhooks](https://developers.strava.com/docs/webhooks/).
 |--------|---------|
 | `GET /api/strava/webhook` | Subscription validation — echoes `hub.challenge` when `hub.verify_token` matches `STRAVA_WEBHOOK_VERIFY_TOKEN`. |
 | `POST /api/strava/webhook` | Receives events; responds `200` immediately and processes asynchronously via `waitUntil` (`@vercel/functions`). |
-| `server/stravaWebhookProcessor.js` | Handles athlete deauth, activity delete, activity create/update (fetches `GET /activities/{id}` once per event). |
-| `server/stravaTokenRefresh.js` | Refreshes access tokens when expired before calling the Strava API. |
+| `server/stravaWebhookProcessor.ts` | Handles athlete deauth, activity delete, activity create/update (fetches `GET /activities/{id}` once per event). |
+| `server/stravaTokenRefresh.ts` | Refreshes access tokens when expired before calling the Strava API. |
 | `scripts/register-strava-webhook.mjs` | Registers (or replaces) the **single** app-wide subscription at Strava. |
 
 ## Environment variables

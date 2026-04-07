@@ -1,6 +1,8 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { resolveBearerUserId } from '../../server/authSession.js';
 import { createLogger } from '../../server/logger.js';
+import { getQueryString } from '../../server/vercelQuery.js';
 
 const log = createLogger('challenges/taunts');
 
@@ -11,11 +13,13 @@ const PRESET_TAUNTS = [
   { key: 'still_running', text: 'Still running?' },
   { key: 'finish', text: 'Save it for the finish.' },
   { key: 'nice_try', text: 'Nice try. Not enough.' },
-];
+] as const;
 
-const PRESET_KEYS = new Set(PRESET_TAUNTS.map((t) => t.key));
+const PRESET_KEYS = new Set<string>(PRESET_TAUNTS.map((t) => t.key));
 
-export default async function handler(req, res) {
+type PostBody = { presetKey?: string };
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -26,7 +30,7 @@ export default async function handler(req, res) {
 
   const prisma = createFreshPrismaClient();
   try {
-    const inviteCode = typeof req.query?.id === 'string' ? req.query.id : '';
+    const inviteCode = getQueryString(req, 'id') ?? '';
     if (!inviteCode) {
       return res.status(400).json({ error: 'Missing challenge invite code' });
     }
@@ -40,7 +44,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const limitRaw = typeof req.query?.limit === 'string' ? req.query.limit : '';
+      const limitRaw = getQueryString(req, 'limit') ?? '';
       const limit = Math.max(1, Math.min(50, Number(limitRaw || 20) || 20));
 
       const rows = await prisma.challengeTaunt.findMany({
@@ -81,7 +85,7 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'Only participants can send taunts in this challenge' });
       }
 
-      const body = req.body || {};
+      const body = (req.body ?? {}) as PostBody;
       const presetKey = typeof body.presetKey === 'string' ? body.presetKey : '';
       if (!presetKey || !PRESET_KEYS.has(presetKey)) {
         return res.status(400).json({ error: 'Invalid presetKey' });
@@ -120,4 +124,3 @@ export default async function handler(req, res) {
     await prisma.$disconnect().catch(() => {});
   }
 }
-

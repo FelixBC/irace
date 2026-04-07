@@ -1,11 +1,14 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../../server/logger.js';
+import { createFreshPrismaClient } from '../../../server/prisma.js';
+import { applyOptionalInsecureTlsFromEnv } from '../../../server/optionalInsecureTls.js';
+import { getQueryString } from '../../../server/vercelQuery.js';
 
 const log = createLogger('stravaCallback');
 
 function getFrontendBaseUrl() {
   const explicit = process.env.FRONTEND_URL;
   if (explicit) return explicit.replace(/\/$/, '');
-  // Stable production hostname (Vercel injects); prefer over VERCEL_URL (unique per deployment)
   const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   if (production) return production.replace(/\/$/, '');
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`.replace(/\/$/, '');
@@ -17,7 +20,14 @@ function getStravaRedirectUri() {
   return `${getFrontendBaseUrl()}/api/auth/strava/callback`;
 }
 
-export default async function handler(req, res) {
+type StravaAthleteJson = {
+  id: number;
+  firstname?: string;
+  lastname?: string;
+  profile?: string;
+};
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   log.debug('OAuth callback', req.method);
 
   if (req.method !== 'GET') {
@@ -26,7 +36,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { code } = req.query;
+    const code = getQueryString(req, 'code');
 
     if (!code) {
       log.warn('missing authorization code');
@@ -40,12 +50,12 @@ export default async function handler(req, res) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: process.env.STRAVA_CLIENT_ID,
-        client_secret: process.env.STRAVA_CLIENT_SECRET,
-        code: code,
+        client_id: process.env.STRAVA_CLIENT_ID ?? '',
+        client_secret: process.env.STRAVA_CLIENT_SECRET ?? '',
+        code,
         grant_type: 'authorization_code',
         redirect_uri: getStravaRedirectUri(),
-      })
+      }),
     });
 
     if (!tokenResponse.ok) {
@@ -54,15 +64,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Token exchange failed' });
     }
 
-    const tokens = await tokenResponse.json();
+    const tokens = (await tokenResponse.json()) as {
+      access_token: string;
+      refresh_token: string;
+      expires_at: number;
+      expires_in: number;
+    };
     log.debug('tokens received');
 
-    // Get athlete info
     log.debug('fetching athlete profile');
     const athleteResponse = await fetch('https://www.strava.com/api/v3/athlete', {
       headers: {
-        'Authorization': `Bearer ${tokens.access_token}`
-      }
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
     });
 
     if (!athleteResponse.ok) {
@@ -70,85 +84,67 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Failed to fetch athlete info' });
     }
 
-    const athlete = await athleteResponse.json();
+    const athlete = (await athleteResponse.json()) as StravaAthleteJson;
     log.info('Strava athlete linked', { stravaId: athlete.id });
 
-    // Use native pg client to avoid Prisma prepared statement issues
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-    
-    const { Client } = await import('pg');
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-      ssl: false
-    });
+    applyOptionalInsecureTlsFromEnv();
+
+    const prisma = createFreshPrismaClient();
 
     try {
-      await client.connect();
       log.debug('db connected');
 
-      // Create user using raw SQL
       const userId = `user_${athlete.id}`;
       log.debug('upsert user', userId);
 
-      // Create or update user using raw SQL
-      const userResult = await client.query(`
-        INSERT INTO "User" (
-          "id", "name", "email", "image", "stravaId", "stravaTokens", "createdAt", "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT ("stravaId") 
-        DO UPDATE SET
-          "name" = EXCLUDED."name",
-          "image" = EXCLUDED."image",
-          "stravaTokens" = EXCLUDED."stravaTokens",
-          "updatedAt" = EXCLUDED."updatedAt"
-        RETURNING *
-      `, [
-        userId,
-        `${athlete.firstname} ${athlete.lastname}`,
-        `strava_${athlete.id}@example.com`,
-        athlete.profile || 'https://via.placeholder.com/150',
-        athlete.id.toString(),
-        JSON.stringify({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: tokens.expires_at,
-          expires_in: tokens.expires_in
-        }),
-        new Date(),
-        new Date()
-      ]);
+      const first = athlete.firstname ?? '';
+      const last = athlete.lastname ?? '';
+      const tokenJson = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_at: tokens.expires_at,
+        expires_in: tokens.expires_in,
+      };
 
-      const user = userResult.rows[0];
+      const user = await prisma.user.upsert({
+        where: { stravaId: String(athlete.id) },
+        create: {
+          id: userId,
+          name: `${first} ${last}`.trim() || 'Strava User',
+          email: `strava_${athlete.id}@example.com`,
+          image: athlete.profile || 'https://via.placeholder.com/150',
+          stravaId: String(athlete.id),
+          stravaTokens: tokenJson,
+        },
+        update: {
+          name: `${first} ${last}`.trim() || 'Strava User',
+          image: athlete.profile || 'https://via.placeholder.com/150',
+          stravaTokens: tokenJson,
+        },
+      });
+
       log.info('user saved', { userId: user.id });
 
-      // Create session using raw SQL
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       log.debug('creating session');
 
-      const sessionResult = await client.query(`
-        INSERT INTO "Session" (
-          "id", "sessionToken", "userId", "expires"
-        ) VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `, [
-        sessionToken,
-        sessionToken,
-        user.id,
-        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-      ]);
+      await prisma.session.create({
+        data: {
+          id: sessionToken,
+          sessionToken,
+          userId: user.id,
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
 
-      const session = sessionResult.rows[0];
       log.debug('session created');
-
-      await client.end();
       log.debug('db disconnected');
 
       const frontendUrl = getFrontendBaseUrl();
-      
-      // Check if there's a state parameter for return URL
-      const state = req.query.state;
-      let redirectUrl;
-      
+
+      const state = getQueryString(req, 'state');
+      let redirectUrl: string;
+
       if (state) {
         const returnTo = decodeURIComponent(state);
         redirectUrl = `${frontendUrl}${returnTo}?session=${sessionToken}`;
@@ -159,25 +155,24 @@ export default async function handler(req, res) {
       }
 
       res.redirect(302, redirectUrl);
-
     } catch (dbError) {
       log.error('database error', dbError);
-      try {
-        await client.end();
-      } catch (e) {
-        log.warn('pg client close failed', e?.message ?? e);
-      }
+      const message = dbError instanceof Error ? dbError.message : 'Unknown error';
       return res.status(500).json({
         error: 'Failed to create user/session',
-        details: dbError.message
+        details: message,
+      });
+    } finally {
+      await prisma.$disconnect().catch((e) => {
+        log.warn('prisma disconnect failed', e?.message ?? e);
       });
     }
-
   } catch (error) {
     log.error('OAuth callback failed', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
       error: 'OAuth callback failed',
-      details: error.message
+      details: message,
     });
   }
 }

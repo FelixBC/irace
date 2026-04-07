@@ -11,14 +11,16 @@ async function cleanDatabase() {
   try {
     log.info('cleaning database (dev utility)');
 
+    await prisma.challengeTaunt.deleteMany();
+    await prisma.pushSubscription.deleteMany();
     await prisma.participation.deleteMany();
     await prisma.activity.deleteMany();
     await prisma.challenge.deleteMany();
+    await prisma.avatar.deleteMany();
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
     await prisma.user.deleteMany();
     await prisma.verificationToken.deleteMany();
-    await prisma.avatar.deleteMany();
 
     log.info('database cleaned');
   } catch (error) {
@@ -34,7 +36,7 @@ cleanDatabase()
     log.info('done');
     process.exit(0);
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     log.error('script failed', error);
     process.exit(1);
   });

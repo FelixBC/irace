@@ -22,6 +22,7 @@ import { Sport, ChallengeStatus, ChallengeType } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
 import { getMainAppUrl } from '../../config/urls';
 import { createLogger } from '../../lib/logger';
+import { useToast } from '../../context/ToastContext';
 
 const log = createLogger('myChallenges');
 
@@ -49,6 +50,8 @@ interface Challenge {
 
 const MyChallenges: React.FC = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const [openMenuChallengeId, setOpenMenuChallengeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sportFilter, setSportFilter] = useState<string>('all');
@@ -107,6 +110,16 @@ const MyChallenges: React.FC = () => {
       loadChallenges();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (openMenuChallengeId == null) return;
+    const onDocClick = () => setOpenMenuChallengeId(null);
+    const t = window.setTimeout(() => document.addEventListener('click', onDocClick), 0);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener('click', onDocClick);
+    };
+  }, [openMenuChallengeId]);
 
   // No more mock data - everything comes from database
 
@@ -194,18 +207,41 @@ const MyChallenges: React.FC = () => {
   };
 
   const handleEditChallenge = () => {
-    // In real app, open edit modal or navigate to edit page (use challenge.id from closure where needed)
+    showToast('info', 'Coming soon', 'Editing challenges is not available yet.');
   };
 
-  const handleDeleteChallenge = (challengeId: string) => {
-    // In real app, this would show confirmation dialog
-    setChallenges(prev => prev.filter(c => c.id !== challengeId));
+  const confirmAndDeleteChallenge = async (challenge: Challenge) => {
+    if (!challenge.isCreator) return;
+    setOpenMenuChallengeId(null);
+    if (
+      !window.confirm(
+        'Permanently delete this challenge? All participant rows and taunts for this challenge will be removed. Synced Strava activities stay on your account but are unlinked from this challenge.'
+      )
+    ) {
+      return;
+    }
+    try {
+      await ChallengeService.deleteChallenge(challenge.id);
+      setChallenges((prev) => prev.filter((c) => c.id !== challenge.id));
+      showToast('success', 'Challenge deleted');
+    } catch (error) {
+      log.error('delete challenge failed', error);
+      showToast(
+        'error',
+        'Could not delete',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    }
   };
 
-  const handleShareChallenge = (inviteCode: string) => {
-          const shareUrl = `${getMainAppUrl()}/join/${inviteCode}`;
-    navigator.clipboard.writeText(shareUrl);
-    // In real app, show toast notification
+  const handleShareChallenge = async (inviteCode: string) => {
+    const shareUrl = `${getMainAppUrl()}/join/${inviteCode}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('success', 'Link copied', 'Share link is on your clipboard.');
+    } catch {
+      showToast('error', 'Copy failed', shareUrl);
+    }
   };
 
   if (!user) {
@@ -545,15 +581,89 @@ const MyChallenges: React.FC = () => {
                       </div>
                       
                       {/* Action Menu */}
-                      <div className="relative">
+                      <div className="relative z-20">
                         <motion.button
+                          type="button"
+                          aria-expanded={openMenuChallengeId === challenge.id}
+                          aria-haspopup="true"
+                          aria-label="Challenge actions"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpenMenuChallengeId((cur) =>
+                              cur === challenge.id ? null : challenge.id
+                            );
+                          }}
                           className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </motion.button>
+                        {openMenuChallengeId === challenge.id && (
+                          <div
+                            role="menu"
+                            className="absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuChallengeId(null);
+                                handleViewChallenge(challenge);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 shrink-0 text-gray-500" />
+                              View race
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuChallengeId(null);
+                                void handleShareChallenge(challenge.inviteCode);
+                              }}
+                            >
+                              <Share2 className="h-4 w-4 shrink-0 text-gray-500" />
+                              Copy invite link
+                            </button>
+                            {challenge.isCreator && (
+                              <>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuChallengeId(null);
+                                    handleEditChallenge();
+                                  }}
+                                >
+                                  <Edit3 className="h-4 w-4 shrink-0 text-gray-500" />
+                                  Edit…
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void confirmAndDeleteChallenge(challenge);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 shrink-0" />
+                                  Delete challenge
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -639,7 +749,7 @@ const MyChallenges: React.FC = () => {
                         <Share2 className="w-4 h-4" />
                       </motion.button>
                       
-                      {challenge.creatorId === user?.id && (
+                      {challenge.isCreator && (
                         <>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -652,13 +762,13 @@ const MyChallenges: React.FC = () => {
                           >
                             <Edit3 className="w-4 h-4" />
                           </motion.button>
-                          
+
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteChallenge(challenge.id);
+                              void confirmAndDeleteChallenge(challenge);
                             }}
                             className="px-3 py-2 text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
                           >

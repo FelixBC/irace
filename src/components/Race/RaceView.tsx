@@ -10,7 +10,7 @@ import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User
 import { ChallengeService } from '../../services/challengeService';
 import { createStravaDataService, RealTimeStravaData } from '../../services/stravaDataService';
 import { useAuth } from '../../context/AuthContext';
-import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
+import { differenceInMinutes, format } from 'date-fns';
 import { getMainAppUrl } from '../../config/urls';
 import { createLogger } from '../../lib/logger';
 
@@ -21,6 +21,30 @@ const DEMO_PARTICIPANT_COUNT = 3;
 
 function isDemoChallengeId(id: string | undefined): boolean {
   return id != null && id.toLowerCase() === DEMO_ROUTE_ID;
+}
+
+/** API JSON uses date strings; coerce before compare so past end dates never show negative minutes. */
+function getChallengeTimeDisplay(challenge: Challenge): { ended: boolean; countdown: string } {
+  if (challenge.status === ChallengeStatus.COMPLETED) {
+    return { ended: true, countdown: '' };
+  }
+  const end =
+    challenge.endDate instanceof Date ? challenge.endDate : new Date(challenge.endDate);
+  if (Number.isNaN(end.getTime())) {
+    return { ended: true, countdown: '' };
+  }
+  const totalMinutes = differenceInMinutes(end, new Date());
+  if (totalMinutes <= 0) {
+    return { ended: true, countdown: '' };
+  }
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  let countdown: string;
+  if (days > 0) countdown = `${days}d ${hours}h`;
+  else if (hours > 0) countdown = `${hours}h ${minutes}m`;
+  else countdown = `${minutes}m`;
+  return { ended: false, countdown };
 }
 
 function demoAvatar(name: string): string {
@@ -313,27 +337,6 @@ const RaceView: React.FC = () => {
     setRaceTracks(buildDemoRaceTracks(ch));
   };
 
-  const getTimeRemaining = (): string => {
-    if (!challenge) return '0 days';
-
-    const now = new Date();
-    const end = challenge.endDate;
-
-    if (end <= now) return '0m';
-
-    const days = differenceInDays(end, now);
-    const hours = differenceInHours(end, now) % 24;
-    const minutes = differenceInMinutes(end, now) % 60;
-
-    if (days > 0) {
-      return `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else {
-      return `${minutes}m`;
-    }
-  };
-
   const finishers = useMemo((): ChallengeParticipant[] => {
     const list = challenge?.participants;
     if (!Array.isArray(list)) return [];
@@ -420,6 +423,8 @@ const RaceView: React.FC = () => {
     );
   }
 
+  const timeDisplay = getChallengeTimeDisplay(challenge);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -445,7 +450,9 @@ const RaceView: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
-                <span>{getTimeRemaining()} remaining</span>
+                <span>
+                  {timeDisplay.ended ? 'Challenge ended' : `${timeDisplay.countdown} remaining`}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>📅</span>
@@ -563,7 +570,10 @@ const RaceView: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <RaceTrack track={track} timeRemaining={getTimeRemaining()} />
+                  <RaceTrack
+                    track={track}
+                    timeRemaining={timeDisplay.ended ? 'Ended' : `${timeDisplay.countdown} left`}
+                  />
                 </motion.div>
               ))}
             </motion.div>

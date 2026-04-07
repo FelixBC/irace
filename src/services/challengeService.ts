@@ -130,6 +130,25 @@ export class ChallengeService {
     }
   }
 
+  /** Creator-only; requires session cookie / Bearer token. */
+  static async deleteChallenge(challengeId: string): Promise<void> {
+    const sessionToken = localStorage.getItem('session_token');
+    if (!sessionToken) {
+      throw new Error('Please sign in to delete a challenge.');
+    }
+    const url = `${CHALLENGES}?challengeId=${encodeURIComponent(challengeId)}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+      },
+    });
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      throw new Error(data.error || `Failed to delete challenge (${response.status})`);
+    }
+  }
+
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
       const response = await fetch(USER_CHALLENGES(userId));

@@ -5,6 +5,7 @@ import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../server/optionalInsecureTls.js';
 import { getQueryString } from '../../server/vercelQuery.js';
+import { resolveBearerUserId } from '../../server/authSession.js';
 
 const log = createLogger('challenges');
 
@@ -60,12 +61,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
       res.status(200).end();
       return;
+    }
+
+    if (req.method === 'DELETE') {
+      const challengeId = getQueryString(req, 'challengeId')?.trim();
+      if (!challengeId) {
+        return res.status(400).json({ error: 'challengeId is required' });
+      }
+
+      const prisma = createFreshPrismaClient();
+      try {
+        const userId = await resolveBearerUserId(prisma, req);
+        if (!userId) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const challenge = await prisma.challenge.findUnique({
+          where: { id: challengeId },
+          select: { id: true, creatorId: true },
+        });
+
+        if (!challenge) {
+          return res.status(404).json({ error: 'Challenge not found' });
+        }
+
+        if (challenge.creatorId !== userId) {
+          return res.status(403).json({ error: 'Only the challenge creator can delete this challenge' });
+        }
+
+        await prisma.$transaction([
+          prisma.activity.updateMany({
+            where: { challengeId },
+            data: { challengeId: null },
+          }),
+          prisma.challenge.delete({ where: { id: challengeId } }),
+        ]);
+
+        log.info('challenge deleted', { challengeId, userId });
+        return res.status(200).json({ ok: true });
+      } catch (dbError) {
+        log.error('delete challenge failed', dbError);
+        const message = dbError instanceof Error ? dbError.message : 'Unknown error';
+        return res.status(500).json({
+          error: 'Failed to delete challenge',
+          details: message,
+        });
+      } finally {
+        await prisma.$disconnect().catch((e) => {
+          log.warn('prisma disconnect failed', e?.message ?? e);
+        });
+      }
     }
 
     if (req.method === 'POST' && getQueryString(req, 'action') === 'join') {

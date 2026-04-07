@@ -69,6 +69,8 @@ export interface ChallengeParticipant {
   status?: ParticipationStatus;
   joinedAt?: Date;
   distance?: number;
+  /** When set, per-sport km (or other units) for multi-sport challenges; preferred over aggregate `distance`. */
+  progress?: Partial<Record<Sport, number>> | null;
   lastActivityDate?: Date;
   finishedAt?: Date;
   finishPosition?: number;

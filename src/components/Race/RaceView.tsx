@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Share2, Copy, QrCode, RefreshCw, Users, Clock, AlertCircle, Trophy } from 'lucide-react';
+import { Share2, RefreshCw, Users, Clock, AlertCircle, Trophy } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import RaceTrack from './RaceTrack';
 import ActivityFeed from './ActivityFeed';
@@ -160,13 +160,75 @@ function buildDemoRaceTracks(ch: Challenge): RaceTrackType[] {
   });
 }
 
+function pickPerSportKm(p: ChallengeParticipant, sport: Sport): number | null {
+  const raw = p.progress;
+  if (raw && typeof raw === 'object') {
+    const v = raw[sport];
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+  }
+  return null;
+}
+
+function selfStravaKmForSport(activities: Activity[], sport: Sport, challengeStart: Date): number {
+  return activities
+    .filter((a) => a.sport === sport && new Date(a.date) >= challengeStart)
+    .reduce((s, a) => s + a.distance, 0);
+}
+
+/**
+ * One track per sport: everyone who joined (`challenge.participants`) appears on each lane.
+ * Distances come from server `progress[sport]` or `distance` (aggregate). For the logged-in user
+ * only, optional Strava activities refine per-sport km until everyone’s data is server-driven.
+ */
+function buildRealRaceTracks(
+  ch: Challenge,
+  selfUserId: string | undefined,
+  selfActivities: Activity[] | undefined
+): RaceTrackType[] {
+  const start = new Date(ch.startDate);
+  const rows: ChallengeParticipant[] = Array.isArray(ch.participants) ? ch.participants : [];
+
+  return ch.sports.map((sport) => {
+    const sportGoal = ch.sportGoals?.[sport] || ch.goal || 100;
+
+    const participantProgress: ParticipantProgress[] = rows.map((p) => {
+      const perSport = pickPerSportKm(p, sport);
+      let km: number;
+      if (perSport != null) {
+        km = perSport;
+      } else if (selfUserId && p.user.id === selfUserId && selfActivities?.length) {
+        km = selfStravaKmForSport(selfActivities, sport, start);
+      } else {
+        km = p.distance ?? 0;
+      }
+
+      const pct = sportGoal > 0 ? Math.min(100, (km / sportGoal) * 100) : 0;
+      return {
+        user: p.user,
+        distance: km,
+        percentage: pct,
+        dailyProgress: [],
+      };
+    });
+
+    participantProgress.sort((a, b) => b.distance - a.distance);
+    const leader = participantProgress.length > 0 ? participantProgress[0].user : null;
+
+    return {
+      sport,
+      participants: participantProgress,
+      maxDistance: sportGoal,
+      leader,
+    };
+  });
+}
+
 const RaceView: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
   const { user, stravaTokens, isConnectedToStrava } = useAuth();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [raceTracks, setRaceTracks] = useState<RaceTrackType[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showQR, setShowQR] = useState(false);
   const [stravaData, setStravaData] = useState<RealTimeStravaData | null>(null);
   const [isLoadingStrava, setIsLoadingStrava] = useState(false);
   const [stravaError, setStravaError] = useState<string | null>(null);
@@ -205,42 +267,40 @@ const RaceView: React.FC = () => {
     void loadRealChallenge();
   }, [challengeId]);
 
-  // After real challenge loads (or Strava / user becomes available), sync tracks — avoids stale
-  // `isConnectedToStrava` inside the async fetch callback so a just-created challenge shows data without refresh.
+  // Participant-only tracks (also when Strava is off — avoids overwriting Strava-refined self km).
   useEffect(() => {
     if (!challengeId || isDemoChallengeId(challengeId) || !challenge) return;
+    if (isConnectedToStrava && stravaTokens) return;
+    setRaceTracks(buildRealRaceTracks(challenge, user?.id, undefined));
+  }, [challengeId, challenge, user?.id, isConnectedToStrava, stravaTokens]);
 
-    if (isConnectedToStrava && stravaTokens) {
-      console.log('🔄 Loading Strava data for challenge', challenge.inviteCode);
-      void loadStravaData();
-    } else {
-      console.log('🔗 No Strava session — empty tracks for challenge', challenge.inviteCode);
-      generateEmptyRaceTracks(challenge);
-    }
-  }, [challengeId, challenge, isConnectedToStrava, stravaTokens, user?.id]);
+  // Strava path: depend on `challenge?.id` only so `loadStravaData` can `setChallenge` without re-triggering a fetch loop.
+  useEffect(() => {
+    if (!challengeId || isDemoChallengeId(challengeId) || !challenge?.id) return;
+    if (!isConnectedToStrava || !stravaTokens) return;
+    void loadStravaData();
+  }, [challengeId, challenge?.id, isConnectedToStrava, stravaTokens, user?.id]);
 
   const loadStravaData = async () => {
-    if (!stravaTokens) return;
-    
+    if (!stravaTokens || !challengeId || isDemoChallengeId(challengeId)) return;
+
     console.log('🔄 Starting to load Strava data...');
-    console.log('🔑 Strava tokens:', stravaTokens);
-    
+
     setIsLoadingStrava(true);
     setStravaError(null);
-    
+
     try {
+      const refreshed = await ChallengeService.getChallenge(challengeId);
+      const ch = refreshed ?? challenge;
+      if (refreshed) setChallenge(refreshed);
+      if (!ch) return;
+
       const stravaService = createStravaDataService(stravaTokens);
-      console.log('🏃‍♂️ Strava service created, fetching user data...');
-      
       const data = await stravaService.refreshUserData();
-      console.log('✅ Strava data received:', data);
-      console.log('📊 Activities count:', data.activities.length);
-      console.log('📊 Sample activities:', data.activities.slice(0, 3));
-      
+      console.log('✅ Strava data received:', data.activities.length, 'activities');
+
       setStravaData(data);
-      
-      // Update race tracks with real Strava data
-      generateRaceTracksWithRealData(data.activities);
+      setRaceTracks(buildRealRaceTracks(ch, user?.id, data.activities));
     } catch (error) {
       console.error('❌ Error loading Strava data:', error);
       setStravaError(error instanceof Error ? error.message : 'Failed to load Strava data');
@@ -253,94 +313,6 @@ const RaceView: React.FC = () => {
     const ch = source ?? challenge;
     if (!ch) return;
     setRaceTracks(buildDemoRaceTracks(ch));
-  };
-
-  const generateEmptyRaceTracks = (challenge: Challenge) => {
-    if (!challenge) return;
-
-    console.log('🏃‍♂️ Generating empty race tracks for challenge:', challenge);
-
-    const tracks: RaceTrackType[] = challenge.sports.map((sport) => {
-      // Create empty tracks with 0 progress
-      const participantProgress: ParticipantProgress[] = [{
-        user: user || { id: '1', name: 'You', image: 'https://ui-avatars.com/api/?name=You&size=40&background=random' },
-        distance: 0,
-        percentage: 0,
-        dailyProgress: [],
-      }];
-
-      // Use sport-specific goal if available, otherwise fallback to challenge goal
-      const sportGoal = challenge.sportGoals?.[sport] || challenge.goal || 100;
-
-      return {
-        sport,
-        participants: participantProgress,
-        maxDistance: sportGoal, // Use sport-specific goal
-        leader: participantProgress[0].user,
-      };
-    });
-
-    console.log('🏃‍♂️ Generated empty tracks:', tracks);
-    setRaceTracks(tracks);
-  };
-
-  const generateRaceTracksWithRealData = (activities: Activity[]) => {
-    if (!challenge || !user) return;
-
-    console.log('🏃‍♂️ Generating real race tracks with Strava data:', activities);
-
-    const tracks: RaceTrackType[] = challenge.sports.map((sport) => {
-      // Get activities for this sport from real Strava data
-      // BUT only include activities that happened AFTER the challenge start date
-      const challengeStartDate = new Date(challenge.startDate);
-      console.log(`📅 Challenge start date: ${challengeStartDate.toDateString()} (${challengeStartDate.toISOString()})`);
-      
-      const sportActivities = activities.filter(
-        (activity) => 
-          activity.sport === sport && 
-          new Date(activity.date) >= challengeStartDate
-      );
-
-      console.log(`🏃‍♂️ Sport ${sport} has ${sportActivities.length} activities since challenge start (${challengeStartDate.toDateString()})`);
-      
-      // Log some sample activities to verify dates
-      if (sportActivities.length > 0) {
-        console.log(`📅 Sample activities for ${sport}:`, sportActivities.slice(0, 2).map(a => ({
-          date: new Date(a.date).toDateString(),
-          distance: a.distance,
-          type: a.sport
-        })));
-      }
-
-      // For real challenges, calculate progress based on challenge goal
-      const totalDistance = sportActivities.reduce((sum, a) => sum + a.distance, 0);
-      const challengeGoal = challenge.sportGoals?.[sport] || challenge.goal || 100; // Use sport-specific goal, fallback to general goal
-      const progressPercentage = Math.min((totalDistance / challengeGoal) * 100, 100); // Cap at 100%
-      
-      console.log(`🏃‍♂️ Sport ${sport}: ${totalDistance}km / ${challengeGoal}km = ${progressPercentage.toFixed(1)}% (since challenge start)`);
-      
-      const participantProgress: ParticipantProgress[] = [{
-        user: user,
-        distance: totalDistance,
-        percentage: progressPercentage,
-        dailyProgress: [], // Simplified for demo
-      }];
-
-      // Sort by distance (descending)
-      participantProgress.sort((a, b) => b.distance - a.distance);
-
-      const leader = participantProgress.length > 0 ? participantProgress[0].user : null;
-
-      return {
-        sport,
-        participants: participantProgress,
-        maxDistance: challengeGoal, // Use the sport-specific goal as max distance
-        leader,
-      };
-    });
-
-    console.log('🏃‍♂️ Generated real tracks:', tracks);
-    setRaceTracks(tracks);
   };
 
   const getTimeRemaining = (): string => {
@@ -380,18 +352,17 @@ const RaceView: React.FC = () => {
     if (isDemoChallengeId(challengeId)) {
       return 3; // Demo has 3 participants
     }
-    
-    // For real challenges, count actual participants
+
+    const fromApi = challenge?.participants?.length;
+    if (typeof fromApi === 'number' && fromApi > 0) return fromApi;
+
     if (raceTracks.length === 0) return 0;
-    
-    // Get unique participants across all tracks
     const allParticipants = new Set<string>();
-    raceTracks.forEach(track => {
-      track.participants.forEach(participant => {
+    raceTracks.forEach((track) => {
+      track.participants.forEach((participant) => {
         allParticipants.add(participant.user.id);
       });
     });
-    
     return allParticipants.size;
   };
 
@@ -401,11 +372,21 @@ const RaceView: React.FC = () => {
     if (isDemoChallengeId(challengeId)) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       generateDemoRaceTracks(challenge);
-    } else if (isConnectedToStrava && stravaTokens) {
-      await loadStravaData();
-    } else if (challenge) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      generateEmptyRaceTracks(challenge);
+    } else if (challengeId) {
+      try {
+        const refreshed = await ChallengeService.getChallenge(challengeId);
+        if (refreshed) setChallenge(refreshed);
+        const ch = refreshed ?? challenge;
+        if (ch) {
+          if (isConnectedToStrava && stravaTokens) {
+            await loadStravaData();
+          } else {
+            setRaceTracks(buildRealRaceTracks(ch, user?.id, undefined));
+          }
+        }
+      } catch (e) {
+        console.error('Refresh challenge failed:', e);
+      }
     }
 
     setIsRefreshing(false);

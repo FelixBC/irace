@@ -1,4 +1,5 @@
 import { normalizeSports } from './normalizeSports.js';
+import { closeChallengeIfEnded, maybeMarkParticipantFinished } from './challengeLifecycle.js';
 
 export async function handleStravaSync(req, res) {
   console.log('🏃‍♂️ === STRAVA SYNC API ===');
@@ -58,7 +59,7 @@ export async function handleStravaSync(req, res) {
       if (challengeId) {
         const challengeResult = await client.query(
           `
-          SELECT "id", "sports", "startDate", "endDate", "sportGoals"
+          SELECT "id", "sports", "startDate", "endDate", "sportGoals", "status"
           FROM "Challenge" 
           WHERE "id" = $1
         `,
@@ -168,19 +169,30 @@ export async function handleStravaSync(req, res) {
       }
 
       if (challengeId && syncedCount > 0) {
-        await client.query(
-          `
-          UPDATE "Participation" 
-          SET 
-            "currentDistance" = "currentDistance" + $1,
-            "lastActivityDate" = NOW(),
-            "updatedAt" = NOW()
-          WHERE "userId" = $2 AND "challengeId" = $3
-        `,
-          [totalDistance, userId, challengeId]
-        );
+        await client.query('BEGIN');
+        try {
+          const ended = await closeChallengeIfEnded(client, challengeId);
+          if (!ended) {
+            await client.query(
+              `
+              UPDATE "Participation" 
+              SET 
+                "currentDistance" = "currentDistance" + $1,
+                "lastActivityDate" = NOW(),
+                "updatedAt" = NOW()
+              WHERE "userId" = $2 AND "challengeId" = $3
+            `,
+              [totalDistance, userId, challengeId]
+            );
 
-        console.log(`✅ Updated participation progress: +${totalDistance.toFixed(2)}km`);
+            await maybeMarkParticipantFinished(client, { challengeId, userId });
+            console.log(`✅ Updated participation progress: +${totalDistance.toFixed(2)}km`);
+          }
+          await client.query('COMMIT');
+        } catch (e) {
+          await client.query('ROLLBACK').catch(() => {});
+          throw e;
+        }
       }
 
       await client.end();

@@ -30,6 +30,23 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Close any ended challenges for this user (creator or participant).
+    await pool.query(
+      `
+      UPDATE "Challenge" c
+      SET "status" = 'COMPLETED', "completedAt" = NOW(), "updatedAt" = NOW()
+      WHERE c."status" = 'ACTIVE'
+        AND c."endDate" <= NOW()
+        AND (
+          c."creatorId" = $1 OR EXISTS (
+            SELECT 1 FROM "Participation" p
+            WHERE p."challengeId" = c.id AND p."userId" = $1
+          )
+        )
+    `,
+      [userId]
+    );
+
     // Get challenges where user is either creator or participant
     const query = `
       SELECT DISTINCT c.*, 

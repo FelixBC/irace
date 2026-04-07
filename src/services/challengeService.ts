@@ -137,6 +137,9 @@ export class ChallengeService {
       }
     } catch (error) {
       console.error('Error joining challenge:', error);
+      if (error instanceof Error && error.message) {
+        throw error;
+      }
       throw new Error('Failed to join challenge. Please try again.');
     }
   }
@@ -180,6 +183,35 @@ export class ChallengeService {
       console.error('Error syncing Strava activities:', error);
       throw new Error('Failed to sync Strava activities. Please try again.');
     }
+  }
+
+  static async getTaunts(inviteCode: string, limit = 20): Promise<any> {
+    const url = `${getApiBaseUrl()}/challenges/taunts?id=${encodeURIComponent(inviteCode)}&limit=${limit}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to load taunts');
+    }
+    return await res.json();
+  }
+
+  static async sendTaunt(inviteCode: string, presetKey: string): Promise<{ taunt: unknown }> {
+    const sessionToken = localStorage.getItem('session_token');
+    if (!sessionToken) throw new Error('Please connect Strava to send taunts.');
+    const url = `${getApiBaseUrl()}/challenges/taunts?id=${encodeURIComponent(inviteCode)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionToken}`,
+      },
+      body: JSON.stringify({ presetKey }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to send taunt');
+    }
+    return data;
   }
 
   private static generateShareCode(): string {

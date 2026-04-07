@@ -126,8 +126,8 @@ const MyChallenges: React.FC = () => {
     switch (status) {
       case ChallengeStatus.ACTIVE: return 'text-green-600 bg-green-100';
       case ChallengeStatus.COMPLETED: return 'text-blue-600 bg-blue-100';
-      case ChallengeStatus.UPCOMING: return 'text-orange-600 bg-orange-100';
-      case ChallengeStatus.PAUSED: return 'text-gray-600 bg-gray-100';
+      case ChallengeStatus.CANCELLED: return 'text-gray-600 bg-gray-100';
+      case ChallengeStatus.DRAFT: return 'text-gray-600 bg-gray-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -136,8 +136,8 @@ const MyChallenges: React.FC = () => {
     switch (status) {
       case ChallengeStatus.ACTIVE: return 'Active';
       case ChallengeStatus.COMPLETED: return 'Completed';
-      case ChallengeStatus.UPCOMING: return 'Upcoming';
-      case ChallengeStatus.PAUSED: return 'Paused';
+      case ChallengeStatus.CANCELLED: return 'Cancelled';
+      case ChallengeStatus.DRAFT: return 'Draft';
       default: return 'Unknown';
     }
   };
@@ -352,8 +352,8 @@ const MyChallenges: React.FC = () => {
                 <option value="all">All Status</option>
                 <option value={ChallengeStatus.ACTIVE}>Active</option>
                 <option value={ChallengeStatus.COMPLETED}>Completed</option>
-                <option value={ChallengeStatus.UPCOMING}>Upcoming</option>
-                <option value={ChallengeStatus.PAUSED}>Paused</option>
+                <option value={ChallengeStatus.CANCELLED}>Cancelled</option>
+                <option value={ChallengeStatus.DRAFT}>Draft</option>
               </select>
 
               <select
@@ -498,9 +498,18 @@ const MyChallenges: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ scale: 1.02 }}
+                  onClick={() => handleViewChallenge(challenge)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleViewChallenge(challenge);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${
                     viewMode === 'list' ? 'flex' : ''
-                  }`}
+                  } cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2`}
                 >
                   {/* Challenge Header */}
                   <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
@@ -540,6 +549,7 @@ const MyChallenges: React.FC = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
+                          onClick={(e) => e.stopPropagation()}
                           className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                           <MoreVertical className="w-4 h-4" />
@@ -591,12 +601,11 @@ const MyChallenges: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-600">
-                          {challenge.status === ChallengeStatus.UPCOMING 
-                            ? `${getDaysRemaining(challenge.endDate)} days left`
-                            : challenge.status === ChallengeStatus.ACTIVE
+                          {challenge.status === ChallengeStatus.ACTIVE
                             ? `${getDaysRemaining(challenge.endDate)} days remaining`
-                            : 'Completed'
-                          }
+                            : challenge.status === ChallengeStatus.COMPLETED
+                              ? 'Completed'
+                              : getStatusText(challenge.status)}
                         </span>
                       </div>
                     </div>
@@ -608,7 +617,10 @@ const MyChallenges: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleViewChallenge(challenge)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewChallenge(challenge);
+                        }}
                         className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         <Eye className="w-4 h-4" />
@@ -618,7 +630,10 @@ const MyChallenges: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleShareChallenge(challenge.inviteCode)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareChallenge(challenge.inviteCode);
+                        }}
                         className="px-3 py-2 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                       >
                         <Share2 className="w-4 h-4" />
@@ -629,7 +644,10 @@ const MyChallenges: React.FC = () => {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleEditChallenge(challenge.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditChallenge(challenge.id);
+                            }}
                             className="px-3 py-2 text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -638,7 +656,10 @@ const MyChallenges: React.FC = () => {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleDeleteChallenge(challenge.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteChallenge(challenge.id);
+                            }}
                             className="px-3 py-2 text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />

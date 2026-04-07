@@ -1,5 +1,6 @@
 import { normalizeSports } from './normalizeSports.js';
 import { getValidStravaAccessToken } from './stravaTokenRefresh.js';
+import { closeChallengeIfEnded, maybeMarkParticipantFinished } from './challengeLifecycle.js';
 
 const SPORT_MAP = {
   Run: 'RUNNING',
@@ -134,7 +135,7 @@ export async function processStravaWebhookEvent(payload) {
 
       const challRes = await client.query(
         `
-        SELECT c."id", c."startDate", c."endDate", c."sports"
+        SELECT c."id", c."startDate", c."endDate", c."sports", c."status"
         FROM "Challenge" c
         INNER JOIN "Participation" p ON p."challengeId" = c.id
         WHERE p."userId" = $1 AND p."status" = 'ACTIVE'
@@ -143,6 +144,13 @@ export async function processStravaWebhookEvent(payload) {
       );
 
       for (const row of challRes.rows) {
+        // Freeze lifecycle: if ended, close and do not apply progress changes.
+        if (new Date(row.endDate) <= new Date()) {
+          await closeChallengeIfEnded(client, row.id);
+          continue;
+        }
+        if (row.status && row.status !== 'ACTIVE') continue;
+
         const start = new Date(row.startDate);
         const end = new Date(row.endDate);
         if (startDate < start || startDate > end) continue;
@@ -151,18 +159,33 @@ export async function processStravaWebhookEvent(payload) {
         const mappedSport = SPORT_MAP[activity.sport_type] || 'RUNNING';
         if (!sports.includes(mappedSport)) continue;
 
-        await client.query(
-          `
-          UPDATE "Participation"
-          SET
-            "currentDistance" = "currentDistance" + $1,
-            "lastActivityDate" = $2,
-            "lastActivityAt" = $2,
-            "updatedAt" = NOW()
-          WHERE "userId" = $3 AND "challengeId" = $4
-        `,
-          [distanceKm, startDate, userId, row.id]
-        );
+        await client.query('BEGIN');
+        try {
+          const ended = await closeChallengeIfEnded(client, row.id);
+          if (ended) {
+            await client.query('COMMIT');
+            continue;
+          }
+
+          await client.query(
+            `
+            UPDATE "Participation"
+            SET
+              "currentDistance" = "currentDistance" + $1,
+              "lastActivityDate" = $2,
+              "lastActivityAt" = $2,
+              "updatedAt" = NOW()
+            WHERE "userId" = $3 AND "challengeId" = $4
+          `,
+            [distanceKm, startDate, userId, row.id]
+          );
+
+          await maybeMarkParticipantFinished(client, { challengeId: row.id, userId });
+          await client.query('COMMIT');
+        } catch (e) {
+          await client.query('ROLLBACK').catch(() => {});
+          throw e;
+        }
       }
 
       console.log('strava webhook: activity created', objectId, 'user', userId);

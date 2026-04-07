@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Share2, Copy, QrCode, RefreshCw, Users, Clock, AlertCircle } from 'lucide-react';
+import { Share2, Copy, QrCode, RefreshCw, Users, Clock, AlertCircle, Trophy } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import RaceTrack from './RaceTrack';
 import ActivityFeed from './ActivityFeed';
 import Leaderboard from './Leaderboard';
-import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User, Activity, ChallengeType, ChallengeStatus } from '../../types';
+import TauntsPanel from './TauntsPanel';
+import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User, Activity, ChallengeType, ChallengeStatus, ChallengeParticipant } from '../../types';
 // Mock data removed - using real data only
 import { ChallengeService } from '../../services/challengeService';
 import { createStravaDataService, RealTimeStravaData } from '../../services/stravaDataService';
@@ -348,6 +349,8 @@ const RaceView: React.FC = () => {
     const now = new Date();
     const end = challenge.endDate;
 
+    if (end <= now) return '0m';
+
     const days = differenceInDays(end, now);
     const hours = differenceInHours(end, now) % 24;
     const minutes = differenceInMinutes(end, now) % 60;
@@ -360,6 +363,17 @@ const RaceView: React.FC = () => {
       return `${minutes}m`;
     }
   };
+
+  const finishers = useMemo(() => {
+    const list = Array.isArray((challenge as Challenge | null)?.participants)
+      ? ((challenge as Challenge).participants as ChallengeParticipant[])
+      : [];
+    return [...list]
+      .filter((p) => typeof p.finishPosition === 'number' && p.finishPosition != null)
+      .sort((a, b) => (a.finishPosition ?? 0) - (b.finishPosition ?? 0));
+  }, [challenge]);
+
+  const hasResults = finishers.length > 0 || challenge?.status === ChallengeStatus.COMPLETED;
 
   const getTotalParticipants = (): number => {
     // For demo challenge, show the demo users count
@@ -587,7 +601,52 @@ const RaceView: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {hasResults && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                  <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
+                  Results
+                </h3>
+                {challenge?.status === ChallengeStatus.COMPLETED && (
+                  <p className="text-xs text-gray-500 mb-4">Challenge closed. Results are final.</p>
+                )}
+                {finishers.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No one finished yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {finishers.slice(0, 10).map((p) => (
+                      <div key={p.user.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50">
+                        <div className="w-8 text-sm font-mono text-gray-500">{p.finishPosition}.</div>
+                        <img
+                          src={
+                            p.user.image ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name || 'User')}&size=64&background=f97316&color=fff`
+                          }
+                          alt={p.user.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{p.user.name || 'User'}</div>
+                          <div className="text-xs text-gray-400">
+                            {typeof p.finalDistance === 'number'
+                              ? `${p.finalDistance.toFixed(1)}km`
+                              : typeof p.distance === 'number'
+                                ? `${p.distance.toFixed(1)}km`
+                                : ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
             <Leaderboard raceTracks={raceTracks} />
+            {!isDemo && challengeId && <TauntsPanel inviteCode={challengeId} />}
             <ActivityFeed activities={feedActivities} users={feedUsers} />
 
             {/* Show message when no Strava data */}

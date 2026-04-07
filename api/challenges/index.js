@@ -308,7 +308,7 @@ export default async function handler(req, res) {
                 "id", "name", "description", "sports", "challengeType",
                 "goal", "goalUnit", "sportGoals", "duration",
                 "startDate", "endDate", "isPublic", "inviteCode",
-                "maxParticipants", "status", "creatorId", "createdAt", "updatedAt"
+                "maxParticipants", "status", "creatorId", "createdAt", "updatedAt", "completedAt"
               FROM "Challenge"
               WHERE "inviteCode" = $1
             `, [id]);
@@ -316,17 +316,29 @@ export default async function handler(req, res) {
             if (challengeResult.rows.length > 0) {
               const challenge = challengeResult.rows[0];
               console.log('✅ Real challenge found, fetching participants...');
+
+              // Close challenge if it has ended (freeze results).
+              if (challenge.status === 'ACTIVE') {
+                await client.query(
+                  `
+                  UPDATE "Challenge"
+                  SET "status" = 'COMPLETED', "completedAt" = NOW(), "updatedAt" = NOW()
+                  WHERE "id" = $1 AND "status" = 'ACTIVE' AND "endDate" <= NOW()
+                `,
+                  [challenge.id]
+                );
+              }
               
               // Fetch participants for this challenge
               const participantsResult = await client.query(`
                 SELECT 
                   p."id", p."userId", p."joinedAt", p."status", p."progress", 
-                  p."currentDistance", p."lastActivityDate",
+                  p."currentDistance", p."lastActivityDate", p."finishedAt", p."finishPosition", p."finalDistance",
                   u."name", u."image", u."stravaId"
                 FROM "Participation" p
                 JOIN "User" u ON p."userId" = u."id"
-                WHERE p."challengeId" = $1 AND p."status" = 'ACTIVE'
-                ORDER BY p."joinedAt" ASC
+                WHERE p."challengeId" = $1 AND p."status" IN ('ACTIVE', 'COMPLETED')
+                ORDER BY p."finishPosition" ASC NULLS LAST, p."joinedAt" ASC
               `, [challenge.id]);
               
               const participants = participantsResult.rows.map(row => ({
@@ -341,7 +353,10 @@ export default async function handler(req, res) {
                 dailyProgress: [],
                 joinedAt: row.joinedAt,
                 progress: row.progress || {},
-                lastActivityDate: row.lastActivityDate
+                lastActivityDate: row.lastActivityDate,
+                finishedAt: row.finishedAt,
+                finishPosition: row.finishPosition,
+                finalDistance: row.finalDistance
               }));
               
               console.log(`✅ Found ${participants.length} participants`);

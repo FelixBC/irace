@@ -51,6 +51,7 @@ model User {
   participations     Participation[]
   sessions           Session[]
   pushSubscriptions  PushSubscription[]
+  challengeTaunts    ChallengeTaunt[]
 }
 
 model PushSubscription {
@@ -89,6 +90,7 @@ model Challenge {
   inviteCode      String          @unique
   maxParticipants Int             @default(10)
   status          ChallengeStatus @default(ACTIVE)
+  completedAt     DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   creatorId       String
@@ -98,6 +100,7 @@ model Challenge {
   activities      Activity[]
   creator         User            @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants    Participation[]
+  taunts          ChallengeTaunt[]
 
   @@index([creatorId])
   @@index([startDate, endDate])
@@ -116,6 +119,9 @@ model Participation {
   progress         Json?
   lastActivityDate DateTime?
   currentDistance  Float               @default(0)
+  finishedAt       DateTime?
+  finishPosition   Int?
+  finalDistance    Float?
   lastActivityAt   DateTime?
   /// When set, this user agreed that aggregated challenge stats may be shown to other participants in this challenge (Strava API / community-challenge model).
   challengeDataConsentAt      DateTime?
@@ -124,10 +130,25 @@ model Participation {
   user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, challengeId])
+  @@unique([challengeId, finishPosition])
   @@index([userId])
   @@index([challengeId])
   @@index([status])
   @@index([avatarId])
+}
+
+model ChallengeTaunt {
+  id         String   @id @default(cuid())
+  challengeId String
+  userId     String
+  presetKey  String
+  createdAt  DateTime @default(now())
+
+  challenge  Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId, createdAt])
+  @@index([userId])
 }
 
 model Activity {

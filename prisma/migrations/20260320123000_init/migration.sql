@@ -1,4 +1,5 @@
-﻿-- CreateSchema
+-- CreateSchema
+-- (normalized to UTF-8 without BOM)
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum

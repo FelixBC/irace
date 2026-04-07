@@ -60,6 +60,19 @@ export interface Challenge {
   maxParticipants: number;
   status: ChallengeStatus;
   creatorId: string;
+  completedAt?: Date;
+  participants?: ChallengeParticipant[];
+}
+
+export interface ChallengeParticipant {
+  user: User;
+  status?: ParticipationStatus;
+  joinedAt?: Date;
+  distance?: number;
+  lastActivityDate?: Date;
+  finishedAt?: Date;
+  finishPosition?: number;
+  finalDistance?: number;
 }
 
 export interface Participation {

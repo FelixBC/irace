@@ -31,6 +31,11 @@ const JoinChallenge: React.FC = () => {
       setIsLoading(true);
       const challengeData = await ChallengeService.getChallenge(inviteCode!);
       setChallenge(challengeData);
+      if (!challengeData) {
+        setError('Challenge not found or expired');
+      } else {
+        setError(null);
+      }
     } catch (err) {
       console.error('Error loading challenge:', err);
       setError('Challenge not found or expired');
@@ -61,7 +66,7 @@ const JoinChallenge: React.FC = () => {
 
     } catch (err) {
       console.error('Error joining challenge:', err);
-      setError('Failed to join challenge. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to join challenge. Please try again.');
     } finally {
       setIsJoining(false);
     }
@@ -130,7 +135,23 @@ const JoinChallenge: React.FC = () => {
     );
   }
 
-  if (!challenge) return null;
+  if (!challenge) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Challenge Not Found</h1>
+          <p className="text-gray-600 mb-6">{error || 'Challenge not found or expired'}</p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const sportConfig = {
     RUNNING: { icon: '🏃‍♂️', name: 'Running', color: 'text-orange-600' },

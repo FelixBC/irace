@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Share2, RefreshCw, Users, Clock, AlertCircle, Trophy } from 'lucide-react';
 import { useParams } from 'react-router-dom';
@@ -7,7 +7,6 @@ import ActivityFeed from './ActivityFeed';
 import Leaderboard from './Leaderboard';
 import TauntsPanel from './TauntsPanel';
 import { Challenge, RaceTrack as RaceTrackType, Sport, ParticipantProgress, User, Activity, ChallengeType, ChallengeStatus, ChallengeParticipant } from '../../types';
-// Mock data removed - using real data only
 import { ChallengeService } from '../../services/challengeService';
 import { createStravaDataService, RealTimeStravaData } from '../../services/stravaDataService';
 import { useAuth } from '../../context/AuthContext';
@@ -15,6 +14,7 @@ import { differenceInDays, differenceInHours, differenceInMinutes, format } from
 import { getMainAppUrl } from '../../config/urls';
 
 const DEMO_ROUTE_ID = 'demo-challenge';
+const DEMO_PARTICIPANT_COUNT = 3;
 
 function isDemoChallengeId(id: string | undefined): boolean {
   return id != null && id.toLowerCase() === DEMO_ROUTE_ID;
@@ -234,6 +234,29 @@ const RaceView: React.FC = () => {
   const [stravaError, setStravaError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
+  const loadStravaData = useCallback(async () => {
+    if (!stravaTokens || !challengeId || isDemoChallengeId(challengeId)) return;
+
+    setIsLoadingStrava(true);
+    setStravaError(null);
+
+    try {
+      const ch = await ChallengeService.getChallenge(challengeId);
+      if (!ch) return;
+
+      setChallenge(ch);
+      const stravaService = createStravaDataService(stravaTokens);
+      const data = await stravaService.refreshUserData();
+      setStravaData(data);
+      setRaceTracks(buildRealRaceTracks(ch, user?.id, data.activities));
+    } catch (error) {
+      console.error('Strava data load failed:', error);
+      setStravaError(error instanceof Error ? error.message : 'Failed to load Strava data');
+    } finally {
+      setIsLoadingStrava(false);
+    }
+  }, [stravaTokens, challengeId, user?.id]);
+
   // Demo: apply challenge + tracks before paint. Real routes: clear stale demo state here too (same frame).
   useLayoutEffect(() => {
     if (!challengeId) return;
@@ -279,35 +302,7 @@ const RaceView: React.FC = () => {
     if (!challengeId || isDemoChallengeId(challengeId) || !challenge?.id) return;
     if (!isConnectedToStrava || !stravaTokens) return;
     void loadStravaData();
-  }, [challengeId, challenge?.id, isConnectedToStrava, stravaTokens, user?.id]);
-
-  const loadStravaData = async () => {
-    if (!stravaTokens || !challengeId || isDemoChallengeId(challengeId)) return;
-
-    console.log('🔄 Starting to load Strava data...');
-
-    setIsLoadingStrava(true);
-    setStravaError(null);
-
-    try {
-      const refreshed = await ChallengeService.getChallenge(challengeId);
-      const ch = refreshed ?? challenge;
-      if (refreshed) setChallenge(refreshed);
-      if (!ch) return;
-
-      const stravaService = createStravaDataService(stravaTokens);
-      const data = await stravaService.refreshUserData();
-      console.log('✅ Strava data received:', data.activities.length, 'activities');
-
-      setStravaData(data);
-      setRaceTracks(buildRealRaceTracks(ch, user?.id, data.activities));
-    } catch (error) {
-      console.error('❌ Error loading Strava data:', error);
-      setStravaError(error instanceof Error ? error.message : 'Failed to load Strava data');
-    } finally {
-      setIsLoadingStrava(false);
-    }
-  };
+  }, [challengeId, challenge?.id, isConnectedToStrava, stravaTokens, loadStravaData]);
 
   const generateDemoRaceTracks = (source?: Challenge | null) => {
     const ch = source ?? challenge;
@@ -336,35 +331,29 @@ const RaceView: React.FC = () => {
     }
   };
 
-  const finishers = useMemo(() => {
-    const list = Array.isArray((challenge as Challenge | null)?.participants)
-      ? ((challenge as Challenge).participants as ChallengeParticipant[])
-      : [];
+  const finishers = useMemo((): ChallengeParticipant[] => {
+    const list = challenge?.participants;
+    if (!Array.isArray(list)) return [];
     return [...list]
-      .filter((p) => typeof p.finishPosition === 'number' && p.finishPosition != null)
+      .filter((p) => typeof p.finishPosition === 'number')
       .sort((a, b) => (a.finishPosition ?? 0) - (b.finishPosition ?? 0));
   }, [challenge]);
 
   const hasResults = finishers.length > 0 || challenge?.status === ChallengeStatus.COMPLETED;
 
-  const getTotalParticipants = (): number => {
-    // For demo challenge, show the demo users count
-    if (isDemoChallengeId(challengeId)) {
-      return 3; // Demo has 3 participants
-    }
+  const totalParticipants = useMemo(() => {
+    if (isDemoChallengeId(challengeId)) return DEMO_PARTICIPANT_COUNT;
 
-    const fromApi = challenge?.participants?.length;
-    if (typeof fromApi === 'number' && fromApi > 0) return fromApi;
+    const n = challenge?.participants?.length;
+    if (typeof n === 'number' && n > 0) return n;
 
     if (raceTracks.length === 0) return 0;
-    const allParticipants = new Set<string>();
-    raceTracks.forEach((track) => {
-      track.participants.forEach((participant) => {
-        allParticipants.add(participant.user.id);
-      });
-    });
-    return allParticipants.size;
-  };
+    const ids = new Set<string>();
+    for (const track of raceTracks) {
+      for (const p of track.participants) ids.add(p.user.id);
+    }
+    return ids.size;
+  }, [challengeId, challenge?.participants, raceTracks]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -385,7 +374,7 @@ const RaceView: React.FC = () => {
           }
         }
       } catch (e) {
-        console.error('Refresh challenge failed:', e);
+        console.error('Challenge refresh failed:', e);
       }
     }
 
@@ -394,20 +383,17 @@ const RaceView: React.FC = () => {
 
   const copyShareLink = async () => {
     if (!challenge?.inviteCode) {
-      console.error('No invite code available');
+      console.error('Share link unavailable: missing invite code');
       return;
     }
-    
+
     try {
       const shareUrl = `${getMainAppUrl()}/join/${challenge.inviteCode}`;
       await navigator.clipboard.writeText(shareUrl);
-      console.log('Share link copied to clipboard:', shareUrl);
-      
-      // Show visual feedback
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy share link:', error);
+      console.error('Clipboard write failed:', error);
       // Fallback: show the URL in an alert
       const shareUrl = `${getMainAppUrl()}/join/${challenge.inviteCode}`;
       alert(`Share this link: ${shareUrl}`);
@@ -452,7 +438,7 @@ const RaceView: React.FC = () => {
             <div className="flex flex-wrap justify-center items-center gap-6 text-lg">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5" />
-                <span>{getTotalParticipants()} participants</span>
+                <span>{totalParticipants} participants</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />

@@ -1,5 +1,8 @@
 import { Pool } from 'pg';
 import { normalizeSports } from '../../../../server/normalizeSports.js';
+import { createLogger } from '../../../../server/logger.js';
+
+const log = createLogger('challenges/user');
 
 // Disable SSL verification for Vercel
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -87,7 +90,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(challenges);
   } catch (error) {
-    console.error('Error fetching user challenges:', error);
+    log.error('fetch user challenges failed', error);
     res.status(500).json({ 
       error: 'Failed to fetch user challenges',
       details: error.message 

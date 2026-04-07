@@ -1,5 +1,8 @@
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { resolveBearerUserId } from '../../server/authSession.js';
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('challenges/taunts');
 
 const PRESET_TAUNTS = [
   { key: 'plateau', text: 'That plateau seems long.' },
@@ -111,7 +114,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    console.error('challenges/taunts:', err);
+    log.error('handler error', err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
     await prisma.$disconnect().catch(() => {});

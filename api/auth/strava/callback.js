@@ -1,3 +1,7 @@
+import { createLogger } from '../../../server/logger.js';
+
+const log = createLogger('stravaCallback');
+
 function getFrontendBaseUrl() {
   const explicit = process.env.FRONTEND_URL;
   if (explicit) return explicit.replace(/\/$/, '');
@@ -14,27 +18,22 @@ function getStravaRedirectUri() {
 }
 
 export default async function handler(req, res) {
-  console.log('🚀 Strava callback handler started');
-  console.log('📋 Request method:', req.method);
-  console.log('📋 Request query:', req.query);
+  log.debug('OAuth callback', req.method);
 
   if (req.method !== 'GET') {
-    console.log('❌ Method not allowed:', req.method);
+    log.warn('method not allowed', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { code } = req.query;
-    
+
     if (!code) {
-      console.log('❌ No authorization code provided');
+      log.warn('missing authorization code');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    console.log('🔑 Authorization code received:', code);
-
-    // Exchange authorization code for tokens
-    console.log('🔄 Exchanging code for tokens...');
+    log.debug('exchanging code for tokens');
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -51,15 +50,15 @@ export default async function handler(req, res) {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.log('❌ Token exchange failed:', tokenResponse.status, errorText);
+      log.warn('token exchange failed', tokenResponse.status, errorText.slice(0, 200));
       return res.status(400).json({ error: 'Token exchange failed' });
     }
 
     const tokens = await tokenResponse.json();
-    console.log('✅ Tokens received successfully');
+    log.debug('tokens received');
 
     // Get athlete info
-    console.log('👤 Fetching athlete info...');
+    log.debug('fetching athlete profile');
     const athleteResponse = await fetch('https://www.strava.com/api/v3/athlete', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`
@@ -67,12 +66,12 @@ export default async function handler(req, res) {
     });
 
     if (!athleteResponse.ok) {
-      console.log('❌ Failed to fetch athlete info:', athleteResponse.status);
+      log.warn('athlete fetch failed', athleteResponse.status);
       return res.status(400).json({ error: 'Failed to fetch athlete info' });
     }
 
     const athlete = await athleteResponse.json();
-    console.log('✅ Athlete info received:', athlete.firstname, athlete.lastname);
+    log.info('Strava athlete linked', { stravaId: athlete.id });
 
     // Use native pg client to avoid Prisma prepared statement issues
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -85,11 +84,11 @@ export default async function handler(req, res) {
 
     try {
       await client.connect();
-      console.log('✅ Database connected successfully with native pg client');
+      log.debug('db connected');
 
       // Create user using raw SQL
       const userId = `user_${athlete.id}`;
-      console.log('🔧 Creating user with ID:', userId);
+      log.debug('upsert user', userId);
 
       // Create or update user using raw SQL
       const userResult = await client.query(`
@@ -120,11 +119,11 @@ export default async function handler(req, res) {
       ]);
 
       const user = userResult.rows[0];
-      console.log('✅ User created/updated successfully');
+      log.info('user saved', { userId: user.id });
 
       // Create session using raw SQL
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      console.log('🔧 Creating session with token:', sessionToken);
+      log.debug('creating session');
 
       const sessionResult = await client.query(`
         INSERT INTO "Session" (
@@ -139,10 +138,10 @@ export default async function handler(req, res) {
       ]);
 
       const session = sessionResult.rows[0];
-      console.log('✅ Session created successfully');
+      log.debug('session created');
 
       await client.end();
-      console.log('✅ Database disconnected successfully');
+      log.debug('db disconnected');
 
       const frontendUrl = getFrontendBaseUrl();
       
@@ -151,24 +150,22 @@ export default async function handler(req, res) {
       let redirectUrl;
       
       if (state) {
-        // Decode the state parameter and redirect to the intended page
         const returnTo = decodeURIComponent(state);
         redirectUrl = `${frontendUrl}${returnTo}?session=${sessionToken}`;
-        console.log('✅ Redirecting to intended page:', redirectUrl);
+        log.debug('redirect with state', returnTo);
       } else {
-        // Default redirect to home page
         redirectUrl = `${frontendUrl}?session=${sessionToken}`;
-        console.log('✅ Redirecting to home page:', redirectUrl);
+        log.debug('redirect home');
       }
 
       res.redirect(302, redirectUrl);
 
     } catch (dbError) {
-      console.error('❌ Database error:', dbError);
+      log.error('database error', dbError);
       try {
         await client.end();
       } catch (e) {
-        console.log('⚠️ Error closing client:', e.message);
+        log.warn('pg client close failed', e?.message ?? e);
       }
       return res.status(500).json({
         error: 'Failed to create user/session',
@@ -177,7 +174,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('❌ Error in OAuth callback:', error);
+    log.error('OAuth callback failed', error);
     return res.status(500).json({
       error: 'OAuth callback failed',
       details: error.message

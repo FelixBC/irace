@@ -1,6 +1,9 @@
 import { normalizeSports } from './normalizeSports.js';
 import { getValidStravaAccessToken } from './stravaTokenRefresh.js';
 import { closeChallengeIfEnded, maybeMarkParticipantFinished } from './challengeLifecycle.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('stravaWebhook');
 
 const SPORT_MAP = {
   Run: 'RUNNING',
@@ -60,7 +63,7 @@ export async function processStravaWebhookEvent(payload) {
       await client.query(`UPDATE "User" SET "stravaTokens" = NULL, "updatedAt" = NOW() WHERE "stravaId" = $1`, [
         String(ownerId),
       ]);
-      console.log('strava webhook: athlete deauthorized', ownerId);
+      log.info('athlete deauthorized', { ownerId });
       return;
     }
 
@@ -72,7 +75,7 @@ export async function processStravaWebhookEvent(payload) {
 
     if (aspectType === 'delete') {
       await client.query(`DELETE FROM "Activity" WHERE "stravaActivityId" = $1`, [String(objectId)]);
-      console.log('strava webhook: activity deleted', objectId);
+      log.info('activity deleted', { objectId });
       return;
     }
 
@@ -85,7 +88,7 @@ export async function processStravaWebhookEvent(payload) {
       [stravaId]
     );
     if (userResult.rows.length === 0) {
-      console.log('strava webhook: no user for stravaId', stravaId);
+      log.debug('no local user for stravaId', stravaId);
       return;
     }
 
@@ -99,13 +102,13 @@ export async function processStravaWebhookEvent(payload) {
     });
 
     if (actRes.status === 404) {
-      console.log('strava webhook: activity not found (404)', objectId);
+      log.debug('activity not found (404)', objectId);
       return;
     }
 
     if (!actRes.ok) {
       const t = await actRes.text();
-      console.warn('strava webhook: activity fetch failed', actRes.status, t);
+      log.warn('activity fetch failed', actRes.status, t.slice(0, 200));
       return;
     }
 
@@ -188,7 +191,7 @@ export async function processStravaWebhookEvent(payload) {
         }
       }
 
-      console.log('strava webhook: activity created', objectId, 'user', userId);
+      log.info('activity created', { objectId, userId });
     } else {
       await client.query(
         `
@@ -204,7 +207,7 @@ export async function processStravaWebhookEvent(payload) {
       `,
         [String(objectId), sport, distanceKm, duration, startDate]
       );
-      console.log('strava webhook: activity updated', objectId);
+      log.info('activity updated', { objectId });
     }
   } finally {
     try {

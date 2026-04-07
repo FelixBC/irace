@@ -1,8 +1,11 @@
 import { normalizeSports } from '../../server/normalizeSports.js';
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('challenges');
 
 export default async function handler(req, res) {
-  console.log('🏆 === CHALLENGES API START ===');
-  
+  log.debug(req.method, req.url || '');
+
   try {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,13 +18,10 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST' && req.query.action === 'join') {
-      // Join challenge functionality
-      console.log('🏃‍♂️ Processing JOIN challenge request...');
-      
       const { challengeId, userId, challengeDataConsentAccepted, challengeDataConsentVersion } = req.body;
 
       if (!challengeId || !userId) {
-        console.log('❌ Missing required fields');
+        log.warn('join rejected: missing challengeId or userId');
         return res.status(400).json({ error: 'Challenge ID and User ID are required' });
       }
 
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log('🔗 Joining challenge:', challengeId, 'for user:', userId);
+      log.debug('join', { challengeId, userId });
 
       try {
         // Disable SSL verification for this request
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
         try {
           await client.connect();
-          console.log('✅ Database connected successfully with native pg client');
+          log.debug('db connected');
 
           // Check if challenge exists
           const challengeResult = await client.query(`
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
           ]);
 
           await client.end();
-          console.log('✅ User joined challenge successfully');
+          log.info('user joined challenge', { challengeId, userId });
 
           res.status(201).json({
             success: true,
@@ -133,11 +133,11 @@ export default async function handler(req, res) {
           });
 
         } catch (dbError) {
-          console.error('❌ Database error:', dbError);
+          log.error('join database error', dbError);
           try {
             await client.end();
           } catch (e) {
-            console.log('⚠️ Error closing client:', e.message);
+            log.warn('pg client close failed', e?.message ?? e);
           }
           return res.status(500).json({
             error: 'Failed to join challenge',
@@ -146,7 +146,7 @@ export default async function handler(req, res) {
         }
 
       } catch (error) {
-        console.error('❌ Error in join challenge:', error);
+        log.error('join failed', error);
         res.status(500).json({
           error: 'Join challenge failed',
           details: error.message
@@ -154,10 +154,8 @@ export default async function handler(req, res) {
       }
       
     } else if (req.method === 'POST') {
-      console.log('🏆 Processing POST request to create challenge...');
-      
         const challengeData = req.body;
-        console.log('🏆 Received challenge data:', challengeData);
+        log.debug('create challenge', { name: challengeData?.name, creatorId: challengeData?.creatorId });
 
         if (!challengeData.creatorParticipantSharingAck) {
           return res.status(400).json({
@@ -178,8 +176,8 @@ export default async function handler(req, res) {
         });
         
         await client.connect();
-        console.log('✅ Database connected successfully with native pg client');
-        
+        log.debug('db connected (create)');
+
         // Generate unique ID and invite code
         const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         const inviteCode = challengeData.inviteCode || Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -222,8 +220,8 @@ export default async function handler(req, res) {
         
         await client.query(query, values);
         await client.end();
-        
-        console.log('✅ Challenge created successfully in database');
+
+        log.info('challenge created', { challengeId, inviteCode });
         res.status(201).json({
           success: true,
           message: 'Challenge created successfully',
@@ -232,7 +230,7 @@ export default async function handler(req, res) {
         });
         
       } catch (dbError) {
-        console.error('❌ Database error:', dbError);
+        log.error('create challenge database error', dbError);
         res.status(500).json({ 
           error: 'Failed to create challenge in database',
           details: dbError.message 
@@ -240,13 +238,11 @@ export default async function handler(req, res) {
       }
       
     } else if (req.method === 'GET') {
-      console.log('🏆 Processing GET request to fetch challenges...');
-      
       const { id } = req.query;
-      
+
       if (id) {
         // Get specific challenge by inviteCode (frontend passes inviteCode as id)
-        console.log('🏆 Requested challenge inviteCode:', id);
+        log.debug('get challenge by inviteCode', id);
         
         try {
           // Disable SSL verification for this request
@@ -258,7 +254,7 @@ export default async function handler(req, res) {
             ssl: false
           });
           await client.connect();
-          console.log('✅ Database connected successfully with native pg client for GET challenge');
+          log.debug('db connected (get by invite)');
           
           if (id === 'demo-challenge') {
             // Return demo challenge for landing page
@@ -298,7 +294,7 @@ export default async function handler(req, res) {
               ]
             };
             
-            console.log('✅ Demo challenge returned successfully');
+            log.debug('demo challenge returned');
             await client.end();
             res.status(200).json(demoChallenge);
           } else {
@@ -315,7 +311,7 @@ export default async function handler(req, res) {
             
             if (challengeResult.rows.length > 0) {
               const challenge = challengeResult.rows[0];
-              console.log('✅ Real challenge found, fetching participants...');
+              log.debug('challenge found, loading participants', challenge.id);
 
               // Close challenge if it has ended (freeze results).
               if (challenge.status === 'ACTIVE') {
@@ -359,7 +355,7 @@ export default async function handler(req, res) {
                 finalDistance: row.finalDistance
               }));
               
-              console.log(`✅ Found ${participants.length} participants`);
+              log.debug('participants loaded', participants.length);
               
               const challengeWithParticipants = {
                 ...challenge,
@@ -370,13 +366,13 @@ export default async function handler(req, res) {
               await client.end();
               res.status(200).json(challengeWithParticipants);
             } else {
-              console.log('❌ Challenge not found in database');
+              log.warn('challenge not found for inviteCode', id);
               await client.end();
               res.status(404).json({ error: 'Challenge not found' });
             }
           }
         } catch (dbError) {
-          console.error('❌ Database error:', dbError);
+          log.error('get challenge database error', dbError);
           res.status(500).json({ 
             error: 'Failed to fetch challenge from database',
             details: dbError.message 
@@ -396,7 +392,7 @@ export default async function handler(req, res) {
           });
           
           await client.connect();
-          console.log('✅ Database connected successfully with native pg client for GET');
+          log.debug('db connected (list challenges)');
           
           // Get all public challenges from database
           const result = await client.query(`
@@ -457,10 +453,10 @@ export default async function handler(req, res) {
 
           await client.end();
 
-          console.log('✅ All challenges fetched successfully from database');
+          log.debug('list challenges ok', challenges.length);
           res.status(200).json(allChallenges);
         } catch (dbError) {
-          console.error('❌ Database error:', dbError);
+          log.error('list challenges database error', dbError);
           res.status(500).json({ 
             error: 'Failed to fetch challenges from database',
             details: dbError.message 
@@ -469,13 +465,10 @@ export default async function handler(req, res) {
       }
       
     } else {
-      res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+      return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
-    
-    console.log('✅ === CHALLENGES API SUCCESS ===');
   } catch (error) {
-    console.error('❌ === CHALLENGES API ERROR ===');
-    console.error('❌ Error:', error);
+    log.error('handler error', error);
     
     res.status(500).json({ 
       error: 'Challenges API error',

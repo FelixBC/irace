@@ -1,5 +1,8 @@
 import { StravaService } from './stravaService';
-import { StravaTokens, StravaActivity, User, Activity, Sport } from '../types';
+import { StravaTokens, User, Activity, Sport } from '../types';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('stravaData');
 
 export interface RealTimeStravaData {
   user: User;
@@ -31,11 +34,11 @@ export class StravaDataService {
     const afterDate = new Date();
     afterDate.setDate(afterDate.getDate() - days);
     
-    console.log(`📅 Fetching activities from ${afterDate.toDateString()} (last ${days} days)`);
-    
+    log.debug('fetch activities since', afterDate.toISOString(), `days=${days}`);
+
     const stravaActivities = await this.stravaService.getActivitiesAfterDate(afterDate);
-    
-    console.log(`📊 Found ${stravaActivities.length} activities in the last ${days} days`);
+
+    log.debug('activities returned', stravaActivities.length);
     
     return stravaActivities.map(stravaActivity => ({
       id: stravaActivity.id.toString(),
@@ -64,16 +67,12 @@ export class StravaDataService {
     // Only get activities from the last 2 days, regardless of challenge dates
     const activities = await this.getRecentActivities(2);
     
-    console.log(`🏆 Challenge ${challengeId}: Filtering ${activities.length} recent activities (last 2 days)`);
-    
-    return activities.filter(activity => {
+    log.debug('filter activities for challenge', challengeId, activities.length);
+
+    return activities.filter((activity) => {
       const activityDate = new Date(activity.date);
       const isInChallengePeriod = activityDate >= startDate && activityDate <= endDate;
-      const isRecent = activityDate >= new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // Last 2 days
-      
-      console.log(`📅 Activity ${activity.id}: ${activityDate.toDateString()} - Challenge: ${isInChallengePeriod}, Recent: ${isRecent}`);
-      
-      // Only include if it's both in challenge period AND recent (last 2 days)
+      const isRecent = activityDate >= new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
       return isInChallengePeriod && isRecent;
     });
   }

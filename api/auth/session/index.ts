@@ -1,4 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createLogger } from '../../../server/logger.js';
+
+const log = createLogger('authSession');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -24,16 +27,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       
       await client.connect();
-      console.log('✅ Database connected successfully with native pg client');
+      log.debug('db connected');
 
       const authHeader = req.headers.authorization;
-      
+
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'No valid authorization header' });
       }
 
       const sessionToken = authHeader.substring(7);
-      console.log('🔑 Validating session token:', sessionToken);
+      log.debug('session lookup');
 
       // Find session and include user data using raw SQL
       const sessionResult = await client.query(`
@@ -47,13 +50,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `, [sessionToken]);
 
       if (sessionResult.rows.length === 0) {
-        console.log('❌ No session found for token:', sessionToken);
+        log.warn('session not found');
         await client.end();
         return res.status(401).json({ error: 'Session not found' });
       }
 
       const session = sessionResult.rows[0];
-      console.log('✅ Session found:', session.id);
+      log.debug('session ok', session.id);
 
       // Check if session is expired
       if (new Date(session.expires) < new Date()) {
@@ -78,14 +81,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await client.end();
     } catch (error) {
-      console.error('Error validating session:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      
-      // Check if it's a database connection issue
-      if (error.message && error.message.includes('connect')) {
+      log.error('session validation error', error);
+
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      if (message.includes('connect')) {
         return res.status(500).json({ 
           error: 'Session validation failed',
           details: 'Database connection issue. Please try again.',
@@ -93,9 +92,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Session validation failed',
-        details: error.message || 'Unknown error occurred',
+        details: message,
         fallback: true
       });
     }

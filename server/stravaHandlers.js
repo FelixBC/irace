@@ -1,13 +1,14 @@
 import { normalizeSports } from './normalizeSports.js';
 import { closeChallengeIfEnded, maybeMarkParticipantFinished } from './challengeLifecycle.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('stravaSync');
 
 export async function handleStravaSync(req, res) {
-  console.log('🏃‍♂️ === STRAVA SYNC API ===');
-  console.log('📋 Request method:', req.method);
-  console.log('📋 Request body:', req.body);
+  log.debug('request', req.method, req.body?.challengeId);
 
   if (req.method !== 'POST') {
-    console.log('❌ Method not allowed:', req.method);
+    log.warn('method not allowed', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -15,11 +16,11 @@ export async function handleStravaSync(req, res) {
     const { userId, challengeId } = req.body;
 
     if (!userId) {
-      console.log('❌ User ID is required');
+      log.warn('missing userId');
       return res.status(400).json({ error: 'User ID is required' });
     }
 
-    console.log('🔄 Syncing Strava activities for user:', userId, 'challenge:', challengeId);
+    log.debug('sync start', { userId, challengeId });
 
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -31,7 +32,7 @@ export async function handleStravaSync(req, res) {
 
     try {
       await client.connect();
-      console.log('✅ Database connected successfully with native pg client');
+      log.debug('db connected');
 
       const userResult = await client.query(
         `
@@ -71,7 +72,7 @@ export async function handleStravaSync(req, res) {
         }
       }
 
-      console.log('🔄 Fetching activities from Strava...');
+      log.debug('fetching Strava activities');
       const activitiesResponse = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=200', {
         headers: {
           Authorization: `Bearer ${stravaTokens.access_token}`,
@@ -80,13 +81,13 @@ export async function handleStravaSync(req, res) {
 
       if (!activitiesResponse.ok) {
         const errorData = await activitiesResponse.json();
-        console.error('❌ Failed to fetch Strava activities:', errorData);
+        log.error('Strava activities fetch failed', errorData);
         await client.end();
         return res.status(500).json({ error: 'Failed to fetch Strava activities', details: errorData });
       }
 
       const activities = await activitiesResponse.json();
-      console.log(`✅ Fetched ${activities.length} activities from Strava`);
+      log.debug('activities fetched', activities.length);
 
       let relevantActivities = activities;
       if (challenge) {
@@ -101,7 +102,7 @@ export async function handleStravaSync(req, res) {
           return isInDateRange && isRelevantSport;
         });
 
-        console.log(`✅ Filtered to ${relevantActivities.length} relevant activities for challenge`);
+        log.debug('filtered for challenge', relevantActivities.length);
       }
 
       let syncedCount = 0;
@@ -119,7 +120,7 @@ export async function handleStravaSync(req, res) {
           );
 
           if (existingActivityResult.rows.length > 0) {
-            console.log(`⏭️ Activity ${activity.id} already synced, skipping`);
+            log.debug('activity already synced, skip', activity.id);
             continue;
           }
 
@@ -164,7 +165,7 @@ export async function handleStravaSync(req, res) {
           totalDistance += distance;
           syncedCount += 1;
         } catch (activityError) {
-          console.error(`❌ Error processing activity ${activity.id}:`, activityError);
+          log.error('activity processing error', activity.id, activityError);
         }
       }
 
@@ -186,7 +187,11 @@ export async function handleStravaSync(req, res) {
             );
 
             await maybeMarkParticipantFinished(client, { challengeId, userId });
-            console.log(`✅ Updated participation progress: +${totalDistance.toFixed(2)}km`);
+            log.info('participation distance updated', {
+              userId,
+              challengeId,
+              deltaKm: totalDistance.toFixed(2),
+            });
           }
           await client.query('COMMIT');
         } catch (e) {
@@ -196,7 +201,7 @@ export async function handleStravaSync(req, res) {
       }
 
       await client.end();
-      console.log(`✅ Strava sync completed: ${syncedCount} activities synced, ${totalDistance.toFixed(2)}km total`);
+      log.info('sync complete', { syncedCount, totalDistanceKm: totalDistance.toFixed(2) });
 
       return res.status(200).json({
         success: true,
@@ -206,11 +211,11 @@ export async function handleStravaSync(req, res) {
         activities: relevantActivities.length,
       });
     } catch (dbError) {
-      console.error('❌ Database error:', dbError);
+      log.error('database error', dbError);
       try {
         await client.end();
       } catch (e) {
-        console.log('⚠️ Error closing client:', e.message);
+        log.warn('pg client close failed', e?.message ?? e);
       }
       return res.status(500).json({
         error: 'Failed to sync Strava activities',
@@ -218,13 +223,15 @@ export async function handleStravaSync(req, res) {
       });
     }
   } catch (error) {
-    console.error('❌ Error in Strava sync:', error);
+    log.error('sync handler error', error);
     return res.status(500).json({
       error: 'Strava sync failed',
       details: error.message,
     });
   }
 }
+
+const logDisconnect = createLogger('stravaDisconnect');
 
 export async function handleStravaDisconnect(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -277,7 +284,7 @@ export async function handleStravaDisconnect(req, res) {
       });
       if (!deauthRes.ok) {
         const text = await deauthRes.text();
-        console.warn('Strava deauthorize non-OK:', deauthRes.status, text);
+        logDisconnect.warn('Strava deauthorize non-OK', deauthRes.status, text.slice(0, 200));
       }
     }
 
@@ -286,7 +293,7 @@ export async function handleStravaDisconnect(req, res) {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('strava/disconnect:', err);
+    logDisconnect.error('disconnect error', err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
     try {
@@ -294,6 +301,8 @@ export async function handleStravaDisconnect(req, res) {
     } catch (_) {}
   }
 }
+
+const logRefresh = createLogger('stravaRefresh');
 
 export async function handleStravaRefreshToken(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -354,7 +363,7 @@ export async function handleStravaRefreshToken(req, res) {
 
     if (!tokenResponse.ok) {
       const text = await tokenResponse.text();
-      console.error('Strava refresh failed:', tokenResponse.status, text);
+      logRefresh.error('token refresh failed', tokenResponse.status, text.slice(0, 200));
       return res.status(502).json({ error: 'Strava token refresh failed' });
     }
 
@@ -373,7 +382,7 @@ export async function handleStravaRefreshToken(req, res) {
 
     return res.status(200).json({ stravaTokens: newTokens });
   } catch (err) {
-    console.error('refresh-token:', err);
+    logRefresh.error('refresh handler error', err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
     try {

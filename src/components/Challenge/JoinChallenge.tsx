@@ -7,6 +7,9 @@ import { ChallengeService } from '../../services/challengeService';
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../../types';
 import { getMainAppUrl } from '../../config/urls';
 import { CHALLENGE_DATA_CONSENT_VERSION } from '../../config/consent';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('joinChallenge');
 
 const JoinChallenge: React.FC = () => {
   const { inviteCode } = useParams<{ inviteCode: string }>();
@@ -37,7 +40,7 @@ const JoinChallenge: React.FC = () => {
         setError(null);
       }
     } catch (err) {
-      console.error('Error loading challenge:', err);
+      log.error('load challenge failed', err);
       setError('Challenge not found or expired');
     } finally {
       setIsLoading(false);
@@ -65,7 +68,7 @@ const JoinChallenge: React.FC = () => {
       }, 2000);
 
     } catch (err) {
-      console.error('Error joining challenge:', err);
+      log.error('join failed', err);
       setError(err instanceof Error ? err.message : 'Failed to join challenge. Please try again.');
     } finally {
       setIsJoining(false);

@@ -1,57 +1,40 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import { createLogger } from '../server/logger.js';
 
-// Cargar variables de entorno
 dotenv.config();
 
 const prisma = new PrismaClient();
+const log = createLogger('clean-db');
 
 async function cleanDatabase() {
   try {
-    console.log('🧹 Limpiando base de datos...');
-    
-    // Eliminar todas las tablas en orden correcto (respetando foreign keys)
-    console.log('🗑️ Eliminando datos de Participation...');
+    log.info('cleaning database (dev utility)');
+
     await prisma.participation.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de Activity...');
     await prisma.activity.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de Challenge...');
     await prisma.challenge.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de Session...');
     await prisma.session.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de Account...');
     await prisma.account.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de User...');
     await prisma.user.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de VerificationToken...');
     await prisma.verificationToken.deleteMany();
-    
-    console.log('🗑️ Eliminando datos de Avatar...');
     await prisma.avatar.deleteMany();
-    
-    console.log('✅ Base de datos limpiada exitosamente!');
-    
+
+    log.info('database cleaned');
   } catch (error) {
-    console.error('❌ Error limpiando base de datos:', error);
+    log.error('clean failed', error);
     throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
 
-// Ejecutar si se llama directamente
 cleanDatabase()
   .then(() => {
-    console.log('🎉 Proceso completado!');
+    log.info('done');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('💥 Error:', error);
+    log.error('script failed', error);
     process.exit(1);
   });

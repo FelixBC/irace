@@ -23,6 +23,9 @@ import { useAuth } from '../../context/AuthContext';
 import { Sport, ChallengeStatus, ChallengeType } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
 import { getMainAppUrl } from '../../config/urls';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('myChallenges');
 
 interface Challenge {
   id: string;
@@ -47,7 +50,7 @@ interface Challenge {
 }
 
 const MyChallenges: React.FC = () => {
-  const { user, isConnectedToStrava } = useAuth();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sportFilter, setSportFilter] = useState<string>('all');
@@ -94,7 +97,7 @@ const MyChallenges: React.FC = () => {
         
         setChallenges(transformedChallenges);
       } catch (error) {
-        console.error('Error loading challenges:', error);
+        log.error('load challenges failed', error);
         // Fallback to empty array
         setChallenges([]);
       } finally {
@@ -192,9 +195,8 @@ const MyChallenges: React.FC = () => {
     window.location.href = `/race/${challenge.inviteCode}`;
   };
 
-  const handleEditChallenge = (challengeId: string) => {
-    // In real app, this would open edit modal or navigate to edit page
-    console.log('Edit challenge:', challengeId);
+  const handleEditChallenge = () => {
+    // In real app, open edit modal or navigate to edit page (use challenge.id from closure where needed)
   };
 
   const handleDeleteChallenge = (challengeId: string) => {
@@ -646,7 +648,7 @@ const MyChallenges: React.FC = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditChallenge(challenge.id);
+                              handleEditChallenge();
                             }}
                             className="px-3 py-2 text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
                           >

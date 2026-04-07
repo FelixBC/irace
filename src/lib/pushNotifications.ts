@@ -1,4 +1,7 @@
 import { getApiBaseUrl } from '../config/urls';
+import { createLogger } from './logger';
+
+const log = createLogger('webPush');
 
 export function isWebPushConfigured(): boolean {
   return Boolean(import.meta.env.VITE_VAPID_PUBLIC_KEY?.trim());
@@ -20,7 +23,7 @@ export async function registerWebPushServiceWorker(): Promise<ServiceWorkerRegis
   try {
     return await navigator.serviceWorker.register('/sw.js', { scope: '/' });
   } catch (e) {
-    console.warn('Service worker registration failed', e);
+    log.warn('service worker registration failed', e);
     return null;
   }
 }

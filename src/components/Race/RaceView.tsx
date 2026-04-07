@@ -12,6 +12,9 @@ import { createStravaDataService, RealTimeStravaData } from '../../services/stra
 import { useAuth } from '../../context/AuthContext';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { getMainAppUrl } from '../../config/urls';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('raceView');
 
 const DEMO_ROUTE_ID = 'demo-challenge';
 const DEMO_PARTICIPANT_COUNT = 3;
@@ -250,7 +253,7 @@ const RaceView: React.FC = () => {
       setStravaData(data);
       setRaceTracks(buildRealRaceTracks(ch, user?.id, data.activities));
     } catch (error) {
-      console.error('Strava data load failed:', error);
+      log.error('Strava data load failed', error);
       setStravaError(error instanceof Error ? error.message : 'Failed to load Strava data');
     } finally {
       setIsLoadingStrava(false);
@@ -279,11 +282,11 @@ const RaceView: React.FC = () => {
         if (realChallenge) {
           setChallenge(realChallenge);
         } else {
-          console.error('Challenge not found:', challengeId);
+          log.error('challenge not found', challengeId);
           setChallenge(null);
         }
       } catch (error) {
-        console.error('Error loading challenge:', error);
+        log.error('load challenge failed', error);
         setChallenge(null);
       }
     };
@@ -374,7 +377,7 @@ const RaceView: React.FC = () => {
           }
         }
       } catch (e) {
-        console.error('Challenge refresh failed:', e);
+        log.error('challenge refresh failed', e);
       }
     }
 
@@ -383,7 +386,7 @@ const RaceView: React.FC = () => {
 
   const copyShareLink = async () => {
     if (!challenge?.inviteCode) {
-      console.error('Share link unavailable: missing invite code');
+      log.error('share link unavailable: missing invite code');
       return;
     }
 
@@ -393,7 +396,7 @@ const RaceView: React.FC = () => {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch (error) {
-      console.error('Clipboard write failed:', error);
+      log.error('clipboard write failed', error);
       // Fallback: show the URL in an alert
       const shareUrl = `${getMainAppUrl()}/join/${challenge.inviteCode}`;
       alert(`Share this link: ${shareUrl}`);

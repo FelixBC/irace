@@ -1,5 +1,8 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { getApiBaseUrl, getStravaCallbackUrl } from '../config/urls';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('stravaService');
 
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
 
@@ -90,7 +93,7 @@ export class StravaService {
 export function getStravaAuthUrl(returnPath?: string): string {
   const clientId = getClientId();
   if (!clientId) {
-    console.error('VITE_STRAVA_CLIENT_ID is not set');
+    log.error('VITE_STRAVA_CLIENT_ID is not set');
   }
   const redirectUri = getStravaCallbackUrl();
   const scope = 'read,activity:read_all';

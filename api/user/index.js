@@ -1,6 +1,10 @@
 /**
  * POST /api/user — Upsert Strava user and issue session (server-side only; no secrets in client).
  */
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('api/user');
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -81,7 +85,7 @@ export default async function handler(req, res) {
       },
     });
   } catch (err) {
-    console.error('POST /api/user error:', err);
+    log.error('POST failed', err);
     return res.status(500).json({ error: 'Failed to create session', details: err.message });
   } finally {
     try {

@@ -10,6 +10,9 @@ import GoalSettingModal from './GoalSettingModal';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { getMainAppUrl } from '../../config/urls';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('createChallenge');
 
 const CreateChallenge: React.FC = () => {
   const navigate = useNavigate();
@@ -118,7 +121,7 @@ const CreateChallenge: React.FC = () => {
       showToast('success', 'Challenge Created!', 'Your fitness challenge is ready to share');
       setStep(3);
     } catch (error) {
-      console.error('Error creating challenge:', error);
+      log.error('create failed', error);
       showToast('error', 'Creation Failed', error instanceof Error ? error.message : 'Failed to create challenge. Please try again.');
     } finally {
       setIsCreating(false);

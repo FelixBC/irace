@@ -1,4 +1,7 @@
 import { Client } from 'pg';
+import { createLogger } from './server/logger.js';
+
+const log = createLogger('create-participation-table');
 
 async function createParticipationTable() {
   const client = new Client({
@@ -8,7 +11,7 @@ async function createParticipationTable() {
 
   try {
     await client.connect();
-    console.log('✅ Connected to database');
+    log.info('connected');
 
     // Create Participation table
     await client.query(`
@@ -30,7 +33,7 @@ async function createParticipationTable() {
         CONSTRAINT "Participation_userId_challengeId_key" UNIQUE ("userId", "challengeId")
       )
     `);
-    console.log('✅ Participation table created');
+    log.info('Participation table ensured');
 
     // Create Activity table
     await client.query(`
@@ -50,7 +53,7 @@ async function createParticipationTable() {
         CONSTRAINT "Activity_challengeId_fkey" FOREIGN KEY ("challengeId") REFERENCES "Challenge"("id")
       )
     `);
-    console.log('✅ Activity table created');
+    log.info('Activity table ensured');
 
     // Create indexes
     await client.query(`
@@ -77,12 +80,9 @@ async function createParticipationTable() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS "Activity_stravaActivityId_idx" ON "Activity"("stravaActivityId")
     `);
-    console.log('✅ Indexes created');
-
-    console.log('🎉 All tables created successfully!');
-
+    log.info('indexes ensured');
   } catch (error) {
-    console.error('❌ Error:', error);
+    log.error('migration script error', error);
   } finally {
     await client.end();
   }

@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from './server/logger.js';
+
 const prisma = new PrismaClient();
+const log = createLogger('setup-db');
 
 async function setupDatabase() {
-  console.log('🚀 Setting up database...');
-  
+  log.info('setting up database (dev seed)');
+
   try {
-    // Test database connection
     await prisma.$connect();
-    console.log('✅ Database connection successful');
-    
-    // Create a test user if none exists
-    const existingUser = await prisma.user.findFirst();
-    if (!existingUser) {
-      console.log('👤 Creating test user...');
+    log.info('connected');
+
+    let creatorId = (await prisma.user.findFirst())?.id;
+    if (!creatorId) {
+      log.debug('creating test user');
       const testUser = await prisma.user.create({
         data: {
           name: 'Test User',
@@ -24,15 +25,15 @@ async function setupDatabase() {
           stravaTokens: null
         }
       });
-      console.log('✅ Test user created:', testUser.id);
+      creatorId = testUser.id;
+      log.info('test user created', creatorId);
     } else {
-      console.log('👤 Test user already exists');
+      log.debug('test user already exists');
     }
-    
-    // Create a test challenge if none exists
+
     const existingChallenge = await prisma.challenge.findFirst();
     if (!existingChallenge) {
-      console.log('🏆 Creating test challenge...');
+      log.debug('creating test challenge');
       const testChallenge = await prisma.challenge.create({
         data: {
           name: 'Test Challenge',
@@ -57,18 +58,17 @@ async function setupDatabase() {
           inviteCode: 'TEST123',
           maxParticipants: 10,
           status: 'ACTIVE',
-          creatorId: existingUser.id
+          creatorId
         }
       });
-      console.log('✅ Test challenge created:', testChallenge.id);
+      log.info('test challenge created', testChallenge.id);
     } else {
-      console.log('🏆 Test challenge already exists');
+      log.debug('test challenge already exists');
     }
-    
-    console.log('🎉 Database setup completed successfully!');
-    
+
+    log.info('setup complete');
   } catch (error) {
-    console.error('❌ Database setup failed:', error);
+    log.error('setup failed', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

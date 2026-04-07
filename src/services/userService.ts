@@ -1,5 +1,8 @@
 import { prisma } from '../lib/db';
 import { User, StravaTokens } from '../types';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('userService');
 
 export interface CreateUserData {
   name: string;
@@ -39,7 +42,7 @@ export class UserService {
         stravaTokens: user.stravaTokens as StravaTokens
       };
     } catch (error) {
-      console.error('Error creating/updating user:', error);
+      log.error('createOrUpdateUser failed', error);
       throw new Error('Failed to save user data. Please try again.');
     }
   }
@@ -61,7 +64,7 @@ export class UserService {
         stravaTokens: user.stravaTokens as StravaTokens
       };
     } catch (error) {
-      console.error('Error fetching user:', error);
+      log.error('getUserById failed', error);
       throw new Error('Failed to load user data. Please try again.');
     }
   }
@@ -83,7 +86,7 @@ export class UserService {
         stravaTokens: user.stravaTokens as StravaTokens
       };
     } catch (error) {
-      console.error('Error fetching user by Strava ID:', error);
+      log.error('getUserByStravaId failed', error);
       throw new Error('Failed to load user data. Please try again.');
     }
   }
@@ -98,7 +101,7 @@ export class UserService {
         }
       });
     } catch (error) {
-      console.error('Error updating user tokens:', error);
+      log.error('updateUserTokens failed', error);
       throw new Error('Failed to update user tokens. Please try again.');
     }
   }
@@ -109,7 +112,7 @@ export class UserService {
         where: { id: userId }
       });
     } catch (error) {
-      console.error('Error deleting user:', error);
+      log.error('deleteUser failed', error);
       throw new Error('Failed to delete user. Please try again.');
     }
   }
@@ -149,7 +152,7 @@ export class UserService {
         totalActivities: activities
       };
     } catch (error) {
-      console.error('Error fetching user stats:', error);
+      log.error('getUserStats failed', error);
       throw new Error('Failed to load user statistics. Please try again.');
     }
   }

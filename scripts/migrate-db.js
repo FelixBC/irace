@@ -1,19 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import { createLogger } from '../server/logger.js';
 
 dotenv.config();
 
+const log = createLogger('migrate-db');
+
 async function migrateDatabase() {
-  console.log('🔄 Starting database migration...');
-  
+  log.info('starting migration');
+
   const prisma = new PrismaClient();
-  
+
   try {
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    log.info('database connected');
 
-    // Push the schema to the database
-    console.log('🔄 Pushing schema to database...');
+    log.debug('pushing schema');
     
     // Create Challenge table if it doesn't exist
     await prisma.$executeRaw`
@@ -39,7 +41,7 @@ async function migrateDatabase() {
       );
     `;
     
-    console.log('✅ Challenge table created/verified');
+    log.info('Challenge table created/verified');
     
     // Create indexes
     await prisma.$executeRaw`
@@ -50,7 +52,7 @@ async function migrateDatabase() {
       CREATE INDEX IF NOT EXISTS "Challenge_isPublic_idx" ON "Challenge"("isPublic");
     `;
     
-    console.log('✅ Indexes created/verified');
+    log.info('indexes created/verified');
     
     // Test if we can query the table
     const testResult = await prisma.$queryRaw`
@@ -60,13 +62,12 @@ async function migrateDatabase() {
       ORDER BY ordinal_position;
     `;
     
-    console.log('📋 Challenge table structure:', testResult);
-    
+    log.debug('Challenge columns', testResult);
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    log.error('migration failed', error);
   } finally {
     await prisma.$disconnect();
-    console.log('✅ Database migration completed');
+    log.info('migration finished');
   }
 }
 

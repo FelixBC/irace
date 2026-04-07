@@ -1,7 +1,10 @@
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
-import { CHALLENGES, CHALLENGE, USER_CHALLENGES, JOIN_CHALLENGE, UPDATE_PROGRESS } from '../config/api';
+import { CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
 import { getApiBaseUrl } from '../config/urls';
 import { addDays } from 'date-fns';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('challengeService');
 
 export interface CreateChallengeData {
   name: string;
@@ -56,7 +59,7 @@ export class ChallengeService {
       const responseData = await response.json();
       return responseData.data;
     } catch (error) {
-      console.error('Error creating challenge:', error);
+      log.error('createChallenge failed', error);
       throw new Error('Failed to create challenge. Please try again.');
     }
   }
@@ -75,7 +78,7 @@ export class ChallengeService {
       const challenge = await response.json();
       return challenge;
     } catch (error) {
-      console.error('Error fetching challenge:', error);
+      log.error('getChallenge failed', error);
       throw new Error('Failed to load challenge. Please try again.');
     }
   }
@@ -91,7 +94,7 @@ export class ChallengeService {
       const challenges = await response.json();
       return challenges;
     } catch (error) {
-      console.error('Error fetching challenges:', error);
+      log.error('getAllChallenges failed', error);
       throw new Error('Failed to load challenges. Please try again.');
     }
   }
@@ -107,7 +110,7 @@ export class ChallengeService {
       const challenges = await response.json();
       return challenges;
     } catch (error) {
-      console.error('Error fetching user challenges:', error);
+      log.error('getUserChallenges failed', error);
       throw new Error('Failed to load your challenges. Please try again.');
     }
   }
@@ -136,7 +139,7 @@ export class ChallengeService {
         throw new Error(errorData.error || `Failed to join challenge: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Error joining challenge:', error);
+      log.error('joinChallenge failed', error);
       if (error instanceof Error && error.message) {
         throw error;
       }
@@ -158,7 +161,7 @@ export class ChallengeService {
         throw new Error(`Failed to update progress: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Error updating challenge progress:', error);
+      log.error('updateChallengeProgress failed', error);
       throw new Error('Failed to update progress. Please try again.');
     }
   }
@@ -180,7 +183,7 @@ export class ChallengeService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error syncing Strava activities:', error);
+      log.error('syncStravaActivities failed', error);
       throw new Error('Failed to sync Strava activities. Please try again.');
     }
   }

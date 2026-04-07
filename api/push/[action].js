@@ -1,6 +1,9 @@
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { resolveBearerUserId } from '../../server/authSession.js';
 import { ensureWebPushConfigured, webpush } from '../../server/webPushConfig.js';
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('push');
 
 /**
  * POST /api/push/:action — subscribe | unsubscribe | test (one serverless fn for Hobby plan limits).
@@ -106,7 +109,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, sent, errors });
   } catch (err) {
-    console.error('push/[action]:', action, err);
+    log.error('handler error', action, err);
     return res.status(500).json({ error: 'Server error' });
   } finally {
     await prisma.$disconnect().catch(() => {});

@@ -1,6 +1,8 @@
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('challengeById');
+
 export default function handler(req, res) {
-  console.log('🏆 === CHALLENGE BY ID API FUNCTION START ===');
-  
   try {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,10 +15,8 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      console.log('🏆 Processing GET request for challenge...');
-      
       const { id } = req.query;
-      console.log('🏆 Requested challenge ID:', id);
+      log.debug('GET', id);
 
       // For now, return mock challenges based on ID
       // In the future, this would fetch from the database
@@ -83,21 +83,16 @@ export default function handler(req, res) {
       }
 
       if (challenge) {
-        console.log('✅ Challenge found and returned successfully');
         res.status(200).json(challenge);
       } else {
-        console.log('❌ Challenge not found');
+        log.warn('not found', id);
         res.status(404).json({ error: 'Challenge not found' });
       }
-      
     } else {
       res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
-    
-    console.log('✅ === CHALLENGE BY ID API FUNCTION SUCCESS ===');
   } catch (error) {
-    console.error('❌ === CHALLENGE BY ID API FUNCTION ERROR ===');
-    console.error('❌ Error:', error);
+    log.error('handler error', error);
     
     res.status(500).json({ 
       error: 'Challenge API error',

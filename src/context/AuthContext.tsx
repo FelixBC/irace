@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getApiBaseUrl } from '../config/urls';
 import { User, StravaTokens } from '../types';
 import { SESSION } from '../config/api';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('auth');
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const sessionTokenFromUrl = urlParams.get('session');
     
     if (sessionTokenFromUrl) {
-      console.log('🔑 Session token found in URL, storing it...');
+      log.debug('session token from OAuth redirect stored');
       localStorage.setItem('session_token', sessionTokenFromUrl);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -60,14 +63,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setStravaTokens(null);
             }
           } catch (error) {
-            console.error('Error checking session:', error);
+            log.error('session check failed', error);
             localStorage.removeItem('session_token');
             setUser(null);
             setStravaTokens(null);
           }
         }
       } catch (error) {
-        console.error('Error checking existing session:', error);
+        log.error('existing session check failed', error);
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for storage events to update state when tokens/user data changes
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'strava_tokens') {
-        console.log('🔄 Strava tokens updated, refreshing user state...');
+        log.debug('strava_tokens storage event');
         const tokens = event.newValue ? JSON.parse(event.newValue) : null;
         setStravaTokens(tokens);
         
@@ -89,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (event.key === 'user_updated') {
-        console.log('🔄 User data updated, refreshing state...');
+        log.debug('user_updated storage event');
         const userData = event.newValue ? JSON.parse(event.newValue) : null;
         if (userData) {
           setUser(userData);
@@ -122,13 +125,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Allow max 1 call per 2 seconds
     if (timeSinceLastCall < 2000) {
-      console.log('Rate limit: Too soon since last API call');
+      log.debug('rate limit: min interval');
       return false;
     }
-    
-    // Allow max 5 calls per minute
+
     if (apiCallCount >= 5 && timeSinceLastCall < 60000) {
-      console.log('Rate limit: Too many API calls this minute');
+      log.debug('rate limit: max calls per minute');
       return false;
     }
     
@@ -138,13 +140,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (tokens: StravaTokens) => {
     // Check rate limiting first
     if (!canMakeApiCall()) {
-      console.log('Rate limit exceeded, skipping API call');
+      log.debug('skip profile fetch: rate limited');
       return;
     }
 
-    // Don't make API calls if tokens are expired or invalid
     if (!tokens || !tokens.access_token || tokens.expires_at * 1000 <= Date.now()) {
-      console.log('Tokens expired or invalid, skipping API call');
+      log.debug('skip profile fetch: token missing or expired');
       // Clear invalid session
       localStorage.removeItem('session_token');
       setStravaTokens(null);
@@ -205,18 +206,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error('Failed to save user to database');
           }
         } catch (dbError) {
-          console.error('Error saving user to database:', dbError);
+          log.error('save user failed', dbError);
           throw new Error('Failed to save user data. Please try again.');
         }
       } else if (response.status === 401 || response.status === 429) {
-        // Token is invalid or rate limited, remove it
-        console.log('Token invalid or rate limited, removing from storage');
+        log.debug('Strava token rejected, clearing session', response.status);
         localStorage.removeItem('session_token');
         setStravaTokens(null);
         setUser(null);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      log.error('fetch Strava profile failed', error);
       // On any error, clear the session
       localStorage.removeItem('session_token');
       setStravaTokens(null);
@@ -261,7 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLastApiCall(0);
       setApiCallCount(0);
     } catch (e) {
-      console.error('disconnectStrava:', e);
+      log.error('disconnectStrava failed', e);
       throw e;
     }
   };

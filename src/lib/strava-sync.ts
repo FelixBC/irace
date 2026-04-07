@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/db';
 import { StravaAPI } from '@/lib/strava';
 import { isActivityRelevant } from '@/lib/strava';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('strava-sync');
 
 export interface StravaSyncResult {
   success: boolean;
@@ -266,7 +269,7 @@ export class StravaSyncService {
 
       return false;
     } catch (error) {
-      console.error('Failed to refresh tokens:', error);
+      log.error('token refresh failed', error);
       return false;
     }
   }

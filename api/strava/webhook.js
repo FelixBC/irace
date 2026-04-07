@@ -3,6 +3,9 @@ import {
   handleStravaWebhookVerification,
   processStravaWebhookEvent,
 } from '../../server/stravaWebhookProcessor.js';
+import { createLogger } from '../../server/logger.js';
+
+const log = createLogger('stravaWebhookApi');
 
 /**
  * Strava Push Subscriptions callback — GET validates subscription, POST receives events.
@@ -17,7 +20,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
     const work = processStravaWebhookEvent(body).catch((err) => {
-      console.error('strava webhook process failed:', err);
+      log.error('async process failed', err);
     });
     waitUntil(work);
     return res.status(200).end();

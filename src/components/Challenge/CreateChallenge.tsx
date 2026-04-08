@@ -127,11 +127,16 @@ const CreateChallenge: React.FC = () => {
     }
   };
 
-  const copyShareLink = () => {
+  const copyShareLink = async () => {
     if (createdChallenge) {
       const shareUrl = `${getMainAppUrl()}/join/${createdChallenge.inviteCode}`;
-      navigator.clipboard.writeText(shareUrl);
-      showToast('success', 'Link Copied!', 'Share link copied to clipboard');
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('success', 'Link Copied!', 'Share link copied to clipboard');
+      } catch (e) {
+        log.error('clipboard write failed', e);
+        showToast('error', 'Copy failed', shareUrl);
+      }
     }
   };
 

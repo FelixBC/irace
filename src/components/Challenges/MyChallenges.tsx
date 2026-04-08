@@ -48,15 +48,20 @@ interface Challenge {
   isCreator: boolean;
 }
 
+type StatusFilter = 'all' | ChallengeStatus;
+type OwnershipFilter = 'all' | 'created' | 'joined';
+type SportFilter = 'all' | Sport;
+type SortBy = 'recent' | 'name' | 'progress' | 'participants';
+
 const MyChallenges: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [openMenuChallengeId, setOpenMenuChallengeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sportFilter, setSportFilter] = useState<string>('all');
-  const [ownershipFilter, setOwnershipFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('recent');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sportFilter, setSportFilter] = useState<SportFilter>('all');
+  const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,9 +69,10 @@ const MyChallenges: React.FC = () => {
   // Load challenges from database
   useEffect(() => {
     const loadChallenges = async () => {
+      if (!user) return;
       try {
         setIsLoading(true);
-        const dbChallenges = await ChallengeService.getUserChallenges(user!.id);
+        const dbChallenges = await ChallengeService.getUserChallenges(user.id);
         
         // Transform database challenges to match our interface
         const transformedChallenges: Challenge[] = dbChallenges.map(dbChallenge => ({
@@ -175,7 +181,7 @@ const MyChallenges: React.FC = () => {
     const matchesSearch = challenge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          challenge.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || challenge.status === statusFilter;
-    const matchesSport = sportFilter === 'all' || challenge.sports.includes(sportFilter as Sport);
+    const matchesSport = sportFilter === 'all' || challenge.sports.includes(sportFilter);
     const matchesOwnership = ownershipFilter === 'all' || 
                            (ownershipFilter === 'created' && challenge.isCreator) ||
                            (ownershipFilter === 'joined' && !challenge.isCreator);

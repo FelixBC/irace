@@ -5,9 +5,9 @@ import { Users, Trophy, Clock, Target, AlertCircle, CheckCircle } from 'lucide-r
 import { useAuth } from '../../context/AuthContext';
 import { ChallengeService } from '../../services/challengeService';
 import { Challenge } from '../../types';
-import { getMainAppUrl } from '../../config/urls';
 import { CHALLENGE_DATA_CONSENT_VERSION } from '../../config/consent';
 import { createLogger } from '../../lib/logger';
+import { getStravaAuthUrl } from '../../services/stravaService';
 
 const log = createLogger('joinChallenge');
 
@@ -47,6 +47,7 @@ const JoinChallenge: React.FC = () => {
 
   const handleJoinChallenge = async () => {
     if (!user || !challenge) return;
+    if (!peerSharingConsent) return;
 
     try {
       setIsJoining(true);
@@ -54,7 +55,7 @@ const JoinChallenge: React.FC = () => {
 
       // Join the challenge
       await ChallengeService.joinChallenge(challenge.id, user.id, {
-        challengeDataConsentAccepted: true,
+        challengeDataConsentAccepted: peerSharingConsent,
         challengeDataConsentVersion: CHALLENGE_DATA_CONSENT_VERSION,
       });
       
@@ -81,17 +82,8 @@ const JoinChallenge: React.FC = () => {
 
   const handleJoinWithStrava = () => {
     if (!peerSharingConsent) return;
-    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
-    if (!clientId) {
-      setError('App misconfiguration: VITE_STRAVA_CLIENT_ID is missing.');
-      return;
-    }
-    const redirectUri = `${getMainAppUrl()}/api/auth/strava/callback`;
-    const scope = 'read,activity:read_all';
-    const state = encodeURIComponent(`/join/${inviteCode}`);
-
-    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`;
-    window.location.href = stravaAuthUrl;
+    const returnPath = inviteCode ? `/join/${inviteCode}` : undefined;
+    window.location.href = getStravaAuthUrl(returnPath);
   };
 
   if (isLoading) {

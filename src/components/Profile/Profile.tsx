@@ -18,13 +18,16 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Sport } from '../../types';
 import { getStravaAuthUrl } from '../../services/stravaService';
-import { getApiBaseUrl } from '../../config/urls';
+import { API_BASE_URL } from '../../config/api';
 import {
   isWebPushConfigured,
   enableWebPush,
   disableWebPush,
   sendTestPushNotification,
 } from '../../lib/pushNotifications';
+import { getSessionToken } from '../../lib/apiClient';
+
+type PushUiState = 'unsupported' | 'denied' | 'off' | 'on';
 
 const Profile: React.FC = () => {
   const { user, logout, isConnectedToStrava, disconnectStrava } = useAuth();
@@ -32,7 +35,6 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [stravaActionError, setStravaActionError] = useState<string | null>(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  type PushUiState = 'unsupported' | 'denied' | 'off' | 'on';
   const [pushUiState, setPushUiState] = useState<PushUiState>('unsupported');
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
@@ -544,12 +546,11 @@ const Profile: React.FC = () => {
                             pushBusy || pushUiState === 'unsupported' || pushUiState === 'denied'
                           }
                           onChange={async (e) => {
-                            const token = localStorage.getItem('session_token');
+                            const token = getSessionToken();
                             if (!token) {
                               setPushMessage('Sign in to enable notifications.');
                               return;
                             }
-                            const baseUrl = getApiBaseUrl();
                             setPushBusy(true);
                             setPushMessage(null);
                             try {
@@ -560,7 +561,7 @@ const Profile: React.FC = () => {
                                   setPushMessage('Notifications were blocked.');
                                   return;
                                 }
-                                const ok = await enableWebPush(token, baseUrl);
+                                const ok = await enableWebPush(token, API_BASE_URL);
                                 setPushUiState(ok ? 'on' : 'off');
                                 if (!ok) {
                                   setPushMessage(
@@ -568,7 +569,7 @@ const Profile: React.FC = () => {
                                   );
                                 }
                               } else {
-                                await disableWebPush(token, baseUrl);
+                                await disableWebPush(token, API_BASE_URL);
                                 setPushUiState('off');
                               }
                             } catch {
@@ -598,12 +599,12 @@ const Profile: React.FC = () => {
                           whileTap={{ scale: 0.97 }}
                           disabled={pushBusy || pushUiState !== 'on'}
                           onClick={async () => {
-                            const token = localStorage.getItem('session_token');
+                            const token = getSessionToken();
                             if (!token) return;
                             setPushBusy(true);
                             setPushMessage(null);
                             try {
-                              const r = await sendTestPushNotification(token, getApiBaseUrl());
+                              const r = await sendTestPushNotification(token, API_BASE_URL);
                               if (!r.ok) setPushMessage(r.error || 'Test failed');
                             } catch {
                               setPushMessage('Test request failed');

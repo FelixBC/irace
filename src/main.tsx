@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import React from 'react';
 import App from './App.tsx';
 import './index.css';
 import { isWebPushConfigured, registerWebPushServiceWorker } from './lib/pushNotifications';
@@ -8,5 +9,7 @@ if (isWebPushConfigured()) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <App />
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 );

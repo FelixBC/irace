@@ -62,7 +62,7 @@ class ErrorBoundary extends Component<Props, State> {
               We encountered an unexpected error. Please try again or return to the home page.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 mb-2">
                   Error details (development only)

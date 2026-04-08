@@ -137,6 +137,7 @@ Adjust `DATABASE_URL` to point at the postgres service if you run the app agains
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) — data layer and conventions  
+- Setup: [DATABASE_SETUP.md](docs/DATABASE_SETUP.md), [DEPLOY_INSTRUCTIONS.md](docs/DEPLOY_INSTRUCTIONS.md)  
 - Strava: [STRAVA_WEBHOOK.md](docs/STRAVA_WEBHOOK.md), [STRAVA_SUBMISSION.md](docs/STRAVA_SUBMISSION.md)  
 - Deployment: [VERCEL_DOMAIN.md](docs/VERCEL_DOMAIN.md), [DATABASE_VERCEL.md](docs/DATABASE_VERCEL.md)  
 - Screenshot index: [docs/strava-submission-screenshots/README.md](docs/strava-submission-screenshots/README.md)

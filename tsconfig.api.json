@@ -19,8 +19,6 @@
     "server/**/*.ts",
     "shared/**/*.ts",
     "scripts/**/*.ts",
-    "create-participation-table.ts",
-    "setup-db.ts",
     "vitest.config.ts"
   ],
   "exclude": ["node_modules", "dist", "src"]

@@ -1,5 +1,5 @@
-import { createFreshPrismaClient } from './server/prisma.js';
-import { createLogger } from './server/logger.js';
+import { createFreshPrismaClient } from '../server/prisma.js';
+import { createLogger } from '../server/logger.js';
 
 const log = createLogger('create-participation-table');
 

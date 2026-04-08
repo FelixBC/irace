@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
-import { createLogger } from './server/logger.js';
+import { createLogger } from '../server/logger.js';
 
 const prisma = new PrismaClient();
 const log = createLogger('setup-db');

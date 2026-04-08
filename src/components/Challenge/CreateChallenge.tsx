@@ -135,7 +135,7 @@ const CreateChallenge: React.FC = () => {
         showToast('success', 'Link Copied!', 'Share link copied to clipboard');
       } catch (e) {
         log.error('clipboard write failed', e);
-        showToast('error', 'Copy failed', shareUrl);
+        showToast('error', 'Copy failed', 'Could not copy the link. Please copy it manually.');
       }
     }
   };

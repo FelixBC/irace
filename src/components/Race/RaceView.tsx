@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Share2, RefreshCw, Users, Clock, AlertCircle, Trophy } from 'lucide-react';
 import { useParams } from 'react-router-dom';
@@ -263,6 +263,8 @@ const RaceView: React.FC = () => {
   const [isLoadingStrava, setIsLoadingStrava] = useState(false);
   const [stravaError, setStravaError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+  const challengeRef = useRef<Challenge | null>(null);
+  challengeRef.current = challenge;
 
   const loadStravaData = useCallback(async (ch: Challenge) => {
     if (!stravaTokens || !challengeId || isDemoChallengeId(challengeId)) return;
@@ -323,12 +325,14 @@ const RaceView: React.FC = () => {
     setRaceTracks(buildRealRaceTracks(challenge, user?.id, undefined));
   }, [challengeId, challenge, user?.id, isConnectedToStrava, stravaTokens]);
 
-  // Strava path: depend on `challenge?.id` only so `loadStravaData` can `setChallenge` without re-triggering a fetch loop.
+  // Strava path: depend on `challenge?.id` only so changes to other properties don't re-trigger a fetch loop.
   useEffect(() => {
     if (!challengeId || isDemoChallengeId(challengeId) || !challenge?.id) return;
     if (!isConnectedToStrava || !stravaTokens) return;
-    void loadStravaData(challenge);
-  }, [challengeId, challenge, isConnectedToStrava, stravaTokens, loadStravaData]);
+    const ch = challengeRef.current;
+    if (!ch) return;
+    void loadStravaData(ch);
+  }, [challengeId, challenge?.id, isConnectedToStrava, stravaTokens, loadStravaData]);
 
   const generateDemoRaceTracks = (source?: Challenge | null) => {
     const ch = source ?? challenge;

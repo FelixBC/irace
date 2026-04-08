@@ -246,7 +246,7 @@ const MyChallenges: React.FC = () => {
       await navigator.clipboard.writeText(shareUrl);
       showToast('success', 'Link copied', 'Share link is on your clipboard.');
     } catch {
-      showToast('error', 'Copy failed', shareUrl);
+      showToast('error', 'Copy failed', 'Could not copy the link. Please copy it manually.');
     }
   };
 

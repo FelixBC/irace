@@ -23,13 +23,16 @@ function isDemoChallengeId(id: string | undefined): boolean {
   return id != null && id.toLowerCase() === DEMO_ROUTE_ID;
 }
 
+function asDate(d: Date | string): Date {
+  return d instanceof Date ? d : new Date(d);
+}
+
 /** API JSON uses date strings; coerce before compare so past end dates never show negative minutes. */
 function getChallengeTimeDisplay(challenge: Challenge): { ended: boolean; countdown: string } {
   if (challenge.status === ChallengeStatus.COMPLETED) {
     return { ended: true, countdown: '' };
   }
-  const end =
-    challenge.endDate instanceof Date ? challenge.endDate : new Date(challenge.endDate);
+  const end = asDate(challenge.endDate);
   if (Number.isNaN(end.getTime())) {
     return { ended: true, countdown: '' };
   }
@@ -212,7 +215,7 @@ function buildRealRaceTracks(
   selfUserId: string | undefined,
   selfActivities: Activity[] | undefined
 ): RaceTrackType[] {
-  const start = new Date(ch.startDate);
+  const start = asDate(ch.startDate);
   const rows: ChallengeParticipant[] = Array.isArray(ch.participants) ? ch.participants : [];
 
   return ch.sports.map((sport) => {
@@ -261,17 +264,13 @@ const RaceView: React.FC = () => {
   const [stravaError, setStravaError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  const loadStravaData = useCallback(async () => {
+  const loadStravaData = useCallback(async (ch: Challenge) => {
     if (!stravaTokens || !challengeId || isDemoChallengeId(challengeId)) return;
 
     setIsLoadingStrava(true);
     setStravaError(null);
 
     try {
-      const ch = await ChallengeService.getChallenge(challengeId);
-      if (!ch) return;
-
-      setChallenge(ch);
       const stravaService = createStravaDataService(stravaTokens);
       const data = await stravaService.refreshUserData();
       setStravaData(data);
@@ -328,8 +327,8 @@ const RaceView: React.FC = () => {
   useEffect(() => {
     if (!challengeId || isDemoChallengeId(challengeId) || !challenge?.id) return;
     if (!isConnectedToStrava || !stravaTokens) return;
-    void loadStravaData();
-  }, [challengeId, challenge?.id, isConnectedToStrava, stravaTokens, loadStravaData]);
+    void loadStravaData(challenge);
+  }, [challengeId, challenge, isConnectedToStrava, stravaTokens, loadStravaData]);
 
   const generateDemoRaceTracks = (source?: Challenge | null) => {
     const ch = source ?? challenge;
@@ -364,27 +363,30 @@ const RaceView: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
 
-    if (isDemoChallengeId(challengeId)) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      generateDemoRaceTracks(challenge);
-    } else if (challengeId) {
-      try {
-        const refreshed = await ChallengeService.getChallenge(challengeId);
-        if (refreshed) setChallenge(refreshed);
-        const ch = refreshed ?? challenge;
-        if (ch) {
-          if (isConnectedToStrava && stravaTokens) {
-            await loadStravaData();
-          } else {
-            setRaceTracks(buildRealRaceTracks(ch, user?.id, undefined));
-          }
-        }
-      } catch (e) {
-        log.error('challenge refresh failed', e);
+    try {
+      if (isDemoChallengeId(challengeId)) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        generateDemoRaceTracks(challenge);
+        return;
       }
-    }
 
-    setIsRefreshing(false);
+      if (!challengeId) return;
+
+      const refreshed = await ChallengeService.getChallenge(challengeId);
+      if (refreshed) setChallenge(refreshed);
+      const ch = refreshed ?? challenge;
+      if (!ch) return;
+
+      if (isConnectedToStrava && stravaTokens) {
+        await loadStravaData(ch);
+      } else {
+        setRaceTracks(buildRealRaceTracks(ch, user?.id, undefined));
+      }
+    } catch (e) {
+      log.error('challenge refresh failed', e);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const copyShareLink = async () => {
@@ -424,6 +426,8 @@ const RaceView: React.FC = () => {
   }
 
   const timeDisplay = getChallengeTimeDisplay(challenge);
+  const startDate = asDate(challenge.startDate);
+  const endDate = asDate(challenge.endDate);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -456,7 +460,7 @@ const RaceView: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <span>📅</span>
-                <span>{format(challenge.startDate, 'MMM d')} - {format(challenge.endDate, 'MMM d')}</span>
+                <span>{format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}</span>
               </div>
             </div>
           </div>

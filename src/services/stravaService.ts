@@ -1,6 +1,8 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
-import { getApiBaseUrl, getStravaCallbackUrl } from '../config/urls';
+import { getStravaCallbackUrl } from '../config/urls';
 import { createLogger } from '../lib/logger';
+import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
+import { CHALLENGES } from '../config/api';
 
 const log = createLogger('stravaService');
 
@@ -22,23 +24,20 @@ export class StravaService {
   }
 
   private async refreshAccessToken(): Promise<void> {
-    const sessionToken = typeof localStorage !== 'undefined' ? localStorage.getItem('session_token') : null;
-    if (!sessionToken) {
+    const authHeader = getAuthHeader();
+    if (!('Authorization' in authHeader)) {
       throw new Error('No session — sign in again');
     }
 
-    const response = await fetch(`${getApiBaseUrl()}/strava/refresh-token`, {
+    const response = await fetch(new URL('/strava/refresh-token', CHALLENGES).toString(), {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${sessionToken}`,
+        ...(authHeader as { Authorization: string }),
       },
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to refresh Strava access token');
-    }
-
-    const data = await response.json();
+    await assertOk(response, 'Failed to refresh Strava access token');
+    const data = await readJson<{ stravaTokens: StravaTokens }>(response);
     const t = data.stravaTokens;
     this.accessToken = t.access_token;
     this.refreshToken = t.refresh_token;

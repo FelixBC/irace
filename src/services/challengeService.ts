@@ -1,8 +1,8 @@
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
 import { CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
-import { getApiBaseUrl } from '../config/urls';
 import { addDays } from 'date-fns';
 import { createLogger } from '../lib/logger';
+import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
 
 const log = createLogger('challengeService');
 
@@ -58,7 +58,7 @@ export class ChallengeService {
     const averageGoal = totalGoal / Object.keys(data.goals).length;
 
     try {
-              const response = await fetch(CHALLENGES, {
+      const response = await fetch(CHALLENGES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,11 +83,8 @@ export class ChallengeService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to create challenge: ${response.statusText}`);
-      }
-
-      const responseData = await response.json();
+      await assertOk(response, 'Failed to create challenge');
+      const responseData = await readJson<{ data: Challenge }>(response);
       return responseData.data;
     } catch (error) {
       log.error('createChallenge failed', error);
@@ -97,7 +94,7 @@ export class ChallengeService {
 
   static async getChallenge(challengeId: string): Promise<Challenge | null> {
     try {
-              const response = await fetch(`${CHALLENGES}?id=${challengeId}`);
+      const response = await fetch(`${CHALLENGES}?id=${challengeId}`);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -106,7 +103,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch challenge: ${response.statusText}`);
       }
 
-      const challenge = await response.json();
+      const challenge = await readJson<Challenge>(response);
       return challenge;
     } catch (error) {
       log.error('getChallenge failed', error);
@@ -116,13 +113,13 @@ export class ChallengeService {
 
   static async getAllChallenges(): Promise<Challenge[]> {
     try {
-              const response = await fetch(CHALLENGES);
+      const response = await fetch(CHALLENGES);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch challenges: ${response.statusText}`);
       }
 
-      const challenges = await response.json();
+      const challenges = await readJson<Challenge[]>(response);
       return challenges;
     } catch (error) {
       log.error('getAllChallenges failed', error);
@@ -132,21 +129,18 @@ export class ChallengeService {
 
   /** Creator-only; requires session cookie / Bearer token. */
   static async deleteChallenge(challengeId: string): Promise<void> {
-    const sessionToken = localStorage.getItem('session_token');
-    if (!sessionToken) {
+    const authHeader = getAuthHeader();
+    if (!('Authorization' in authHeader)) {
       throw new Error('Please sign in to delete a challenge.');
     }
     const url = `${CHALLENGES}?challengeId=${encodeURIComponent(challengeId)}`;
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${sessionToken}`,
+        ...(authHeader as { Authorization: string }),
       },
     });
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
-    if (!response.ok) {
-      throw new Error(data.error || `Failed to delete challenge (${response.status})`);
-    }
+    await assertOk(response, `Failed to delete challenge (${response.status})`);
   }
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
@@ -157,7 +151,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch user challenges: ${response.statusText}`);
       }
 
-      const challenges = await response.json();
+      const challenges = await readJson<Challenge[]>(response);
       return challenges;
     } catch (error) {
       log.error('getUserChallenges failed', error);
@@ -185,7 +179,7 @@ export class ChallengeService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(errorData.error || `Failed to join challenge: ${response.statusText}`);
       }
     } catch (error) {
@@ -203,7 +197,7 @@ export class ChallengeService {
     progress: ChallengeProgressPayload
   ): Promise<void> {
     try {
-              const response = await fetch(UPDATE_PROGRESS(challengeId), {
+      const response = await fetch(UPDATE_PROGRESS(challengeId), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -211,9 +205,7 @@ export class ChallengeService {
         body: JSON.stringify({ userId, progress }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to update progress: ${response.statusText}`);
-      }
+      await assertOk(response, 'Failed to update progress');
     } catch (error) {
       log.error('updateChallengeProgress failed', error);
       throw new Error('Failed to update progress. Please try again.');
@@ -222,7 +214,7 @@ export class ChallengeService {
 
   static async syncStravaActivities(userId: string, challengeId?: string): Promise<StravaSyncApiResponse> {
     try {
-      const response = await fetch(`${getApiBaseUrl()}/strava/sync`, {
+      const response = await fetch(new URL('/strava/sync', CHALLENGES).toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +227,7 @@ export class ChallengeService {
         throw new Error(errorData.error || `Failed to sync Strava activities: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await readJson<StravaSyncApiResponse>(response);
     } catch (error) {
       log.error('syncStravaActivities failed', error);
       throw new Error('Failed to sync Strava activities. Please try again.');
@@ -243,32 +235,32 @@ export class ChallengeService {
   }
 
   static async getTaunts(inviteCode: string, limit = 20): Promise<TauntsListResponse> {
-    const url = `${getApiBaseUrl()}/challenges/taunts?id=${encodeURIComponent(inviteCode)}&limit=${limit}`;
+    const url = new URL('/challenges/taunts', CHALLENGES);
+    url.searchParams.set('id', inviteCode);
+    url.searchParams.set('limit', String(limit));
     const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to load taunts');
     }
-    return await res.json();
+    return await readJson<TauntsListResponse>(res);
   }
 
   static async sendTaunt(inviteCode: string, presetKey: string): Promise<{ taunt: unknown }> {
-    const sessionToken = localStorage.getItem('session_token');
-    if (!sessionToken) throw new Error('Please connect Strava to send taunts.');
-    const url = `${getApiBaseUrl()}/challenges/taunts?id=${encodeURIComponent(inviteCode)}`;
+    const authHeader = getAuthHeader();
+    if (!('Authorization' in authHeader)) throw new Error('Please connect Strava to send taunts.');
+    const url = new URL('/challenges/taunts', CHALLENGES);
+    url.searchParams.set('id', inviteCode);
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionToken}`,
+        ...(authHeader as { Authorization: string }),
       },
       body: JSON.stringify({ presetKey }),
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to send taunt');
-    }
-    return data;
+    await assertOk(res, 'Failed to send taunt');
+    return await readJson<{ taunt: unknown }>(res);
   }
 
   private static generateShareCode(): string {

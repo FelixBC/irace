@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, StravaTokens } from '../types';
-import { SESSION } from '../config/api';
+import { API_BASE_URL, SESSION } from '../config/api';
+import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
 import { createLogger } from '../lib/logger';
 
 const log = createLogger('auth');
@@ -43,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const response = await fetch(SESSION, {
-          headers: { Authorization: `Bearer ${sessionToken}` },
+          headers: { ...getAuthHeader() },
           signal,
         });
 
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        const userData = await response.json();
+        const userData = await readJson<{ user: User; stravaTokens?: StravaTokens | null }>(response);
         setUser(userData.user);
         setStravaTokens(userData.stravaTokens ?? null);
       } catch (error) {
@@ -85,19 +86,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     try {
-      const res = await fetch(`${new URL(SESSION).origin}/strava/disconnect`, {
+      const res = await fetch(`${API_BASE_URL}/strava/disconnect`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${sessionToken}` },
+        headers: { ...getAuthHeader() },
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to disconnect Strava');
-      }
+      await assertOk(res, 'Failed to disconnect Strava');
       const sessionRes = await fetch(SESSION, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
+        headers: { ...getAuthHeader() },
       });
       if (sessionRes.ok) {
-        const data = await sessionRes.json();
+        const data = await readJson<{ user: User; stravaTokens?: StravaTokens | null }>(sessionRes);
         setUser(data.user);
         setStravaTokens(data.stravaTokens ?? null);
       } else {

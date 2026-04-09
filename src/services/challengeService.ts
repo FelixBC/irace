@@ -1,5 +1,5 @@
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
-import { CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
+import { API_BASE_URL, CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
 import { addDays } from 'date-fns';
 import { createLogger } from '../lib/logger';
 import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
@@ -214,7 +214,7 @@ export class ChallengeService {
 
   static async syncStravaActivities(userId: string, challengeId?: string): Promise<StravaSyncApiResponse> {
     try {
-      const response = await fetch(new URL('/strava/sync', CHALLENGES).toString(), {
+      const response = await fetch(`${API_BASE_URL}/strava/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ export class ChallengeService {
   }
 
   static async getTaunts(inviteCode: string, limit = 20): Promise<TauntsListResponse> {
-    const url = new URL('/challenges/taunts', CHALLENGES);
+    const url = new URL(`${API_BASE_URL}/challenges/taunts`);
     url.searchParams.set('id', inviteCode);
     url.searchParams.set('limit', String(limit));
     const res = await fetch(url);
@@ -249,7 +249,7 @@ export class ChallengeService {
   static async sendTaunt(inviteCode: string, presetKey: string): Promise<{ taunt: unknown }> {
     const authHeader = getAuthHeader();
     if (!('Authorization' in authHeader)) throw new Error('Please connect Strava to send taunts.');
-    const url = new URL('/challenges/taunts', CHALLENGES);
+    const url = new URL(`${API_BASE_URL}/challenges/taunts`);
     url.searchParams.set('id', inviteCode);
     const res = await fetch(url, {
       method: 'POST',

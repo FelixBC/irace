@@ -41,3 +41,19 @@ export async function assertOk(res: Response, fallbackMessage: string): Promise<
   throw new ApiError(message, res.status, body);
 }
 
+/** JSON body + Bearer session token when present (typical authenticated API calls). */
+export function jsonAuthHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    ...getAuthHeader(),
+  };
+}
+
+/** JSON + explicit Bearer token (e.g. push helpers where the caller passes the session token). */
+export function jsonBearerHeaders(bearerToken: string): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${bearerToken}`,
+  };
+}
+

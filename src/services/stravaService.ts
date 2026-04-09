@@ -2,7 +2,7 @@ import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { getStravaCallbackUrl } from '../config/urls';
 import { createLogger } from '../lib/logger';
 import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
-import { CHALLENGES } from '../config/api';
+import { API_BASE_URL } from '../config/api';
 
 const log = createLogger('stravaService');
 
@@ -29,7 +29,7 @@ export class StravaService {
       throw new Error('No session — sign in again');
     }
 
-    const response = await fetch(new URL('/strava/refresh-token', CHALLENGES).toString(), {
+    const response = await fetch(`${API_BASE_URL}/strava/refresh-token`, {
       method: 'POST',
       headers: {
         ...(authHeader as { Authorization: string }),

@@ -43,24 +43,32 @@ This document is written to help a junior developer understand what we changed, 
 
 ---
 
-## Module 3 — Services layer: consistent API errors & auth headers (in progress)
+## Module 3 — Services layer: consistent API errors & auth headers
 
 ### What changed
 - Added a small shared API helper:
   - **File**: `src/lib/apiClient.ts`
-  - Provides `ApiError`, `assertOk()`, `readJson()`, and `getAuthHeader()`
+  - Provides `ApiError`, `assertOk()`, `readJson()`, `readJsonOrNull()`, `getAuthHeader()`, `jsonAuthHeaders()`, and `jsonBearerHeaders()`
 - Refactored services to use the shared helper and avoid repeated boilerplate:
   - **Files**:
     - `src/services/challengeService.ts`
     - `src/services/stravaService.ts`
+- Extended the same patterns to **auth**, **push**, and **`StravaAPI`** (browser refresh path):
+  - `src/context/AuthContext.tsx` — session and Strava disconnect use `getAuthHeader()`, `readJson()`, and `assertOk()`; disconnect URL uses `API_BASE_URL` (see below).
+  - `src/lib/pushNotifications.ts` — JSON + Bearer headers via `jsonBearerHeaders()`.
+  - `src/lib/strava.ts` — refresh-token call uses `assertOk()` / `readJson()` and `API_BASE_URL`.
+- **URL fix**: Several calls used `new URL('/something', CHALLENGES)` where `CHALLENGES` is `…/api/challenges`. A path starting with `/` resolves to the **site root**, so requests incorrectly targeted `…/strava/…` and `…/challenges/taunts` **without** the `/api` prefix. Those endpoints now use `` `${API_BASE_URL}/…` `` explicitly.
 
 ### Why it matters
 - **Maintainability**: one place for “how we parse errors / JSON / auth headers”.
 - **Readability**: service methods become shorter and more uniform.
-- **Correctness**: consistent error messages (prefer backend `error` field when available) and consistent status tracking via `ApiError.status`.
+- **Correctness**: consistent error messages (prefer backend `error` field when available) and consistent status tracking via `ApiError.status`; API routes under `/api` are called reliably in dev and production.
 
 ### Touched files
 - `src/lib/apiClient.ts`
+- `src/context/AuthContext.tsx`
+- `src/lib/pushNotifications.ts`
+- `src/lib/strava.ts`
 - `src/services/challengeService.ts`
 - `src/services/stravaService.ts`
 

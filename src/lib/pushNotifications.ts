@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../config/urls';
+import { jsonBearerHeaders, readJsonOrNull } from './apiClient';
 import { createLogger } from './logger';
 
 const log = createLogger('webPush');
@@ -44,10 +45,7 @@ export async function enableWebPush(bearerToken: string, baseUrl = getApiBaseUrl
 
   const res = await fetch(`${baseUrl}/push/subscribe`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${bearerToken}`,
-    },
+    headers: jsonBearerHeaders(bearerToken),
     body: JSON.stringify(json),
   });
 
@@ -62,10 +60,7 @@ export async function disableWebPush(bearerToken: string, baseUrl = getApiBaseUr
   const endpoint = sub.endpoint;
   await fetch(`${baseUrl}/push/unsubscribe`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${bearerToken}`,
-    },
+    headers: jsonBearerHeaders(bearerToken),
     body: JSON.stringify({ endpoint }),
   });
   await sub.unsubscribe();
@@ -77,15 +72,15 @@ export async function sendTestPushNotification(
 ): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch(`${baseUrl}/push/test`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${bearerToken}`,
-    },
+    headers: jsonBearerHeaders(bearerToken),
     body: JSON.stringify({ title: 'iRace', body: 'Push is working.' }),
   });
-  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return { ok: false, error: typeof data.error === 'string' ? data.error : 'Request failed' };
+    const data = await readJsonOrNull<{ error?: unknown }>(res);
+    return {
+      ok: false,
+      error: typeof data?.error === 'string' ? data.error : 'Request failed',
+    };
   }
   return { ok: true };
 }

@@ -123,6 +123,7 @@ Run these locally and scan the diff before `git push`:
 | `npm run typecheck:api` | `tsc` for `api/**/*.ts` |
 | `npm run test` | Vitest (run once) |
 | `npm run test:watch` | Vitest watch mode |
+| `npm run docs:study-pdf` | Build `docs/IRACE_STUDY_GUIDE.pdf` (needs Microsoft Edge) |
 
 ## Docker
 
@@ -136,6 +137,7 @@ Adjust `DATABASE_URL` to point at the postgres service if you run the app agains
 
 ## Documentation
 
+- [Study guide PDF](docs/IRACE_STUDY_GUIDE.pdf) — merged engineering guide, audit changelog, and architecture notes (`npm run docs:study-pdf` to regenerate)  
 - [Architecture](docs/ARCHITECTURE.md) — data layer and conventions  
 - Setup: [DATABASE_SETUP.md](docs/DATABASE_SETUP.md), [DEPLOY_INSTRUCTIONS.md](docs/DEPLOY_INSTRUCTIONS.md)  
 - Strava: [STRAVA_WEBHOOK.md](docs/STRAVA_WEBHOOK.md), [STRAVA_SUBMISSION.md](docs/STRAVA_SUBMISSION.md)  

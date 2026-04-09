@@ -9,9 +9,9 @@ This document is for **juniors** who want to connect textbook ideas to a **real 
 - Use **Parts C–E** to align your habits with how teams work and how this repo is structured.
 - Cross-check **`docs/AUDIT_CHANGES.md`** for a chronological log of refactors already done on the frontend, and **`docs/ARCHITECTURE.md`** for a short technical index.
 
-**Exporting to PDF**
+**Single PDF for studying (recommended)**
 
-- If you want a portable copy, render this Markdown to PDF the same way you did for the audit notes (e.g. print from a browser or your preferred toolchain). The **source of truth** stays this `.md` file in Git.
+- Run **`npm run docs:study-pdf`** (requires Microsoft Edge). This merges this guide, the audit changelog, and architecture notes into **`docs/IRACE_STUDY_GUIDE.pdf`** with a cover page and print-friendly layout. Regenerate after editing any of those Markdown files. The **source of truth** remains the `.md` files in Git.
 
 ---
 

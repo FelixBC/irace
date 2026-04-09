@@ -107,3 +107,6 @@ jspm_packages/
 docker-compose.override.yml
 .vercel
 .env*.local
+
+# Generated print HTML (see npm run docs:study-pdf)
+docs/_irace_study_guide_print.html

@@ -231,6 +231,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'startDate and endDate are required' });
       }
 
+      const startDate = new Date(challengeData.startDate);
+      const endDate = new Date(challengeData.endDate);
+
       const prisma = createFreshPrismaClient();
 
       try {
@@ -240,30 +243,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const inviteCode =
           challengeData.inviteCode || Math.random().toString(36).substring(2, 8).toUpperCase();
         const sports = prismaSportsFromInput(challengeData.sports);
+        const creatorId = challengeData.creatorId || 'user_test';
+        const creatorParticipationId = `participation_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-        await prisma.challenge.create({
-          data: {
-            id: challengeId,
-            name: challengeData.name || 'Test Challenge',
-            description: challengeData.description || 'A test challenge',
-            sports,
-            challengeType: (challengeData.challengeType || 'DISTANCE') as 'DISTANCE' | 'TIME' | 'FREQUENCY',
-            goal: challengeData.goal ?? 50,
-            goalUnit: challengeData.goalUnit || 'km',
-            sportGoals: challengeData.sportGoals ?? {},
-            duration: challengeData.duration || '30 days',
-            startDate: new Date(challengeData.startDate),
-            endDate: new Date(challengeData.endDate),
-            isPublic: challengeData.isPublic !== undefined ? challengeData.isPublic : true,
-            inviteCode,
-            maxParticipants: challengeData.maxParticipants ?? 10,
-            status: (challengeData.status || 'ACTIVE') as 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DRAFT',
-            creatorId: challengeData.creatorId || 'user_test',
-            creatorParticipantSharingAckAt: new Date(),
-          },
+        await prisma.$transaction(async (tx) => {
+          await tx.challenge.create({
+            data: {
+              id: challengeId,
+              name: challengeData.name || 'Test Challenge',
+              description: challengeData.description || 'A test challenge',
+              sports,
+              challengeType: (challengeData.challengeType || 'DISTANCE') as 'DISTANCE' | 'TIME' | 'FREQUENCY',
+              goal: challengeData.goal ?? 50,
+              goalUnit: challengeData.goalUnit || 'km',
+              sportGoals: challengeData.sportGoals ?? {},
+              duration: challengeData.duration || '30 days',
+              startDate,
+              endDate,
+              isPublic: challengeData.isPublic !== undefined ? challengeData.isPublic : true,
+              inviteCode,
+              maxParticipants: challengeData.maxParticipants ?? 10,
+              status: (challengeData.status || 'ACTIVE') as 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DRAFT',
+              creatorId,
+              creatorParticipantSharingAckAt: new Date(),
+            },
+          });
+
+          await tx.participation.create({
+            data: {
+              id: creatorParticipationId,
+              userId: creatorId,
+              challengeId,
+              status: 'ACTIVE',
+              progress: {},
+              currentDistance: 0,
+              challengeDataConsentAt: new Date(),
+              challengeDataConsentVersion: '1',
+            },
+          });
         });
 
-        log.info('challenge created', { challengeId, inviteCode });
+        log.info('challenge created', { challengeId, inviteCode, creatorParticipationId });
         res.status(201).json({
           success: true,
           message: 'Challenge created successfully',

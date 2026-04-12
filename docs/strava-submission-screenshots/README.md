@@ -3,7 +3,17 @@
 PNG captures for a reviewer packet or for Claude to assemble into a PDF.  
 **Production site:** https://iraceapp.vercel.app
 
-## Included
+## Resubmission set (2026-04, Strava data–heavy)
+
+| File | What it shows |
+|------|----------------|
+| `resubmit-2026-01-race-demo-leaderboard.png` | Demo race: leaderboard + km from demo participants. |
+| `resubmit-2026-03-create-creator-consent.png` | Create flow step 2: creator acknowledgement (Strava / aggregated stats). |
+| `resubmit-2026-04-profile-strava-connected.png` | Profile: Connected to Strava + athlete identity. |
+| `resubmit-2026-05-profile-settings-disconnect.png` | Settings tab: Strava connection + Disconnect. |
+| `RESUBMIT_2026_CAPTIONS.md` | Paste-ready captions for a tight PDF. |
+
+## Included (original batch)
 
 | File | What it shows |
 |------|----------------|

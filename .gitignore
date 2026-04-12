@@ -110,3 +110,6 @@ docker-compose.override.yml
 
 # Generated print HTML (see npm run docs:study-pdf)
 docs/_irace_study_guide_print.html
+
+# Playwright MCP / local browser automation artifacts
+.playwright-mcp/

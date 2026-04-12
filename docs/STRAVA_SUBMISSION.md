@@ -2,6 +2,8 @@
 
 Use this when you fill out Strava’s application / review form and when you email reviewers. Copy sections below verbatim or trim to field limits.
 
+**If Strava asked you to resubmit with more use-case detail and screenshots of Strava data only**, use the tighter checklist and captions in **[`STRAVA_RESUBMISSION.md`](./STRAVA_RESUBMISSION.md)** first.
+
 **Product display name:** **iRace** (do not use “Strava” in the app name; Strava’s branding guidelines require a distinct product name.)
 
 **Live app (production):** https://iraceapp.vercel.app  

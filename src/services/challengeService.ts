@@ -145,10 +145,17 @@ export class ChallengeService {
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
-      const response = await fetch(USER_CHALLENGES(userId));
-      
+      const authHeader = getAuthHeader();
+      if (!('Authorization' in authHeader)) {
+        throw new Error('Please sign in to load your challenges.');
+      }
+      const response = await fetch(USER_CHALLENGES(userId), {
+        headers: { ...(authHeader as { Authorization: string }) },
+      });
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch user challenges: ${response.statusText}`);
+        const errBody = await readJson<{ error?: string }>(response).catch(() => ({}));
+        throw new Error(errBody.error || `Failed to fetch user challenges: ${response.statusText}`);
       }
 
       const challenges = await readJson<Challenge[]>(response);

@@ -63,6 +63,8 @@ export interface Challenge {
   creatorId: string;
   completedAt?: Date;
   participants?: ChallengeParticipant[];
+  /** 0–100 for the current user on “My challenges” (distance vs challenge goal). */
+  myProgress?: number;
 }
 
 export interface ChallengeParticipant {

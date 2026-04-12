@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Sport, ChallengeStatus, ChallengeType } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
+import type { Challenge as ApiChallenge } from '../../types';
 import { getMainAppUrl } from '../../config/urls';
 import { createLogger } from '../../lib/logger';
 import { useToast } from '../../context/ToastContext';
@@ -73,9 +74,9 @@ const MyChallenges: React.FC = () => {
       try {
         setIsLoading(true);
         const dbChallenges = await ChallengeService.getUserChallenges(user.id);
-        
+
         // Transform database challenges to match our interface
-        const transformedChallenges: Challenge[] = dbChallenges.map(dbChallenge => ({
+        const transformedChallenges: Challenge[] = (dbChallenges as ApiChallenge[]).map((dbChallenge) => ({
           id: dbChallenge.id,
           name: dbChallenge.name,
           description: dbChallenge.description || '',
@@ -98,7 +99,7 @@ const MyChallenges: React.FC = () => {
               : Array.isArray(dbChallenge.participants)
                 ? dbChallenge.participants.length
                 : 0,
-          progress: 0, // TODO: Calculate real progress
+          progress: typeof dbChallenge.myProgress === 'number' ? dbChallenge.myProgress : 0,
           isCreator: dbChallenge.isCreator || false,
         }));
         

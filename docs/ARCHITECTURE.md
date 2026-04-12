@@ -4,6 +4,8 @@
 
 Handlers under **`api/`** are **TypeScript** (`VercelRequest` / `VercelResponse` from `@vercel/node`). Shared helpers live in **`server/`** (mostly JavaScript today). Local API typecheck: `npm run typecheck:api`.
 
+- **`GET /api/challenges/user/:userId`** — requires `Authorization: Bearer <session>`; only returns data when the session user matches `userId`. Response includes **`myProgress`** (0–100) from the caller’s `Participation.currentDistance` vs `Challenge.goal`. Shared helpers: `server/apiHelpers.ts`, `server/myChallengeProgress.ts`.
+
 ## Database: Prisma
 
 The app uses **[Prisma](https://www.prisma.io/)** for the PostgreSQL schema, migrations, and all runtime database access from API routes and server workers.

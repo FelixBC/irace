@@ -124,32 +124,22 @@ export class UserService {
     totalActivities: number;
   }> {
     try {
-      const [challenges, activities] = await Promise.all([
-        prisma.challenge.count({
-          where: {
-            OR: [
-              { creatorId: userId },
-              {
-                participants: {
-                  some: {
-                    userId: userId
-                  }
-                }
-              }
-            ]
-          }
-        }),
-        prisma.activity.count({
-          where: { userId }
-        })
+      const base = {
+        OR: [{ creatorId: userId }, { participants: { some: { userId } } }],
+      };
+
+      const [totalChallenges, activeChallenges, completedChallenges, totalActivities] = await Promise.all([
+        prisma.challenge.count({ where: base }),
+        prisma.challenge.count({ where: { ...base, status: 'ACTIVE' } }),
+        prisma.challenge.count({ where: { ...base, status: 'COMPLETED' } }),
+        prisma.activity.count({ where: { userId } }),
       ]);
 
-      // For now, return basic stats. In the future, we can add more complex calculations
       return {
-        totalChallenges: challenges,
-        completedChallenges: 0, // TODO: Calculate based on challenge status and user progress
-        activeChallenges: 0, // TODO: Calculate based on challenge status and user participation
-        totalActivities: activities
+        totalChallenges,
+        completedChallenges,
+        activeChallenges,
+        totalActivities,
       };
     } catch (error) {
       log.error('getUserStats failed', error);

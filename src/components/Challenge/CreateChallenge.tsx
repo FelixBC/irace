@@ -115,7 +115,7 @@ const CreateChallenge: React.FC = () => {
     };
 
     try {
-      const newChallenge = await ChallengeService.createChallenge(challengeData, user.id);
+      const newChallenge = await ChallengeService.createChallenge(challengeData);
       setCreatedChallenge(newChallenge);
       showToast('success', 'Challenge Created!', 'Your fitness challenge is ready to share');
       setStep(3);

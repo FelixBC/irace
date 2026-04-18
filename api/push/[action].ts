@@ -4,6 +4,7 @@ import { resolveBearerUserId } from '../../server/authSession.js';
 import { ensureWebPushConfigured, webpush } from '../../server/webPushConfig.js';
 import { createLogger } from '../../server/logger.js';
 import { getQueryString } from '../../server/vercelQuery.js';
+import { applyCors } from '../../server/cors.js';
 
 const log = createLogger('push');
 
@@ -16,7 +17,7 @@ type SubscribeBody = {
  * POST /api/push/:action — subscribe | unsubscribe | test (one serverless fn for Hobby plan limits).
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

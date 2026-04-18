@@ -48,7 +48,7 @@ export interface TauntsListResponse {
 }
 
 export class ChallengeService {
-  static async createChallenge(data: CreateChallengeData, creatorId: string): Promise<Challenge> {
+  static async createChallenge(data: CreateChallengeData): Promise<Challenge> {
     const shareCode = this.generateShareCode();
     const startDate = new Date();
     const endDate = addDays(startDate, data.duration);
@@ -58,10 +58,15 @@ export class ChallengeService {
     const averageGoal = totalGoal / Object.keys(data.goals).length;
 
     try {
+      const authHeader = getAuthHeader();
+      if (!('Authorization' in authHeader)) {
+        throw new Error('Please sign in to create a challenge.');
+      }
       const response = await fetch(CHALLENGES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(authHeader as { Authorization: string }),
         },
         body: JSON.stringify({
           name: data.name,
@@ -78,7 +83,6 @@ export class ChallengeService {
           inviteCode: shareCode,
           maxParticipants: 10,
           status: ChallengeStatus.ACTIVE,
-          creatorId,
           creatorParticipantSharingAck: data.creatorParticipantSharingAck,
         }),
       });
@@ -168,18 +172,21 @@ export class ChallengeService {
 
   static async joinChallenge(
     challengeId: string,
-    userId: string,
     consent: { challengeDataConsentAccepted: boolean; challengeDataConsentVersion: string }
   ): Promise<void> {
     try {
+      const authHeader = getAuthHeader();
+      if (!('Authorization' in authHeader)) {
+        throw new Error('Please sign in to join a challenge.');
+      }
       const response = await fetch(`${CHALLENGES}?action=join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(authHeader as { Authorization: string }),
         },
         body: JSON.stringify({
           challengeId,
-          userId,
           challengeDataConsentAccepted: consent.challengeDataConsentAccepted,
           challengeDataConsentVersion: consent.challengeDataConsentVersion,
         }),
@@ -219,14 +226,19 @@ export class ChallengeService {
     }
   }
 
-  static async syncStravaActivities(userId: string, challengeId?: string): Promise<StravaSyncApiResponse> {
+  static async syncStravaActivities(challengeId?: string): Promise<StravaSyncApiResponse> {
     try {
+      const authHeader = getAuthHeader();
+      if (!('Authorization' in authHeader)) {
+        throw new Error('Please sign in to sync Strava activities.');
+      }
       const response = await fetch(`${API_BASE_URL}/strava/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(authHeader as { Authorization: string }),
         },
-        body: JSON.stringify({ userId, challengeId }),
+        body: JSON.stringify({ challengeId }),
       });
 
       if (!response.ok) {

@@ -3,6 +3,7 @@ import { createFreshPrismaClient } from '../../server/prisma.js';
 import { resolveBearerUserId } from '../../server/authSession.js';
 import { createLogger } from '../../server/logger.js';
 import { getQueryString } from '../../server/vercelQuery.js';
+import { applyCors } from '../../server/cors.js';
 
 const log = createLogger('challenges/taunts');
 
@@ -20,7 +21,7 @@ const PRESET_KEYS = new Set<string>(PRESET_TAUNTS.map((t) => t.key));
 type PostBody = { presetKey?: string };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

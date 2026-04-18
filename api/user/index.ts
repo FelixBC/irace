@@ -1,9 +1,11 @@
 /**
- * POST /api/user — Upsert Strava user and issue session (server-side only; no secrets in client).
+ * POST /api/user — Upsert Strava user and issue session.
+ * Requires `Authorization: Bearer <INTERNAL_USER_UPSERT_SECRET>` (server-to-server / tooling only).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
+import { applyCors } from '../../server/cors.js';
 
 const log = createLogger('api/user');
 
@@ -21,7 +23,7 @@ type PostBody = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -31,6 +33,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const secret = process.env.INTERNAL_USER_UPSERT_SECRET?.trim();
+  if (!secret) {
+    log.warn('INTERNAL_USER_UPSERT_SECRET is not set — refusing user upsert');
+    return res.status(503).json({ error: 'User upsert is not configured' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ') || authHeader.slice(7) !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const body = (req.body ?? {}) as PostBody;

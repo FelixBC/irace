@@ -1,18 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award } from 'lucide-react';
-import { RaceTrack } from '../../types';
+import { RaceTrack, Sport } from '../../types';
 
 interface LeaderboardProps {
   raceTracks: RaceTrack[];
 }
 
-const sportConfig = {
+const sportConfig: Record<Sport, { icon: string; color: string }> = {
   RUNNING: { icon: '🏃‍♂️', color: 'text-orange-600' },
   CYCLING: { icon: '🚴‍♂️', color: 'text-blue-600' },
   SWIMMING: { icon: '🏊‍♂️', color: 'text-teal-600' },
   WALKING: { icon: '🚶‍♂️', color: 'text-green-600' },
   HIKING: { icon: '🥾', color: 'text-amber-600' },
+  YOGA: { icon: '🧘', color: 'text-rose-600' },
   WEIGHT_TRAINING: { icon: '💪', color: 'text-purple-600' },
 };
 

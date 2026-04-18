@@ -2,11 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../../server/logger.js';
 import { createFreshPrismaClient } from '../../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../../server/optionalInsecureTls.js';
+import { applyCors } from '../../../server/cors.js';
 
 const log = createLogger('authSession');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

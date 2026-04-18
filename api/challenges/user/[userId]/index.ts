@@ -7,12 +7,13 @@ import { getQueryString } from '../../../../server/vercelQuery.js';
 import { resolveBearerUserId } from '../../../../server/authSession.js';
 import { sendJsonError } from '../../../../server/apiHelpers.js';
 import { computeProgressPercent } from '../../../../server/myChallengeProgress.js';
+import { applyCors } from '../../../../server/cors.js';
 
 const log = createLogger('challenges/user');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   applyOptionalInsecureTlsFromEnv();
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

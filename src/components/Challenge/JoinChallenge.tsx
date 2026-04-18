@@ -54,7 +54,7 @@ const JoinChallenge: React.FC = () => {
       setError(null);
 
       // Join the challenge
-      await ChallengeService.joinChallenge(challenge.id, user.id, {
+      await ChallengeService.joinChallenge(challenge.id, {
         challengeDataConsentAccepted: peerSharingConsent,
         challengeDataConsentVersion: CHALLENGE_DATA_CONSENT_VERSION,
       });

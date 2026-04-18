@@ -6,6 +6,7 @@ import { createFreshPrismaClient } from '../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../server/optionalInsecureTls.js';
 import { getQueryString } from '../../server/vercelQuery.js';
 import { resolveBearerUserId } from '../../server/authSession.js';
+import { applyCors } from '../../server/cors.js';
 
 const log = createLogger('challenges');
 
@@ -31,7 +32,6 @@ function prismaSportsFromInput(raw: unknown): Sport[] {
 
 type JoinBody = {
   challengeId?: string;
-  userId?: string;
   challengeDataConsentAccepted?: boolean;
   challengeDataConsentVersion?: string;
 };
@@ -51,7 +51,6 @@ type CreateChallengeBody = {
   inviteCode?: string;
   maxParticipants?: number;
   status?: string;
-  creatorId?: string;
   creatorParticipantSharingAck?: boolean;
 };
 
@@ -60,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   log.debug(req.method, req.url || '');
 
   try {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    applyCors(req, res);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -121,11 +120,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST' && getQueryString(req, 'action') === 'join') {
       const body = (req.body ?? {}) as JoinBody;
-      const { challengeId, userId, challengeDataConsentAccepted, challengeDataConsentVersion } = body;
+      const { challengeId, challengeDataConsentAccepted, challengeDataConsentVersion } = body;
 
-      if (!challengeId || !userId) {
-        log.warn('join rejected: missing challengeId or userId');
-        return res.status(400).json({ error: 'Challenge ID and User ID are required' });
+      if (!challengeId) {
+        log.warn('join rejected: missing challengeId');
+        return res.status(400).json({ error: 'Challenge ID is required' });
       }
 
       if (!challengeDataConsentAccepted || challengeDataConsentVersion !== '1') {
@@ -135,11 +134,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      log.debug('join', { challengeId, userId });
-
       const prisma = createFreshPrismaClient();
 
       try {
+        const userId = await resolveBearerUserId(prisma, req);
+        if (!userId) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        log.debug('join', { challengeId, userId });
+
         const challenge = await prisma.challenge.findUnique({
           where: { id: challengeId },
           select: { id: true, maxParticipants: true, status: true },
@@ -218,7 +222,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST') {
       const challengeData = (req.body ?? {}) as CreateChallengeBody;
-      log.debug('create challenge', { name: challengeData?.name, creatorId: challengeData?.creatorId });
+      log.debug('create challenge', { name: challengeData?.name });
 
       if (!challengeData.creatorParticipantSharingAck) {
         return res.status(400).json({
@@ -239,11 +243,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         log.debug('db connected (create)');
 
+        const creatorId = await resolveBearerUserId(prisma, req);
+        if (!creatorId) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         const inviteCode =
           challengeData.inviteCode || Math.random().toString(36).substring(2, 8).toUpperCase();
         const sports = prismaSportsFromInput(challengeData.sports);
-        const creatorId = challengeData.creatorId || 'user_test';
         const creatorParticipationId = `participation_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
         await prisma.$transaction(async (tx) => {

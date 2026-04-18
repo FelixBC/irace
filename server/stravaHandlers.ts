@@ -7,6 +7,8 @@ import { createFreshPrismaClient } from './prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from './optionalInsecureTls.js';
 import { createLogger } from './logger.js';
 import { mapStravaActivityTypeToSport } from '../shared/stravaSportType.js';
+import { resolveBearerUserId } from './authSession.js';
+import { applyCors } from './cors.js';
 
 const log = createLogger('stravaSync');
 
@@ -24,7 +26,6 @@ function activitySportKey(activity: StravaActivitySummary): string | undefined {
 }
 
 type SyncBody = {
-  userId?: string;
   challengeId?: string;
 };
 
@@ -45,6 +46,14 @@ function jsonRefreshToken(tokens: unknown): string | undefined {
 }
 
 export async function handleStravaSync(req: VercelRequest, res: VercelResponse) {
+  applyCors(req, res);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   log.debug('request', req.method, (req.body as SyncBody | undefined)?.challengeId);
 
   if (req.method !== 'POST') {
@@ -54,14 +63,7 @@ export async function handleStravaSync(req: VercelRequest, res: VercelResponse) 
 
   try {
     const body = (req.body ?? {}) as SyncBody;
-    const { userId, challengeId } = body;
-
-    if (!userId) {
-      log.warn('missing userId');
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    log.debug('sync start', { userId, challengeId });
+    const { challengeId } = body;
 
     applyOptionalInsecureTlsFromEnv();
 
@@ -69,6 +71,13 @@ export async function handleStravaSync(req: VercelRequest, res: VercelResponse) 
 
     try {
       log.debug('db connected');
+
+      const userId = await resolveBearerUserId(prisma, req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      log.debug('sync start', { userId, challengeId });
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -238,7 +247,7 @@ export async function handleStravaSync(req: VercelRequest, res: VercelResponse) 
 const logDisconnect = createLogger('stravaDisconnect');
 
 export async function handleStravaDisconnect(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -305,7 +314,7 @@ export async function handleStravaDisconnect(req: VercelRequest, res: VercelResp
 const logRefresh = createLogger('stravaRefresh');
 
 export async function handleStravaRefreshToken(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

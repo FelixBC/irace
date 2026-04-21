@@ -147,7 +147,7 @@ const CreateChallenge: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 transition-colors">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Progress Indicator */}
         <div className="mb-8">
@@ -158,7 +158,7 @@ const CreateChallenge: React.FC = () => {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     step >= stepNumber
                       ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {stepNumber}
@@ -166,7 +166,7 @@ const CreateChallenge: React.FC = () => {
                 {stepNumber < 3 && (
                   <div
                     className={`w-12 h-0.5 mx-2 ${
-                      step > stepNumber ? 'bg-orange-500' : 'bg-gray-200'
+                      step > stepNumber ? 'bg-orange-500' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -174,7 +174,7 @@ const CreateChallenge: React.FC = () => {
             ))}
           </div>
           <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Step {step} of 3: {
                 step === 1 ? 'Challenge Details' :
                 step === 2 ? 'Settings' : 'Share & Launch'
@@ -188,15 +188,15 @@ const CreateChallenge: React.FC = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-8"
+          className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors"
         >
           {step === 1 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Your Challenge</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Your Challenge</h2>
               
               {/* Challenge Name */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Challenge Name
                 </label>
                 <input
@@ -204,17 +204,17 @@ const CreateChallenge: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Winter Fitness Challenge 2025"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
                   maxLength={50}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {formData.name.length}/50 characters
                 </p>
               </div>
 
               {/* Sport Selection */}
               <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-4">
                   Select Sports
                 </label>
                 <div className="grid grid-cols-2 gap-4">
@@ -226,16 +226,16 @@ const CreateChallenge: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
                         formData.sports.includes(sport.id)
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <span className="text-2xl">{sport.icon}</span>
                         <div>
-                          <p className="font-medium text-gray-900">{sport.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{sport.name}</p>
                           {formData.goals[sport.id] && (
-                            <p className="text-sm text-orange-600">
+                            <p className="text-sm text-orange-600 dark:text-orange-300">
                               Goal: {formData.goals[sport.id]} {sport.id === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
                             </p>
                           )}
@@ -245,7 +245,7 @@ const CreateChallenge: React.FC = () => {
                   ))}
                 </div>
                 {formData.sports.length === 0 && (
-                  <p className="text-sm text-gray-500 mt-3 text-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center">
                     Select at least one sport for your challenge
                   </p>
                 )}

@@ -22,6 +22,7 @@ import { Sport, ChallengeStatus, ChallengeType } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
 import type { Challenge as ApiChallenge } from '../../types';
 import { getMainAppUrl } from '../../config/urls';
+import { getStravaAuthUrl } from '../../services/stravaService';
 import { createLogger } from '../../lib/logger';
 import { useToast } from '../../context/ToastContext';
 
@@ -55,7 +56,7 @@ type SportFilter = 'all' | Sport;
 type SortBy = 'recent' | 'name' | 'progress' | 'participants';
 
 const MyChallenges: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   const [openMenuChallengeId, setOpenMenuChallengeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -209,6 +210,10 @@ const MyChallenges: React.FC = () => {
     window.location.href = '/create';
   };
 
+  const handleConnectStrava = () => {
+    window.location.href = getStravaAuthUrl('/my-challenges');
+  };
+
   const handleViewChallenge = (challenge: Challenge) => {
     window.location.href = `/race/${challenge.inviteCode}`;
   };
@@ -251,12 +256,36 @@ const MyChallenges: React.FC = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-300">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading challenges...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">My Challenges</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            You need to log in and connect Strava before we can show your challenges.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleConnectStrava}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            Connect Strava
+          </motion.button>
         </div>
       </div>
     );

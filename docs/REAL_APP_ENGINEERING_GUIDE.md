@@ -7,11 +7,7 @@ This document is for **juniors** who want to connect textbook ideas to a **real 
 - Read **Part A** once to build a mental checklist of “what grown-up apps worry about.”
 - Use **Part B** as a **map**: when you care about a topic, open the listed paths and read the code there (this guide explains *what role* each area plays; it does not paste implementation).
 - Use **Parts C–E** to align your habits with how teams work and how this repo is structured.
-- Cross-check **`docs/AUDIT_CHANGES.md`** for a chronological log of refactors already done on the frontend, and **`docs/ARCHITECTURE.md`** for a short technical index.
-
-**Single PDF for studying (recommended)**
-
-- Run **`npm run docs:study-pdf`** (requires Microsoft Edge). This merges this guide, the audit changelog, and architecture notes into **`docs/IRACE_STUDY_GUIDE.pdf`** with a cover page and print-friendly layout. Regenerate after editing any of those Markdown files. The **source of truth** remains the `.md` files in Git.
+- Cross-check **`docs/AUDIT_CHANGES.md`** for a chronological log of refactors already done on the frontend, and **`docs/ARCHITECTURE.md`** for a short technical index. The **source of truth** is these `.md` files in Git.
 
 ---
 
@@ -209,8 +205,9 @@ The **`server/`** directory is **not** another deployable — it is **libraries*
 
 ### B13. Tooling & scripts
 
-- **DB maintenance / one-off migrations:** `scripts/setup-db.ts`, `scripts/migrate-db.ts`, `scripts/clean-db.ts`, `scripts/create-participation-table.ts` — operational scripts, not imported by the UI.
+- **DB maintenance:** `scripts/setup-db.ts`, `scripts/clean-db.ts` — operational scripts, not imported by the UI.
 - **VAPID generation:** `scripts/generate-vapid-keys.mjs`
+- **Strava webhook registration (ops):** `scripts/register-strava-webhook.mjs`
 
 ### B14. Documentation set (meta)
 

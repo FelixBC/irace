@@ -17,7 +17,7 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-950 transition-colors">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -25,7 +25,7 @@ const LandingPage: React.FC = () => {
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight"
+              className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
             >
               <span className="block">Race Your Friends with</span>
               <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
@@ -37,7 +37,7 @@ const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto"
+              className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto"
             >
               Create fitness challenges with friends and compete in real-time using your actual 
               running, cycling, swimming, walking, hiking, and strength training activities from Strava. TypeRacer meets fitness!
@@ -68,14 +68,14 @@ const LandingPage: React.FC = () => {
               
               <Link
                 to="/race/demo-challenge"
-                className="bg-white hover:bg-gray-50 text-gray-900 font-semibold py-4 px-8 rounded-xl transition-colors flex items-center space-x-2 border border-gray-200 shadow-lg"
+                className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold py-4 px-8 rounded-xl transition-colors flex items-center space-x-2 border border-gray-200 dark:border-gray-600 shadow-lg"
               >
                 <Play className="w-5 h-5" />
                 <span>View Demo Race</span>
               </Link>
             </motion.div>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
               <a href="/privacy" className="text-orange-600 hover:underline">
                 Privacy
               </a>
@@ -125,13 +125,13 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-white dark:bg-gray-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               How It Works
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Three simple steps to start racing with friends
             </p>
           </div>
@@ -162,18 +162,18 @@ const LandingPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2 }}
-                className="relative bg-gray-50 rounded-xl p-8 text-center"
+                className="relative bg-gray-50 dark:bg-gray-800/80 rounded-xl p-8 text-center border border-transparent dark:border-gray-700"
               >
-                <div className="absolute top-4 right-4 text-4xl font-bold text-gray-200">
+                <div className="absolute top-4 right-4 text-4xl font-bold text-gray-200 dark:text-gray-600">
                   {feature.step}
                 </div>
                 <div className="mb-4 flex justify-center">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {feature.description}
                 </p>
               </motion.div>

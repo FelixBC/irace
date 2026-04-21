@@ -5,9 +5,9 @@ const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'support@example.com
 
 const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-gray-200 bg-white mt-auto">
+    <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 mt-auto transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 text-sm text-gray-600">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 text-sm text-gray-600 dark:text-gray-400">
           <div className="space-y-2">
             <p>
               <a

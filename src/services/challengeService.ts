@@ -1,8 +1,17 @@
+import { z } from 'zod';
 import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
 import { API_BASE_URL, CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
 import { addDays } from 'date-fns';
 import { createLogger } from '../lib/logger';
-import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
+import { assertOk, getAuthHeader, parseJsonResponse, readJsonOrNull } from '../lib/apiClient';
+import {
+  apiErrorBodySchema,
+  challengeSchema,
+  createChallengeResponseSchema,
+  stravaSyncResponseSchema,
+  tauntsListResponseSchema,
+  sendTauntResponseSchema,
+} from '../schemas/apiResponses';
 
 const log = createLogger('challengeService');
 
@@ -88,8 +97,7 @@ export class ChallengeService {
       });
 
       await assertOk(response, 'Failed to create challenge');
-      const responseData = await readJson<{ data: Challenge }>(response);
-      return responseData.data;
+      return await parseJsonResponse(response, createChallengeResponseSchema);
     } catch (error) {
       log.error('createChallenge failed', error);
       throw new Error('Failed to create challenge. Please try again.');
@@ -107,8 +115,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch challenge: ${response.statusText}`);
       }
 
-      const challenge = await readJson<Challenge>(response);
-      return challenge;
+      return await parseJsonResponse(response, challengeSchema);
     } catch (error) {
       log.error('getChallenge failed', error);
       throw new Error('Failed to load challenge. Please try again.');
@@ -123,8 +130,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch challenges: ${response.statusText}`);
       }
 
-      const challenges = await readJson<Challenge[]>(response);
-      return challenges;
+      return await parseJsonResponse(response, z.array(challengeSchema));
     } catch (error) {
       log.error('getAllChallenges failed', error);
       throw new Error('Failed to load challenges. Please try again.');
@@ -158,12 +164,16 @@ export class ChallengeService {
       });
 
       if (!response.ok) {
-        const errBody = await readJson<{ error?: string }>(response).catch(() => ({}));
-        throw new Error(errBody.error || `Failed to fetch user challenges: ${response.statusText}`);
+        const raw = await readJsonOrNull<unknown>(response);
+        const parsed = apiErrorBodySchema.safeParse(raw);
+        throw new Error(
+          parsed.success && parsed.data.error
+            ? parsed.data.error
+            : `Failed to fetch user challenges: ${response.statusText}`
+        );
       }
 
-      const challenges = await readJson<Challenge[]>(response);
-      return challenges;
+      return await parseJsonResponse(response, z.array(challengeSchema));
     } catch (error) {
       log.error('getUserChallenges failed', error);
       throw new Error('Failed to load your challenges. Please try again.');
@@ -246,7 +256,7 @@ export class ChallengeService {
         throw new Error(errorData.error || `Failed to sync Strava activities: ${response.statusText}`);
       }
 
-      return await readJson<StravaSyncApiResponse>(response);
+      return await parseJsonResponse(response, stravaSyncResponseSchema);
     } catch (error) {
       log.error('syncStravaActivities failed', error);
       throw new Error('Failed to sync Strava activities. Please try again.');
@@ -262,7 +272,7 @@ export class ChallengeService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to load taunts');
     }
-    return await readJson<TauntsListResponse>(res);
+    return await parseJsonResponse(res, tauntsListResponseSchema);
   }
 
   static async sendTaunt(inviteCode: string, presetKey: string): Promise<{ taunt: unknown }> {
@@ -279,7 +289,7 @@ export class ChallengeService {
       body: JSON.stringify({ presetKey }),
     });
     await assertOk(res, 'Failed to send taunt');
-    return await readJson<{ taunt: unknown }>(res);
+    return await parseJsonResponse(res, sendTauntResponseSchema);
   }
 
   private static generateShareCode(): string {

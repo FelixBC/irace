@@ -1,3 +1,5 @@
+import { z, ZodError } from 'zod';
+
 export class ApiError extends Error {
   status: number;
   details?: unknown;
@@ -7,6 +9,17 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.details = details;
+  }
+}
+
+/** Thrown when response JSON does not match the expected Zod schema. */
+export class ValidationError extends Error {
+  readonly zodError: ZodError;
+
+  constructor(zodError: ZodError) {
+    super(`API response validation failed: ${zodError.message}`);
+    this.name = 'ValidationError';
+    this.zodError = zodError;
   }
 }
 
@@ -22,6 +35,26 @@ export function getAuthHeader(): { Authorization: string } | Record<string, neve
 
 export async function readJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
+}
+
+/**
+ * Parse JSON body with a Zod schema (runtime contract). Prefer this for API boundaries.
+ */
+export async function parseJsonResponse<O>(res: Response, schema: z.ZodType<O, z.ZodTypeDef, unknown>): Promise<O> {
+  let raw: unknown;
+  try {
+    raw = await res.json();
+  } catch {
+    throw new ApiError('Response is not valid JSON', res.status);
+  }
+  try {
+    return schema.parse(raw);
+  } catch (e) {
+    if (e instanceof ZodError) {
+      throw new ValidationError(e);
+    }
+    throw e;
+  }
 }
 
 export async function readJsonOrNull<T>(res: Response): Promise<T | null> {

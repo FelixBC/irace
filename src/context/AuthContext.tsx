@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, StravaTokens } from '../types';
 import { API_BASE_URL, SESSION } from '../config/api';
-import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
+import { assertOk, getAuthHeader, parseJsonResponse } from '../lib/apiClient';
+import { sessionResponseSchema } from '../schemas/apiResponses';
 import { createLogger } from '../lib/logger';
 
 const log = createLogger('auth');
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        const userData = await readJson<{ user: User; stravaTokens?: StravaTokens | null }>(response);
+        const userData = await parseJsonResponse(response, sessionResponseSchema);
         setUser(userData.user);
         setStravaTokens(userData.stravaTokens ?? null);
       } catch (error) {
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { ...getAuthHeader() },
       });
       if (sessionRes.ok) {
-        const data = await readJson<{ user: User; stravaTokens?: StravaTokens | null }>(sessionRes);
+        const data = await parseJsonResponse(sessionRes, sessionResponseSchema);
         setUser(data.user);
         setStravaTokens(data.stravaTokens ?? null);
       } else {

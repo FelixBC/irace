@@ -1,7 +1,8 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { getStravaCallbackUrl } from '../config/urls';
 import { createLogger } from '../lib/logger';
-import { assertOk, getAuthHeader, readJson } from '../lib/apiClient';
+import { assertOk, getAuthHeader, parseJsonResponse } from '../lib/apiClient';
+import { stravaRefreshEnvelopeSchema } from '../schemas/apiResponses';
 import { API_BASE_URL } from '../config/api';
 
 const log = createLogger('stravaService');
@@ -37,7 +38,7 @@ export class StravaService {
     });
 
     await assertOk(response, 'Failed to refresh Strava access token');
-    const data = await readJson<{ stravaTokens: StravaTokens }>(response);
+    const data = await parseJsonResponse(response, stravaRefreshEnvelopeSchema);
     const t = data.stravaTokens;
     this.accessToken = t.access_token;
     this.refreshToken = t.refresh_token;

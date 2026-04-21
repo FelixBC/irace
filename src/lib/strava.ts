@@ -1,6 +1,7 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { API_BASE_URL } from '../config/api';
-import { assertOk, getAuthHeader, readJson } from './apiClient';
+import { assertOk, getAuthHeader, parseJsonResponse } from './apiClient';
+import { stravaRefreshEnvelopeSchema } from '../schemas/apiResponses';
 import {
   mapStravaActivityTypeToSport,
   STRAVA_ACTIVITY_TYPES_CLIENT_PRIMARY,
@@ -32,7 +33,7 @@ export class StravaAPI {
         headers: { ...getAuthHeader() },
       });
       await assertOk(response, 'Failed to refresh Strava access token');
-      const data = await readJson<{ stravaTokens: StravaTokens }>(response);
+      const data = await parseJsonResponse(response, stravaRefreshEnvelopeSchema);
       const t = data.stravaTokens;
       this.accessToken = t.access_token;
       this.refreshToken = t.refresh_token;

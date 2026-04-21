@@ -3,8 +3,9 @@ import { StravaAPI } from '@/lib/strava';
 import { isActivityRelevant } from '@/lib/strava';
 import { createLogger } from '@/lib/logger';
 import { mapStravaActivityTypeToSport } from '../../shared/stravaSportType.js';
+import type { Prisma } from '@prisma/client';
 import type { Challenge, Participation, User } from '@prisma/client';
-import type { StravaActivity } from '@/types';
+import type { StravaActivity, StravaTokens } from '@/types';
 
 const log = createLogger('strava-sync');
 
@@ -63,13 +64,10 @@ export class StravaSyncService {
       }
 
       // Initialize Strava API
-      const stravaAPI = new StravaAPI(user.stravaTokens);
+      const stravaAPI = new StravaAPI(user.stravaTokens as unknown as StravaTokens);
 
-      // Get user's recent activities from Strava
-      const activities = await stravaAPI.getActivities({
-        after: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000), // Last 30 days
-        per_page: 200
-      });
+      // Get user's recent activities from Strava (last 30 days)
+      const activities = await stravaAPI.getActivitiesAfterDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
 
       if (!activities) {
         result.errors.push('Failed to fetch Strava activities');
@@ -86,15 +84,18 @@ export class StravaSyncService {
         const progress = await this.calculateChallengeProgress(
           activities,
           challenge,
-          participation.createdAt
+          participation.joinedAt
         );
 
+        const prevProgress =
+          typeof participation.progress === 'number' ? participation.progress : 0;
+
         // Update participation if progress changed
-        if (progress !== participation.progress) {
+        if (progress !== prevProgress) {
           await prisma.participation.update({
             where: { id: participation.id },
             data: {
-              progress,
+              progress: progress as Prisma.InputJsonValue,
               lastActivityDate: new Date()
             }
           });
@@ -234,11 +235,11 @@ export class StravaSyncService {
 
     return {
       challenge,
-      participants: challenge.participants.map(p => ({
+      participants: challenge.participants.map((p) => ({
         id: p.id,
         userId: p.userId,
         user: p.user,
-        progress: p.progress || 0,
+        progress: typeof p.progress === 'number' ? p.progress : 0,
         rank: 0, // Will be calculated
         lastActivityDate: p.lastActivityDate
       }))
@@ -258,20 +259,16 @@ export class StravaSyncService {
         return false;
       }
 
-      const stravaAPI = new StravaAPI(user.stravaTokens);
+      const stravaAPI = new StravaAPI(user.stravaTokens as unknown as StravaTokens);
       const newTokens = await stravaAPI.refreshTokens();
 
-      if (newTokens) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            stravaTokens: newTokens
-          }
-        });
-        return true;
-      }
-
-      return false;
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          stravaTokens: newTokens as unknown as Prisma.InputJsonValue,
+        },
+      });
+      return true;
     } catch (error) {
       log.error('token refresh failed', error);
       return false;

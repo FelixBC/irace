@@ -85,9 +85,12 @@ VITE_SUPPORT_EMAIL=you@yourdomain.com
 ```env
 STRAVA_CLIENT_ID=your_strava_client_id
 STRAVA_CLIENT_SECRET=your_strava_client_secret
+AUTH_SESSION_SECRET=your_long_random_secret_at_least_16_chars
 DATABASE_URL=postgresql://...
 FRONTEND_URL=https://your-app.example.com
 ```
+
+Set **`AUTH_SESSION_SECRET`** to a long random string (server only). It signs **15-minute access JWTs** and hashes **30-day refresh tokens**; without it, auth routes will error at runtime.
 
 In [Strava API Settings](https://www.strava.com/settings/api), set the **Authorization Callback Domain** and redirect URI to match your app, e.g. `https://your-app.example.com/api/auth/strava/callback` (and the localhost equivalent for dev).
 
@@ -105,10 +108,10 @@ Run these locally and scan the diff before `git push`:
 
 1. `npm run build` — Prisma client + Vite production build must succeed.
 2. `npm run test` — Vitest unit tests (shared helpers + server utilities).
-3. `npm run typecheck:api` — TypeScript check for `api/` (and `server/vercelQuery.ts`).
-4. `npm run lint` — ESLint clean (or only known accepted warnings).
+3. `npm run typecheck` — TypeScript for `api/` + `server/` + `src/` (`typecheck:api` + app `tsc`).
+4. `npm run lint` — ESLint clean (or only known accepted warnings). If the editor shows wrong types on `Session`, run `npx prisma generate` (also runs on `npm install` via `postinstall`).
 5. `git status` / `git diff` — no accidental files (`.env`, `.env.local`, `dist/`, editor junk).
-6. Secrets — `STRAVA_CLIENT_SECRET`, DB passwords, VAPID private keys, webhook tokens must **not** appear in commits (use Vercel/env vars).
+6. Secrets — `STRAVA_CLIENT_SECRET`, `AUTH_SESSION_SECRET`, DB passwords, VAPID private keys, webhook tokens must **not** appear in commits (use Vercel/env vars).
 7. Strava app settings — production **callback URL** still matches your deploy (see [Quick start](#quick-start) above).
 8. **Optional:** smoke the flows you changed (OAuth, join, race, webhook) on staging if you have it.
 
@@ -120,7 +123,8 @@ Run these locally and scan the diff before `git push`:
 | `npm run build` | `prisma generate` + production build |
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
-| `npm run typecheck:api` | `tsc` for `api/**/*.ts` |
+| `npm run typecheck:api` | `tsc` for `api/`, `server/`, etc. (`tsconfig.api.json`) |
+| `npm run typecheck` | API + app TypeScript (`typecheck:api` + `tsconfig.app.json`) |
 | `npm run test` | Vitest (run once) |
 | `npm run test:watch` | Vitest watch mode |
 

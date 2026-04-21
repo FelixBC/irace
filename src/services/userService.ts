@@ -1,6 +1,11 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../lib/db';
 import { User, StravaTokens } from '../types';
 import { createLogger } from '../lib/logger';
+
+function tokensAsJson(tokens: StravaTokens): Prisma.InputJsonValue {
+  return tokens as unknown as Prisma.InputJsonValue;
+}
 
 const log = createLogger('userService');
 
@@ -21,7 +26,7 @@ export class UserService {
           name: data.name,
           email: data.email,
           image: data.image,
-          stravaTokens: data.stravaTokens,
+          stravaTokens: tokensAsJson(data.stravaTokens),
           updatedAt: new Date()
         },
         create: {
@@ -29,17 +34,17 @@ export class UserService {
           email: data.email,
           image: data.image,
           stravaId: data.stravaId,
-          stravaTokens: data.stravaTokens
+          stravaTokens: tokensAsJson(data.stravaTokens)
         }
       });
 
       return {
         id: user.id,
         name: user.name || 'Unknown User',
-        email: user.email,
-        image: user.image,
+        email: user.email ?? undefined,
+        image: user.image ?? undefined,
         stravaId: user.stravaId || '',
-        stravaTokens: user.stravaTokens as StravaTokens
+        stravaTokens: user.stravaTokens as unknown as StravaTokens
       };
     } catch (error) {
       log.error('createOrUpdateUser failed', error);
@@ -58,10 +63,10 @@ export class UserService {
       return {
         id: user.id,
         name: user.name || 'Unknown User',
-        email: user.email,
-        image: user.image,
+        email: user.email ?? undefined,
+        image: user.image ?? undefined,
         stravaId: user.stravaId || '',
-        stravaTokens: user.stravaTokens as StravaTokens
+        stravaTokens: user.stravaTokens as unknown as StravaTokens
       };
     } catch (error) {
       log.error('getUserById failed', error);
@@ -80,10 +85,10 @@ export class UserService {
       return {
         id: user.id,
         name: user.name || 'Unknown User',
-        email: user.email,
-        image: user.image,
+        email: user.email ?? undefined,
+        image: user.image ?? undefined,
         stravaId: user.stravaId || '',
-        stravaTokens: user.stravaTokens as StravaTokens
+        stravaTokens: user.stravaTokens as unknown as StravaTokens
       };
     } catch (error) {
       log.error('getUserByStravaId failed', error);
@@ -96,7 +101,7 @@ export class UserService {
       await prisma.user.update({
         where: { id: userId },
         data: {
-          stravaTokens: tokens,
+          stravaTokens: tokensAsJson(tokens),
           updatedAt: new Date()
         }
       });

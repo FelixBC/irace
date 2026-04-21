@@ -264,24 +264,19 @@ export async function handleStravaDisconnect(req: VercelRequest, res: VercelResp
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const sessionToken = authHeader.slice(7);
   const prisma = createFreshPrismaClient();
 
   try {
-    const session = await prisma.session.findFirst({
-      where: {
-        sessionToken,
-        expires: { gt: new Date() },
-      },
-      include: { user: true },
-    });
-
-    if (!session) {
+    const userId = await resolveBearerUserId(prisma, req);
+    if (!userId) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const userId = session.userId;
-    const tokens = session.user.stravaTokens;
+    const userRow = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stravaTokens: true },
+    });
+    const tokens = userRow?.stravaTokens;
     const accessToken = jsonAccessToken(tokens);
 
     if (accessToken) {
@@ -331,23 +326,21 @@ export async function handleStravaRefreshToken(req: VercelRequest, res: VercelRe
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const sessionToken = authHeader.slice(7);
   const prisma = createFreshPrismaClient();
 
   try {
-    const session = await prisma.session.findFirst({
-      where: {
-        sessionToken,
-        expires: { gt: new Date() },
-      },
-      include: { user: true },
-    });
-
-    if (!session) {
+    const userId = await resolveBearerUserId(prisma, req);
+    if (!userId) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const user = session.user;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
     const tokens = user.stravaTokens;
     if (!tokens || typeof tokens !== 'object' || !jsonRefreshToken(tokens)) {
       return res.status(400).json({ error: 'No refresh token stored' });

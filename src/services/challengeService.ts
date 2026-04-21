@@ -3,7 +3,7 @@ import { Challenge, Sport, ChallengeType, ChallengeStatus } from '../types';
 import { API_BASE_URL, CHALLENGES, USER_CHALLENGES, UPDATE_PROGRESS } from '../config/api';
 import { addDays } from 'date-fns';
 import { createLogger } from '../lib/logger';
-import { assertOk, getAuthHeader, parseJsonResponse, readJsonOrNull } from '../lib/apiClient';
+import { assertOk, authFetch, getAccessToken, jsonAuthHeaders, parseJsonResponse, readJsonOrNull } from '../lib/apiClient';
 import {
   apiErrorBodySchema,
   challengeSchema,
@@ -67,16 +67,12 @@ export class ChallengeService {
     const averageGoal = totalGoal / Object.keys(data.goals).length;
 
     try {
-      const authHeader = getAuthHeader();
-      if (!('Authorization' in authHeader)) {
+      if (!getAccessToken()) {
         throw new Error('Please sign in to create a challenge.');
       }
-      const response = await fetch(CHALLENGES, {
+      const response = await authFetch(CHALLENGES, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authHeader as { Authorization: string }),
-        },
+        headers: jsonAuthHeaders(),
         body: JSON.stringify({
           name: data.name,
           description: `${data.name} - A fitness challenge with ${data.sports.length} sports`,
@@ -97,7 +93,7 @@ export class ChallengeService {
       });
 
       await assertOk(response, 'Failed to create challenge');
-      return await parseJsonResponse(response, createChallengeResponseSchema);
+      return (await parseJsonResponse(response, createChallengeResponseSchema)) as Challenge;
     } catch (error) {
       log.error('createChallenge failed', error);
       throw new Error('Failed to create challenge. Please try again.');
@@ -115,7 +111,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch challenge: ${response.statusText}`);
       }
 
-      return await parseJsonResponse(response, challengeSchema);
+      return (await parseJsonResponse(response, challengeSchema)) as Challenge;
     } catch (error) {
       log.error('getChallenge failed', error);
       throw new Error('Failed to load challenge. Please try again.');
@@ -130,7 +126,7 @@ export class ChallengeService {
         throw new Error(`Failed to fetch challenges: ${response.statusText}`);
       }
 
-      return await parseJsonResponse(response, z.array(challengeSchema));
+      return (await parseJsonResponse(response, z.array(challengeSchema))) as Challenge[];
     } catch (error) {
       log.error('getAllChallenges failed', error);
       throw new Error('Failed to load challenges. Please try again.');
@@ -139,29 +135,22 @@ export class ChallengeService {
 
   /** Creator-only; requires session cookie / Bearer token. */
   static async deleteChallenge(challengeId: string): Promise<void> {
-    const authHeader = getAuthHeader();
-    if (!('Authorization' in authHeader)) {
+    if (!getAccessToken()) {
       throw new Error('Please sign in to delete a challenge.');
     }
     const url = `${CHALLENGES}?challengeId=${encodeURIComponent(challengeId)}`;
-    const response = await fetch(url, {
+    const response = await authFetch(url, {
       method: 'DELETE',
-      headers: {
-        ...(authHeader as { Authorization: string }),
-      },
     });
     await assertOk(response, `Failed to delete challenge (${response.status})`);
   }
 
   static async getUserChallenges(userId: string): Promise<Challenge[]> {
     try {
-      const authHeader = getAuthHeader();
-      if (!('Authorization' in authHeader)) {
+      if (!getAccessToken()) {
         throw new Error('Please sign in to load your challenges.');
       }
-      const response = await fetch(USER_CHALLENGES(userId), {
-        headers: { ...(authHeader as { Authorization: string }) },
-      });
+      const response = await authFetch(USER_CHALLENGES(userId));
 
       if (!response.ok) {
         const raw = await readJsonOrNull<unknown>(response);
@@ -173,7 +162,7 @@ export class ChallengeService {
         );
       }
 
-      return await parseJsonResponse(response, z.array(challengeSchema));
+      return (await parseJsonResponse(response, z.array(challengeSchema))) as Challenge[];
     } catch (error) {
       log.error('getUserChallenges failed', error);
       throw new Error('Failed to load your challenges. Please try again.');
@@ -185,16 +174,12 @@ export class ChallengeService {
     consent: { challengeDataConsentAccepted: boolean; challengeDataConsentVersion: string }
   ): Promise<void> {
     try {
-      const authHeader = getAuthHeader();
-      if (!('Authorization' in authHeader)) {
+      if (!getAccessToken()) {
         throw new Error('Please sign in to join a challenge.');
       }
-      const response = await fetch(`${CHALLENGES}?action=join`, {
+      const response = await authFetch(`${CHALLENGES}?action=join`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authHeader as { Authorization: string }),
-        },
+        headers: jsonAuthHeaders(),
         body: JSON.stringify({
           challengeId,
           challengeDataConsentAccepted: consent.challengeDataConsentAccepted,
@@ -238,16 +223,12 @@ export class ChallengeService {
 
   static async syncStravaActivities(challengeId?: string): Promise<StravaSyncApiResponse> {
     try {
-      const authHeader = getAuthHeader();
-      if (!('Authorization' in authHeader)) {
+      if (!getAccessToken()) {
         throw new Error('Please sign in to sync Strava activities.');
       }
-      const response = await fetch(`${API_BASE_URL}/strava/sync`, {
+      const response = await authFetch(`${API_BASE_URL}/strava/sync`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authHeader as { Authorization: string }),
-        },
+        headers: jsonAuthHeaders(),
         body: JSON.stringify({ challengeId }),
       });
 
@@ -276,20 +257,16 @@ export class ChallengeService {
   }
 
   static async sendTaunt(inviteCode: string, presetKey: string): Promise<{ taunt: unknown }> {
-    const authHeader = getAuthHeader();
-    if (!('Authorization' in authHeader)) throw new Error('Please connect Strava to send taunts.');
+    if (!getAccessToken()) throw new Error('Please connect Strava to send taunts.');
     const url = new URL(`${API_BASE_URL}/challenges/taunts`);
     url.searchParams.set('id', inviteCode);
-    const res = await fetch(url, {
+    const res = await authFetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authHeader as { Authorization: string }),
-      },
+      headers: jsonAuthHeaders(),
       body: JSON.stringify({ presetKey }),
     });
     await assertOk(res, 'Failed to send taunt');
-    return await parseJsonResponse(res, sendTauntResponseSchema);
+    return (await parseJsonResponse(res, sendTauntResponseSchema)) as { taunt: unknown };
   }
 
   private static generateShareCode(): string {

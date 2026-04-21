@@ -1,6 +1,6 @@
 import { StravaTokens, StravaActivity, StravaAthlete } from '../types';
 import { API_BASE_URL } from '../config/api';
-import { assertOk, getAuthHeader, parseJsonResponse } from './apiClient';
+import { assertOk, authFetch, getAccessToken, parseJsonResponse } from './apiClient';
 import { stravaRefreshEnvelopeSchema } from '../schemas/apiResponses';
 import {
   mapStravaActivityTypeToSport,
@@ -24,13 +24,11 @@ export class StravaAPI {
     const inBrowser = typeof globalThis !== 'undefined' && 'localStorage' in globalThis;
 
     if (inBrowser) {
-      const sessionToken = localStorage.getItem('session_token');
-      if (!sessionToken) {
+      if (!getAccessToken()) {
         throw new Error('No session — sign in again');
       }
-      const response = await fetch(`${API_BASE_URL}/strava/refresh-token`, {
+      const response = await authFetch(`${API_BASE_URL}/strava/refresh-token`, {
         method: 'POST',
-        headers: { ...getAuthHeader() },
       });
       await assertOk(response, 'Failed to refresh Strava access token');
       const data = await parseJsonResponse(response, stravaRefreshEnvelopeSchema);
@@ -120,6 +118,12 @@ export class StravaAPI {
       expires_at: this.expiresAt,
       expires_in: this.expiresAt - Math.floor(Date.now() / 1000),
     };
+  }
+
+  /** Refresh Strava OAuth tokens and return the blob suitable for DB persistence. */
+  async refreshTokens(): Promise<StravaTokens> {
+    await this.refreshAccessToken();
+    return this.getUpdatedTokens();
   }
 }
 

@@ -6,6 +6,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { applyCors } from '../../server/cors.js';
+import {
+  REFRESH_TOKEN_TTL_MS,
+  hashOpaqueToken,
+  randomTokenUrlSafe,
+  signAccessToken,
+  ACCESS_TOKEN_TTL_SEC,
+} from '../../server/authTokens.js';
 
 const log = createLogger('api/user');
 
@@ -84,19 +91,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+    const refreshPlain = randomTokenUrlSafe(32);
+    const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
-    await prisma.session.create({
+    const session = await prisma.session.create({
       data: {
-        id: sessionToken,
-        sessionToken,
         userId: user.id,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        refreshTokenHash: hashOpaqueToken(refreshPlain),
+        refreshExpiresAt,
       },
     });
 
+    const accessToken = signAccessToken({ userId: user.id, sessionId: session.id });
+
     return res.status(200).json({
-      sessionToken,
+      accessToken,
+      refreshToken: refreshPlain,
+      expiresIn: ACCESS_TOKEN_TTL_SEC,
       user: {
         id: user.id,
         name: user.name,

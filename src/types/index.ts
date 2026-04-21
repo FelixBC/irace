@@ -33,6 +33,7 @@ export interface StravaAthlete {
   state: string;
   country: string;
   weight: number;
+  email?: string;
 }
 
 export interface User {
@@ -65,6 +66,8 @@ export interface Challenge {
   participants?: ChallengeParticipant[];
   /** 0–100 for the current user on “My challenges” (distance vs challenge goal). */
   myProgress?: number;
+  /** Present when listing challenges for the current user. */
+  isCreator?: boolean;
 }
 
 export interface ChallengeParticipant {

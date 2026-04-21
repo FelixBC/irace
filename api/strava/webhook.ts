@@ -5,20 +5,9 @@ import {
   processStravaWebhookEvent,
 } from '../../server/stravaWebhookProcessor.js';
 import { createLogger } from '../../server/logger.js';
+import { parseVercelPostJsonObject } from '../../server/parseVercelPostJson.js';
 
 const log = createLogger('stravaWebhookApi');
-
-function parseJsonBody(req: VercelRequest): unknown {
-  const raw = req.body;
-  if (typeof raw === 'string') {
-    try {
-      return JSON.parse(raw || '{}');
-    } catch {
-      return {};
-    }
-  }
-  return raw ?? {};
-}
 
 /**
  * Strava Push Subscriptions callback — GET validates subscription, POST receives events.
@@ -31,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
-    const body = parseJsonBody(req);
+    const parsed = parseVercelPostJsonObject<Record<string, unknown>>(req, 'stravaWebhook', log.warn.bind(log));
+    const body: unknown = parsed.ok ? parsed.data : {};
     const work = processStravaWebhookEvent(body).catch((err: unknown) => {
       log.error('async process failed', err);
     });

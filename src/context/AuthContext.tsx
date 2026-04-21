@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, StravaTokens } from '../types';
-import { API_BASE_URL, SESSION } from '../config/api';
-import { assertOk, getAuthHeader, parseJsonResponse } from '../lib/apiClient';
-import { sessionResponseSchema } from '../schemas/apiResponses';
+import { API_BASE_URL, SESSION, AUTH_EXCHANGE, AUTH_LOGOUT } from '../config/api';
+import { assertOk, authFetch, parseJsonResponse } from '../lib/apiClient';
+import { sessionResponseSchema, authExchangeResponseSchema } from '../schemas/apiResponses';
 import { createLogger } from '../lib/logger';
+import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '../lib/sessionStore';
 
 const log = createLogger('auth');
 
@@ -11,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   isConnectedToStrava: boolean;
   disconnectStrava: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   stravaTokens: StravaTokens | null;
 }
@@ -23,34 +24,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [stravaTokens, setStravaTokens] = useState<StravaTokens | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const applySessionPayload = useCallback((userData: User, tokens: StravaTokens | null | undefined) => {
+    setUser(userData);
+    setStravaTokens(tokens ?? null);
+  }, []);
+
   useEffect(() => {
-    // Check for session token in URL parameters (from Strava callback)
     const urlParams = new URLSearchParams(window.location.search);
-    const sessionTokenFromUrl = urlParams.get('session');
-    
-    if (sessionTokenFromUrl) {
-      log.debug('session token from OAuth redirect stored');
-      localStorage.setItem('session_token', sessionTokenFromUrl);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    const exchangeCode = urlParams.get('exchange');
+
+    if (exchangeCode) {
+      const runExchange = async () => {
+        try {
+          const response = await fetch(AUTH_EXCHANGE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exchangeCode }),
+          });
+
+          if (!response.ok) {
+            clearAuthTokens();
+            setUser(null);
+            setStravaTokens(null);
+            log.error('exchange failed', response.status);
+            return;
+          }
+
+          const data = await parseJsonResponse(response, authExchangeResponseSchema);
+          setAuthTokens(data.accessToken, data.refreshToken, data.expiresIn);
+          applySessionPayload(data.user, data.stravaTokens ?? data.user.stravaTokens);
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        } catch (error) {
+          log.error('exchange error', error);
+          clearAuthTokens();
+          setUser(null);
+          setStravaTokens(null);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      void runExchange();
+      return;
     }
 
     const checkExistingSession = async (signal?: AbortSignal) => {
-      try {
-        const sessionToken = localStorage.getItem('session_token');
-        if (!sessionToken) {
-          setUser(null);
-          setStravaTokens(null);
-          return;
-        }
+      if (!getRefreshToken()) {
+        setUser(null);
+        setStravaTokens(null);
+        setIsLoading(false);
+        return;
+      }
 
-        const response = await fetch(SESSION, {
-          headers: { ...getAuthHeader() },
+      try {
+        const response = await authFetch(SESSION, {
+          headers: { 'Content-Type': 'application/json' },
           signal,
         });
 
         if (!response.ok) {
-          localStorage.removeItem('session_token');
+          clearAuthTokens();
           setUser(null);
           setStravaTokens(null);
           return;
@@ -60,10 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData.user);
         setStravaTokens(userData.stravaTokens ?? null);
       } catch (error) {
-        // Ignore aborts; otherwise treat as auth failure so we don't stick in a half-state.
         if ((error as { name?: string } | null)?.name !== 'AbortError') {
           log.error('existing session check failed', error);
-          localStorage.removeItem('session_token');
+          clearAuthTokens();
           setUser(null);
           setStravaTokens(null);
         }
@@ -77,24 +109,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [applySessionPayload]);
 
   const disconnectStrava = async () => {
-    const sessionToken = localStorage.getItem('session_token');
-    if (!sessionToken) {
+    if (!getAccessToken()) {
       setStravaTokens(null);
       setUser(null);
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/strava/disconnect`, {
+      const res = await authFetch(`${API_BASE_URL}/strava/disconnect`, {
         method: 'POST',
-        headers: { ...getAuthHeader() },
       });
       await assertOk(res, 'Failed to disconnect Strava');
-      const sessionRes = await fetch(SESSION, {
-        headers: { ...getAuthHeader() },
-      });
+      const sessionRes = await authFetch(SESSION);
       if (sessionRes.ok) {
         const data = await parseJsonResponse(sessionRes, sessionResponseSchema);
         setUser(data.user);
@@ -109,25 +137,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setStravaTokens(null);
-    localStorage.removeItem('session_token');
-    // Redirect to dashboard after logout
-    window.location.href = '/';
+  const logout = async () => {
+    try {
+      if (getAccessToken()) {
+        await authFetch(AUTH_LOGOUT, { method: 'POST' }).catch(() => {});
+      }
+    } finally {
+      clearAuthTokens();
+      setUser(null);
+      setStravaTokens(null);
+      window.location.href = '/';
+    }
   };
 
   const isConnectedToStrava = !!stravaTokens && !!user;
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isConnectedToStrava, 
-      disconnectStrava, 
-      logout, 
-      isLoading,
-      stravaTokens 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isConnectedToStrava,
+        disconnectStrava,
+        logout,
+        isLoading,
+        stravaTokens,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

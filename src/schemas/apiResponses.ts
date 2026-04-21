@@ -36,6 +36,13 @@ export const sessionResponseSchema = z.object({
   stravaTokens: stravaTokensSchema.nullable().optional(),
 });
 
+/** POST /api/auth/exchange — OAuth handoff completes here. */
+export const authExchangeResponseSchema = sessionResponseSchema.extend({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  expiresIn: z.number(),
+});
+
 export const stravaRefreshEnvelopeSchema = z.object({
   stravaTokens: stravaTokensSchema,
 });

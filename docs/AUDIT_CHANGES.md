@@ -24,7 +24,7 @@ This document is written to help a junior developer understand what we changed, 
 
 ### What changed
 - Simplified auth state so it comes from **one place**:
-  - `session_token` in `localStorage`
+  - App session: **15-minute access JWT** + **30-day opaque refresh token** kept in **memory** (`sessionStore`); OAuth redirect uses a **one-time `exchange` query param** (not `localStorage`).
   - validated by calling `SESSION` (`/api/auth/session`)
   - which returns `user` and `stravaTokens`
 - Removed the older path that:

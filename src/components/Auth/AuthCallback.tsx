@@ -27,11 +27,9 @@ const AuthCallback: React.FC = () => {
       return;
     }
 
-    const session = searchParams.get('session');
-    if (session) {
-      localStorage.setItem('session_token', session);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      navigate('/', { replace: true });
+    const exchange = searchParams.get('exchange');
+    if (exchange) {
+      navigate(`/?exchange=${encodeURIComponent(exchange)}`, { replace: true });
       return;
     }
 

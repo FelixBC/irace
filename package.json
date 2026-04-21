@@ -4,10 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "vite",
     "build": "prisma generate && vite build",
     "lint": "eslint .",
     "typecheck:api": "tsc -p tsconfig.api.json",
+    "typecheck": "npm run typecheck:api && tsc -p tsconfig.app.json --noEmit",
     "db:setup": "tsx scripts/setup-db.ts",
     "db:clean": "tsx scripts/clean-db.ts",
     "test": "vitest run",

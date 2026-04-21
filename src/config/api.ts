@@ -12,6 +12,9 @@ export const API_CONFIG = {
     return {
       USER: `${this.BASE_URL}/user`,
       SESSION: `${this.BASE_URL}/auth/session`,
+      AUTH_EXCHANGE: `${this.BASE_URL}/auth/exchange`,
+      AUTH_REFRESH: `${this.BASE_URL}/auth/refresh`,
+      AUTH_LOGOUT: `${this.BASE_URL}/auth/logout`,
       CHALLENGES: `${this.BASE_URL}/challenges`,
       CHALLENGE: (id: string) => `${this.BASE_URL}/challenges/${id}`,
       USER_CHALLENGES: (userId: string) => `${this.BASE_URL}/challenges/user/${userId}`,
@@ -25,6 +28,9 @@ export const API_CONFIG = {
 export const {
   USER,
   SESSION,
+  AUTH_EXCHANGE,
+  AUTH_REFRESH,
+  AUTH_LOGOUT,
   CHALLENGES,
   CHALLENGE,
   USER_CHALLENGES,

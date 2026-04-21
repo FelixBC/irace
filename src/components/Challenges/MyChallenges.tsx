@@ -418,7 +418,7 @@ const MyChallenges: React.FC = () => {
             <div className="flex flex-wrap items-center space-x-4">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
@@ -430,7 +430,7 @@ const MyChallenges: React.FC = () => {
 
               <select
                 value={sportFilter}
-                onChange={(e) => setSportFilter(e.target.value)}
+                onChange={(e) => setSportFilter(e.target.value as SportFilter)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="all">All Sports</option>
@@ -445,7 +445,7 @@ const MyChallenges: React.FC = () => {
 
               <select
                 value={ownershipFilter}
-                onChange={(e) => setOwnershipFilter(e.target.value)}
+                onChange={(e) => setOwnershipFilter(e.target.value as OwnershipFilter)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="all">All Challenges</option>
@@ -455,7 +455,7 @@ const MyChallenges: React.FC = () => {
 
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="recent">Most Recent</option>

@@ -96,6 +96,9 @@ const Profile: React.FC = () => {
       distance: number;
       date: string;
       unit: string;
+      calories?: number;
+      heartRate?: { average: number; max: number };
+      elevation?: { gain: number; loss?: number };
     }>
   >([]);
 

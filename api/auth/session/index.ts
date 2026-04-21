@@ -3,6 +3,7 @@ import { createLogger } from '../../../server/logger.js';
 import { createFreshPrismaClient } from '../../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../../server/optionalInsecureTls.js';
 import { applyCors } from '../../../server/cors.js';
+import { verifyAccessToken } from '../../../server/authTokens.js';
 
 const log = createLogger('authSession');
 
@@ -29,7 +30,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const sessionToken = authHeader.substring(7);
+  const accessToken = authHeader.substring(7);
+  const claims = verifyAccessToken(accessToken);
+  if (!claims) {
+    res.status(401).json({ error: 'Invalid or expired access token' });
+    return;
+  }
+
   log.debug('session lookup');
 
   applyOptionalInsecureTlsFromEnv();
@@ -38,23 +45,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const session = await prisma.session.findUnique({
-      where: { sessionToken },
+      where: { id: claims.sessionId },
       include: { user: true },
     });
 
-    if (!session) {
-      log.warn('session not found');
+    if (!session || session.userId !== claims.userId) {
+      log.warn('session not found or mismatch');
       res.status(401).json({ error: 'Session not found' });
       return;
     }
 
-    log.debug('session ok', session.id);
-
-    if (session.expires < new Date()) {
-      await prisma.session.delete({ where: { sessionToken } }).catch(() => {});
+    if (session.refreshExpiresAt < new Date()) {
+      await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
       res.status(401).json({ error: 'Session expired' });
       return;
     }
+
+    log.debug('session ok', session.id);
 
     const u = session.user;
     res.status(200).json({

@@ -26,7 +26,6 @@ export class StravaDataService {
       email: athlete.email || undefined,
       image: athlete.profile,
       stravaId: athlete.id.toString(),
-      lastSync: new Date(),
     };
   }
 

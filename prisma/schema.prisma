@@ -28,11 +28,18 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  userId    String
+  /// SHA-256 HMAC of the refresh token (pepper from server secret).
+  refreshTokenHash String @unique
+  refreshExpiresAt DateTime
+  /// Plain refresh until the browser completes POST /auth/exchange (then cleared).
+  pendingRefreshToken String?
+  exchangeTokenHash   String?  @unique
+  exchangeExpiresAt   DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model User {

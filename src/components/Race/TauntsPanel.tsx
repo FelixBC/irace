@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
 import { ChallengeService } from '../../services/challengeService';
+import { useAuth } from '../../context/AuthContext';
 
 type Preset = { key: string; text: string };
 type Taunt = {
@@ -16,13 +17,14 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
   inviteCode,
   pollMs = 20000,
 }) => {
+  const { isConnectedToStrava } = useAuth();
   const [presets, setPresets] = useState<Preset[]>([]);
   const [taunts, setTaunts] = useState<Taunt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  const canSend = useMemo(() => !!localStorage.getItem('session_token'), []);
+  const canSend = useMemo(() => isConnectedToStrava, [isConnectedToStrava]);
 
   const load = useCallback(async () => {
     try {

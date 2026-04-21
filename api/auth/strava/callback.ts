@@ -3,6 +3,12 @@ import { createLogger } from '../../../server/logger.js';
 import { createFreshPrismaClient } from '../../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../../server/optionalInsecureTls.js';
 import { getQueryString } from '../../../server/vercelQuery.js';
+import {
+  EXCHANGE_CODE_TTL_MS,
+  REFRESH_TOKEN_TTL_MS,
+  hashOpaqueToken,
+  randomTokenUrlSafe,
+} from '../../../server/authTokens.js';
 
 const log = createLogger('stravaCallback');
 
@@ -125,15 +131,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       log.info('user saved', { userId: user.id });
 
-      const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      log.debug('creating session');
+      const refreshPlain = randomTokenUrlSafe(32);
+      const exchangePlain = randomTokenUrlSafe(24);
+      const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+      const exchangeExpiresAt = new Date(Date.now() + EXCHANGE_CODE_TTL_MS);
+
+      log.debug('creating session (exchange handoff)');
 
       await prisma.session.create({
         data: {
-          id: sessionToken,
-          sessionToken,
           userId: user.id,
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          refreshTokenHash: hashOpaqueToken(refreshPlain),
+          refreshExpiresAt,
+          pendingRefreshToken: refreshPlain,
+          exchangeTokenHash: hashOpaqueToken(exchangePlain),
+          exchangeExpiresAt,
         },
       });
 
@@ -143,14 +155,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const frontendUrl = getFrontendBaseUrl();
 
       const state = getQueryString(req, 'state');
+      const encExchange = encodeURIComponent(exchangePlain);
       let redirectUrl: string;
 
       if (state) {
         const returnTo = decodeURIComponent(state);
-        redirectUrl = `${frontendUrl}${returnTo}?session=${sessionToken}`;
+        const joiner = returnTo.includes('?') ? '&' : '?';
+        redirectUrl = `${frontendUrl}${returnTo}${joiner}exchange=${encExchange}`;
         log.debug('redirect with state', returnTo);
       } else {
-        redirectUrl = `${frontendUrl}?session=${sessionToken}`;
+        redirectUrl = `${frontendUrl}?exchange=${encExchange}`;
         log.debug('redirect home');
       }
 

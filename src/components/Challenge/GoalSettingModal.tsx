@@ -103,7 +103,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
   };
 
   const handleSubmit = () => {
-    const goals: Record<Sport, number> = {};
+    const goals = {} as Record<Sport, number>;
     sportGoals.forEach(sg => {
       goals[sg.sport] = sg.goal;
     });

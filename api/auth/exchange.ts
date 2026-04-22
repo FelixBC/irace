@@ -2,6 +2,7 @@
  * POST /api/auth/exchange — one-time OAuth handoff: exchange code → access + refresh tokens + user.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Prisma } from '@prisma/client';
 import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../server/optionalInsecureTls.js';
@@ -10,6 +11,21 @@ import { hashOpaqueToken, signAccessToken, ACCESS_TOKEN_TTL_SEC } from '../../se
 import { parseVercelPostJsonObject } from '../../server/parseVercelPostJson.js';
 
 const log = createLogger('authExchange');
+
+type ExchangeSessionRow = {
+  id: string;
+  refreshTokenHash: string;
+  pendingRefreshToken: string | null;
+  exchangeExpiresAt: Date | null;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    stravaId: string | null;
+    stravaTokens: Prisma.JsonValue | null;
+  };
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   applyCors(req, res);
@@ -41,10 +57,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const exchangeHash = hashOpaqueToken(exchangeCode);
 
   try {
-    const session = await prisma.session.findUnique({
-      where: { exchangeTokenHash: exchangeHash },
+    const session = (await prisma.session.findUnique({
+      // `as unknown as …`: supports strict TS when editor Prisma types lag `schema.prisma`.
+      where: { exchangeTokenHash: exchangeHash } as unknown as Prisma.SessionWhereUniqueInput,
       include: { user: true },
-    });
+    })) as ExchangeSessionRow | null;
 
     if (!session || !session.exchangeExpiresAt || session.exchangeExpiresAt <= new Date()) {
       log.warn('invalid or expired exchange');
@@ -68,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pendingRefreshToken: null,
         exchangeTokenHash: null,
         exchangeExpiresAt: null,
-      },
+      } as unknown as Prisma.SessionUpdateInput,
     });
 
     const u = session.user;

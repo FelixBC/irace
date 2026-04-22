@@ -1,8 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createLogger } from '../lib/logger';
 
 export type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'irace-theme';
+const log = createLogger('themeContext');
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,10 +16,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function readStoredTheme(): Theme {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'dark' || v === 'light') return v;
-  } catch {
-    /* private mode / SSR */
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
+  } catch (storageReadError) {
+    log.warn('failed reading theme from localStorage; using default light theme', storageReadError);
   }
   return 'light';
 }
@@ -35,13 +37,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     applyDomTheme(theme);
     try {
       localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      /* ignore */
+    } catch (storageWriteError) {
+      log.warn('failed writing theme to localStorage', storageWriteError);
     }
   }, [theme]);
 
-  const setTheme = useCallback((t: Theme) => {
-    setThemeState(t);
+  const setTheme = useCallback((nextTheme: Theme) => {
+    setThemeState(nextTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {

@@ -1,5 +1,6 @@
 import { z, ZodError } from 'zod';
 import { API_BASE_URL } from '../config/api';
+import { createLogger } from './logger';
 import {
   clearAuthTokens,
   getAccessExpiresAtMs,
@@ -33,6 +34,7 @@ export class ValidationError extends Error {
   }
 }
 
+const log = createLogger('apiClient');
 let refreshInFlight: Promise<void> | null = null;
 
 /**
@@ -42,8 +44,8 @@ export async function refreshAccessIfNeeded(): Promise<void> {
   if (typeof window === 'undefined') return;
   if (Date.now() < getAccessExpiresAtMs() - 30_000) return;
 
-  const r = readRefreshToken();
-  if (!r) return;
+  const refreshToken = readRefreshToken();
+  if (!refreshToken) return;
 
   if (refreshInFlight) {
     await refreshInFlight;
@@ -54,7 +56,7 @@ export async function refreshAccessIfNeeded(): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: r }),
+      body: JSON.stringify({ refreshToken }),
     });
     if (!res.ok) {
       clearAuthTokens();
@@ -75,12 +77,12 @@ export async function refreshAccessIfNeeded(): Promise<void> {
 export async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   try {
     await refreshAccessIfNeeded();
-  } catch {
-    /* still attempt request; caller may get 401 */
+  } catch (refreshError) {
+    log.warn('access token refresh failed before request; continuing with current token', refreshError);
   }
   const headers = new Headers(init?.headers);
-  const t = readAccessToken();
-  if (t) headers.set('Authorization', `Bearer ${t}`);
+  const accessToken = readAccessToken();
+  if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return fetch(input, { ...init, headers });
 }
 
@@ -105,8 +107,8 @@ export async function parseJsonResponse<O>(res: Response, schema: z.ZodType<O, z
   let raw: unknown;
   try {
     raw = await res.json();
-  } catch {
-    throw new ApiError('Response is not valid JSON', res.status);
+  } catch (jsonParseError) {
+    throw new ApiError('Response is not valid JSON', res.status, jsonParseError);
   }
   try {
     return schema.parse(raw);
@@ -121,7 +123,8 @@ export async function parseJsonResponse<O>(res: Response, schema: z.ZodType<O, z
 export async function readJsonOrNull<T>(res: Response): Promise<T | null> {
   try {
     return (await res.json()) as T;
-  } catch {
+  } catch (jsonParseError) {
+    log.debug('readJsonOrNull: response body is not JSON', jsonParseError);
     return null;
   }
 }

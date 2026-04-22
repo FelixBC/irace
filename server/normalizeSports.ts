@@ -2,6 +2,10 @@
  * node-postgres returns PostgreSQL enum[] columns as strings like `{RUNNING}` or `{RUNNING,CYCLING}`.
  * The frontend expects a real string[].
  */
+import { createLogger } from './logger.js';
+
+const log = createLogger('normalizeSports');
+
 export function normalizeSports(sports: unknown): string[] {
   if (Array.isArray(sports)) {
     return sports.filter((x) => x != null && x !== '') as string[];
@@ -24,8 +28,8 @@ export function normalizeSports(sports: unknown): string[] {
       if (Array.isArray(parsed)) {
         return parsed.filter((x) => x != null && x !== '') as string[];
       }
-    } catch {
-      /* not JSON */
+    } catch (jsonParseError) {
+      log.debug('sports value is not JSON; falling back to CSV/plain parsing', jsonParseError);
     }
     if (s.includes(',')) {
       return s.split(',').map((x) => x.trim()).filter(Boolean);

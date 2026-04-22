@@ -193,8 +193,8 @@ function buildDemoRaceTracks(ch: Challenge): RaceTrackType[] {
 function pickPerSportKm(p: ChallengeParticipant, sport: Sport): number | null {
   const raw = p.progress;
   if (raw && typeof raw === 'object') {
-    const v = raw[sport];
-    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    const sportProgressValue = raw[sport];
+    if (typeof sportProgressValue === 'number' && Number.isFinite(sportProgressValue)) return sportProgressValue;
   }
   return null;
 }

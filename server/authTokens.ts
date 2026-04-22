@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createLogger } from './logger.js';
 
 /** Access JWT lifetime (seconds). */
 export const ACCESS_TOKEN_TTL_SEC = 15 * 60;
@@ -8,6 +9,7 @@ export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** OAuth handoff code TTL (client must exchange quickly). */
 export const EXCHANGE_CODE_TTL_MS = 10 * 60 * 1000;
+const log = createLogger('authTokens');
 
 export function requireAuthSessionSecret(): string {
   const s = process.env.AUTH_SESSION_SECRET?.trim();
@@ -61,7 +63,8 @@ export function verifyAccessToken(token: string): AccessClaims | null {
     let sigBuf: Buffer;
     try {
       sigBuf = Buffer.from(sig, 'base64url');
-    } catch {
+    } catch (signatureDecodeError) {
+      log.debug('access token signature is not valid base64url', signatureDecodeError);
       return null;
     }
     if (sigBuf.length !== expected.length || !timingSafeEqual(sigBuf, expected)) return null;
@@ -76,7 +79,8 @@ export function verifyAccessToken(token: string): AccessClaims | null {
     const now = Math.floor(Date.now() / 1000);
     if (typeof payload.exp !== 'number' || payload.exp <= now) return null;
     return { userId: payload.sub, sessionId: payload.sid };
-  } catch {
+  } catch (tokenVerificationError) {
+    log.debug('access token verification failed', tokenVerificationError);
     return null;
   }
 }

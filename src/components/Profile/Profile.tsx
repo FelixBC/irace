@@ -26,8 +26,10 @@ import {
   sendTestPushNotification,
 } from '../../lib/pushNotifications';
 import { getSessionToken } from '../../lib/apiClient';
+import { createLogger } from '../../lib/logger';
 
 type PushUiState = 'unsupported' | 'denied' | 'off' | 'on';
+const log = createLogger('profile');
 
 const Profile: React.FC = () => {
   const { user, logout, isConnectedToStrava, disconnectStrava } = useAuth();
@@ -59,7 +61,8 @@ const Profile: React.FC = () => {
         const reg = await navigator.serviceWorker.getRegistration('/');
         const sub = await reg?.pushManager.getSubscription();
         setPushUiState(sub ? 'on' : 'off');
-      } catch {
+      } catch (pushRegistrationError) {
+        log.warn('could not read push subscription state', pushRegistrationError);
         setPushUiState('off');
       }
     };
@@ -575,7 +578,8 @@ const Profile: React.FC = () => {
                                 await disableWebPush(token, API_BASE_URL);
                                 setPushUiState('off');
                               }
-                            } catch {
+                            } catch (pushToggleError) {
+                              log.error('push toggle failed', pushToggleError);
                               setPushMessage('Something went wrong.');
                               setPushUiState('off');
                             } finally {
@@ -609,7 +613,8 @@ const Profile: React.FC = () => {
                             try {
                               const r = await sendTestPushNotification(token, API_BASE_URL);
                               if (!r.ok) setPushMessage(r.error || 'Test failed');
-                            } catch {
+                            } catch (testPushError) {
+                              log.error('test push request failed', testPushError);
                               setPushMessage('Test request failed');
                             } finally {
                               setPushBusy(false);
@@ -664,7 +669,8 @@ const Profile: React.FC = () => {
                               setIsDisconnecting(true);
                               try {
                                 await disconnectStrava();
-                              } catch {
+                              } catch (disconnectError) {
+                                log.error('disconnect strava failed', disconnectError);
                                 setStravaActionError('Disconnect failed. You can also remove the app in Strava settings.');
                               } finally {
                                 setIsDisconnecting(false);

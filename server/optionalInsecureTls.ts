@@ -7,8 +7,8 @@
  * Prefer fixing DATABASE_URL / system trust store instead.
  */
 export function applyOptionalInsecureTlsFromEnv(): void {
-  const v = process.env.ALLOW_INSECURE_TLS?.trim().toLowerCase();
-  if (v === '1' || v === 'true' || v === 'yes') {
+  const allowInsecureTls = process.env.ALLOW_INSECURE_TLS?.trim().toLowerCase();
+  if (allowInsecureTls === '1' || allowInsecureTls === 'true' || allowInsecureTls === 'yes') {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   }
 }

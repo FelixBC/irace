@@ -68,7 +68,8 @@ async function createSubscription() {
   }
   try {
     return JSON.parse(text);
-  } catch {
+  } catch (jsonParseError) {
+    console.warn('createSubscription: response was not JSON; returning raw text', jsonParseError);
     return text;
   }
 }

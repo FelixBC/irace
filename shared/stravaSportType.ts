@@ -27,6 +27,6 @@ export const STRAVA_ACTIVITY_TYPES_CLIENT_PRIMARY = Object.freeze([
 
 export function mapStravaActivityTypeToSport(stravaType: string | null | undefined): MappedStravaSport {
   if (stravaType == null || stravaType === '') return 'RUNNING';
-  const v = STRAVA_ACTIVITY_TYPE_TO_SPORT[stravaType as keyof typeof STRAVA_ACTIVITY_TYPE_TO_SPORT];
-  return v ?? 'RUNNING';
+  const mappedSport = STRAVA_ACTIVITY_TYPE_TO_SPORT[stravaType as keyof typeof STRAVA_ACTIVITY_TYPE_TO_SPORT];
+  return mappedSport ?? 'RUNNING';
 }

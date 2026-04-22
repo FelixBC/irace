@@ -5,6 +5,9 @@ import { Menu, X, Trophy, Plus, LogOut, Home, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getStravaAuthUrl } from '../../services/stravaService';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('header');
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -162,7 +165,8 @@ const Header: React.FC = () => {
                             setIsUserMenuOpen(false);
                             try {
                               await disconnectStrava();
-                            } catch {
+                            } catch (disconnectError) {
+                              log.error('disconnect strava failed', disconnectError);
                               window.alert('Could not disconnect Strava. Try again or remove the app in Strava settings.');
                             }
                           }}

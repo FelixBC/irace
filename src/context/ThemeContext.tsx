@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { createLogger } from '../lib/logger';
 
 export type Theme = 'light' | 'dark';
@@ -50,8 +50,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
+  const contextValue = useMemo(
+    () => ({ theme, setTheme, toggleTheme }),
+    [theme, setTheme, toggleTheme]
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>
   );
 };
 

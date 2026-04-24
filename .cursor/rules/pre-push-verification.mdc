@@ -1,0 +1,16 @@
+---
+description: Run full checks before git commit or push; never ship failing CI locally
+alwaysApply: true
+---
+
+# Before commit or push
+
+Do not run `git commit` or `git push` until the working tree is verified clean from the repo root:
+
+1. `npm run verify` (runs `typecheck`, ESLint, and `vitest run`)
+
+If any step fails, fix the issues first, then re-run `npm run verify`.
+
+Do not treat editor-only diagnostics as sufficient; use the same commands CI or teammates would run.
+
+See `AGENTS.md` for the same policy in-repo.

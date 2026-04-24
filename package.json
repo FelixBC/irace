@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "prisma generate && vite build",
     "lint": "eslint .",
+    "verify": "npm run typecheck && npm run lint && npm test",
     "typecheck:api": "tsc -p tsconfig.api.json",
     "typecheck": "npm run typecheck:api && tsc -p tsconfig.app.json --noEmit",
     "db:setup": "tsx scripts/setup-db.ts",

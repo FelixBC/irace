@@ -1,0 +1,41 @@
+---
+description: Git commit messages — Conventional Commits, professional tone
+alwaysApply: true
+---
+
+# Commits
+
+Use [**Conventional Commits**](https://www.conventionalcommits.org/): a type prefix, optional scope, imperative summary, blank line, then body if needed.
+
+## Prefixes
+
+- **`feat:`** — new user-visible behavior
+- **`fix:`** — bug fix
+- **`refactor:`** — behavior-preserving code structure change
+- **`chore:`** — tooling, config, deps, non-product code
+- **`docs:`** — documentation only
+- **`test:`** — tests only
+
+Optional scope: `feat(challenges): add join validation`.
+
+## Style
+
+- Summary: imperative, lowercase after the colon, no trailing period, ~72 chars.
+- Describe **what** and **why**, not which editor or AI was used.
+- **Do not** mention Cursor, Copilot, or other tools in the message or trailer.
+- **Do not** use vague lines like "update stuff" or "fixes".
+
+## Examples
+
+```text
+feat(race): show all joined participants on distance tracks
+
+fix(auth): handle expired Strava refresh token without 500
+
+chore: bump vite to 5.4.8
+```
+
+```text
+❌ BAD: "changes", "wip", "Made with Cursor", "misc fixes"
+✅ GOOD: feat: …, fix: …, with a truthful, review-friendly body
+```

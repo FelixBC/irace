@@ -4,20 +4,26 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
+# Environment and secrets (never commit real values; keep .env.example tracked)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.vercel.pull
+.env.*
+!.env.example
+
+# Local TLS / keys (if you generate certs for dev)
+*.pem
+*.p12
+*.key
 
 # Build outputs
 dist/
 build/
 *.tsbuildinfo
 
-# IDE and editor files
+# Vite / tooling caches
+.cache/
+.parcel-cache
+
+# IDE and editors
 .vscode/
 .idea/
 *.swp
@@ -28,7 +34,7 @@ build/
 !.cursor/rules/
 !.cursor/rules/**
 
-# OS generated files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -36,80 +42,40 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Desktop.ini
+desktop.ini
 
-# Logs
-logs
+# Logs and runtime
+logs/
 *.log
-
-# Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Tests and coverage
 coverage/
 *.lcov
+.nyc_output/
 
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
+# Optional caches
 .eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
+.npm
+*.tgz
+.yarn-integrity
 .node_repl_history
 
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
+# Deployment / local overrides
+.vercel/
 .serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# Docker
 docker-compose.override.yml
-.vercel
-.env*.local
+
+# Prisma — local SQLite experiments only (this project uses PostgreSQL in production)
+*.db
+*.db-journal
 
 # Playwright MCP / local browser automation artifacts
 .playwright-mcp/
+playwright-report/
+test-results/
+blob-report/

@@ -43,6 +43,12 @@ export const authExchangeResponseSchema = sessionResponseSchema.extend({
   expiresIn: z.number(),
 });
 
+/** POST /api/auth/refresh — new access JWT only (refresh token unchanged). */
+export const authRefreshResponseSchema = z.object({
+  accessToken: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
+
 export const stravaRefreshEnvelopeSchema = z.object({
   stravaTokens: stravaTokensSchema,
 });

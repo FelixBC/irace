@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   sessionResponseSchema,
+  authRefreshResponseSchema,
   challengeSchema,
   createChallengeResponseSchema,
 } from './apiResponses.js';
@@ -18,6 +19,15 @@ describe('apiResponses schemas', () => {
     });
     expect(out.user.id).toBe('user_1');
     expect(out.stravaTokens?.access_token).toBe('a');
+  });
+
+  it('parses auth refresh envelope', () => {
+    const out = authRefreshResponseSchema.parse({
+      accessToken: 'jwt-here',
+      expiresIn: 900,
+    });
+    expect(out.accessToken).toBe('jwt-here');
+    expect(out.expiresIn).toBe(900);
   });
 
   it('parses challenge with ISO dates', () => {

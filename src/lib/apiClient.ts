@@ -1,5 +1,6 @@
 import { z, ZodError } from 'zod';
 import { API_BASE_URL } from '../config/api';
+import { authRefreshResponseSchema } from '../schemas/apiResponses';
 import { createLogger } from './logger';
 import {
   clearAuthTokens,
@@ -62,8 +63,13 @@ export async function refreshAccessIfNeeded(): Promise<void> {
       clearAuthTokens();
       throw new Error('Session refresh failed');
     }
-    const data = (await res.json()) as { accessToken: string; expiresIn: number };
-    setAccessTokenOnly(data.accessToken, data.expiresIn);
+    try {
+      const data = await parseJsonResponse(res, authRefreshResponseSchema);
+      setAccessTokenOnly(data.accessToken, data.expiresIn);
+    } catch (e) {
+      clearAuthTokens();
+      throw e;
+    }
   })().finally(() => {
     refreshInFlight = null;
   });

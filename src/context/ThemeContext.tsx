@@ -33,6 +33,11 @@ function applyDomTheme(theme: Theme) {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(readStoredTheme);
 
+  // Apply during render so Tailwind `dark:` matches Header on the same paint (effects run too late).
+  if (typeof document !== 'undefined') {
+    applyDomTheme(theme);
+  }
+
   useEffect(() => {
     applyDomTheme(theme);
     try {

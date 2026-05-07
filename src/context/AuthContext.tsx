@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User, StravaTokens } from '../types';
 import { API_BASE_URL, SESSION, AUTH_EXCHANGE, AUTH_LOGOUT } from '../config/api';
 import { assertOk, authFetch, parseJsonResponse } from '../lib/apiClient';
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [applySessionPayload]);
 
-  const disconnectStrava = async () => {
+  const disconnectStrava = useCallback(async () => {
     if (!getAccessToken()) {
       setStravaTokens(null);
       setUser(null);
@@ -135,9 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       log.error('disconnectStrava failed', e);
       throw e;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (getAccessToken()) {
         await authFetch(AUTH_LOGOUT, { method: 'POST' }).catch(() => {});
@@ -148,21 +148,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setStravaTokens(null);
       window.location.href = '/';
     }
-  };
+  }, []);
 
   const isConnectedToStrava = !!stravaTokens && !!user;
 
+  const contextValue = useMemo(
+    () => ({ user, isConnectedToStrava, disconnectStrava, logout, isLoading, stravaTokens }),
+    [user, isConnectedToStrava, disconnectStrava, logout, isLoading, stravaTokens]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isConnectedToStrava,
-        disconnectStrava,
-        logout,
-        isLoading,
-        stravaTokens,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

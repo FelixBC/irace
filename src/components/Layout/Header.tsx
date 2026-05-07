@@ -269,7 +269,7 @@ const Header: React.FC = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <Link
-                  to="/challenges"
+                  to="/my-challenges"
                   className="text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
                   onClick={() => setIsMenuOpen(false)}
                 >

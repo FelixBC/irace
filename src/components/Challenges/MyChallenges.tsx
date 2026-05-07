@@ -135,22 +135,27 @@ const MyChallenges: React.FC = () => {
   const displayChallenges = challenges;
 
   const sportConfig = {
-    RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50' },
-    CYCLING: { icon: '🚴‍♂️', color: 'from-blue-400 to-blue-600', bgColor: 'bg-blue-50' },
-    SWIMMING: { icon: '🏊‍♂️', color: 'from-teal-400 to-cyan-600', bgColor: 'bg-teal-50' },
-    WALKING: { icon: '🚶‍♂️', color: 'from-green-400 to-green-600', bgColor: 'bg-green-50' },
-    HIKING: { icon: '🥾', color: 'from-amber-400 to-amber-600', bgColor: 'bg-amber-50' },
-    WEIGHT_TRAINING: { icon: '💪', color: 'from-purple-400 to-purple-600', bgColor: 'bg-purple-50' },
-    YOGA: { icon: '🧘‍♀️', color: 'from-indigo-400 to-indigo-600', bgColor: 'bg-indigo-50' },
+    RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50 dark:bg-orange-950/40' },
+    CYCLING: { icon: '🚴‍♂️', color: 'from-blue-400 to-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/40' },
+    SWIMMING: { icon: '🏊‍♂️', color: 'from-teal-400 to-cyan-600', bgColor: 'bg-teal-50 dark:bg-teal-950/40' },
+    WALKING: { icon: '🚶‍♂️', color: 'from-green-400 to-green-600', bgColor: 'bg-green-50 dark:bg-green-950/40' },
+    HIKING: { icon: '🥾', color: 'from-amber-400 to-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/40' },
+    WEIGHT_TRAINING: { icon: '💪', color: 'from-purple-400 to-purple-600', bgColor: 'bg-purple-50 dark:bg-purple-950/40' },
+    YOGA: { icon: '🧘‍♀️', color: 'from-indigo-400 to-indigo-600', bgColor: 'bg-indigo-50 dark:bg-indigo-950/40' },
   };
 
   const getStatusColor = (status: ChallengeStatus) => {
     switch (status) {
-      case ChallengeStatus.ACTIVE: return 'text-green-600 bg-green-100';
-      case ChallengeStatus.COMPLETED: return 'text-blue-600 bg-blue-100';
-      case ChallengeStatus.CANCELLED: return 'text-gray-600 bg-gray-100';
-      case ChallengeStatus.DRAFT: return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case ChallengeStatus.ACTIVE:
+        return 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-950/50';
+      case ChallengeStatus.COMPLETED:
+        return 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50';
+      case ChallengeStatus.CANCELLED:
+        return 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
+      case ChallengeStatus.DRAFT:
+        return 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
+      default:
+        return 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
     }
   };
 
@@ -259,7 +264,7 @@ const MyChallenges: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex min-h-[60vh] items-center justify-center bg-transparent">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300">Loading…</p>
@@ -270,7 +275,7 @@ const MyChallenges: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+      <div className="flex min-h-[60vh] items-center justify-center bg-transparent px-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 flex items-center justify-center mx-auto mb-4">
             <Users className="w-8 h-8" />
@@ -293,7 +298,7 @@ const MyChallenges: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -303,8 +308,8 @@ const MyChallenges: React.FC = () => {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Challenges</h1>
-              <p className="text-gray-600">Manage and track all your fitness challenges</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 dark:text-white">My Challenges</h1>
+              <p className="text-gray-600 dark:text-gray-300">Manage and track all your fitness challenges</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -328,66 +333,66 @@ const MyChallenges: React.FC = () => {
         >
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Challenges</p>
-                <p className="text-2xl font-bold text-gray-900">{challenges.length}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Challenges</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{challenges.length}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {challenges.filter(c => c.status === ChallengeStatus.ACTIVE).length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {challenges.filter(c => c.status === ChallengeStatus.COMPLETED).length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Award className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                <Award className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Participants</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Participants</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {challenges.reduce((sum, c) => sum + c.participants, 0)}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </motion.div>
@@ -398,19 +403,19 @@ const MyChallenges: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8"
+          className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8"
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
             {/* Search */}
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search challenges..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>
@@ -420,7 +425,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="all">All Status</option>
                 <option value={ChallengeStatus.ACTIVE}>Active</option>
@@ -432,7 +437,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sportFilter}
                 onChange={(e) => setSportFilter(e.target.value as SportFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="all">All Sports</option>
                 <option value={Sport.RUNNING}>Running</option>
@@ -447,7 +452,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={ownershipFilter}
                 onChange={(e) => setOwnershipFilter(e.target.value as OwnershipFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="all">All Challenges</option>
                 <option value="created">Created by Me</option>
@@ -457,7 +462,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="recent">Most Recent</option>
                 <option value="name">Name A-Z</option>
@@ -473,9 +478,9 @@ const MyChallenges: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-orange-100 text-orange-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  viewMode === 'grid'
+                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
                 <div className="w-5 h-5 grid grid-cols-2 gap-1">
@@ -490,9 +495,9 @@ const MyChallenges: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-orange-100 text-orange-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  viewMode === 'list'
+                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
                 <div className="w-5 h-5 flex flex-col space-y-1">
@@ -511,59 +516,41 @@ const MyChallenges: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          {sortedChallenges.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trophy className="w-12 h-12 text-gray-400" />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-300">Loading your challenges...</p>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges found</h3>
-              <p className="text-gray-600 mb-6">
-                {searchTerm || statusFilter !== 'all' || sportFilter !== 'all' || ownershipFilter !== 'all'
-                  ? 'Try adjusting your filters or search terms'
-                  : 'Get started by creating your first challenge!'
-                }
+            </div>
+          ) : sortedChallenges.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                {challenges.length === 0 ? 'No challenges yet' : 'No challenges found'}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                {challenges.length === 0
+                  ? 'Get started by creating your first challenge!'
+                  : 'Try adjusting your filters or search terms'}
               </p>
-              {!searchTerm && statusFilter === 'all' && sportFilter === 'all' && ownershipFilter === 'all' && (
+              {challenges.length === 0 && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCreateChallenge}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
                 >
-                  Create Your First Challenge
+                  <Plus className="w-5 h-5" />
+                  <span>Create Your First Challenge</span>
                 </motion.button>
               )}
             </div>
           ) : (
             <>
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading your challenges...</p>
-                  </div>
-                </div>
-              ) : challenges.length === 0 ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="text-gray-400 mb-4">
-                      <Trophy className="w-16 h-16 mx-auto" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges yet</h3>
-                    <p className="text-gray-600 mb-6">Create your first fitness challenge to get started!</p>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleCreateChallenge}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span>Create Challenge</span>
-                    </motion.button>
-                  </div>
-                </div>
-              ) : (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
                   {sortedChallenges.map((challenge, index) => (
                 <motion.div
                   key={challenge.id}
@@ -580,9 +567,9 @@ const MyChallenges: React.FC = () => {
                   }}
                   role="button"
                   tabIndex={0}
-                  className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${
+                  className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${
                     viewMode === 'list' ? 'flex' : ''
-                  } cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2`}
+                  } cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950`}
                 >
                   {/* Challenge Header */}
                   <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
@@ -593,28 +580,28 @@ const MyChallenges: React.FC = () => {
                             {getStatusText(challenge.status)}
                           </span>
                           {challenge.isCreator ? (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 flex items-center">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 flex items-center">
                               <Star className="w-3 h-3 mr-1" />
                               Created
                             </span>
                           ) : (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex items-center">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 flex items-center">
                               <Users className="w-3 h-3 mr-1" />
                               Joined
                             </span>
                           )}
                           {challenge.isPublic ? (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
                               Public
                             </span>
                           ) : (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                               Private
                             </span>
                           )}
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{challenge.name}</h3>
-                        <p className="text-gray-600 text-sm mb-4">{challenge.description}</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{challenge.name}</h3>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{challenge.description}</p>
                       </div>
                       
                       {/* Action Menu */}
@@ -633,41 +620,41 @@ const MyChallenges: React.FC = () => {
                               cur === challenge.id ? null : challenge.id
                             );
                           }}
-                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-200"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </motion.button>
                         {openMenuChallengeId === challenge.id && (
                           <div
                             role="menu"
-                            className="absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                            className="absolute right-0 mt-1 z-30 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
                             <button
                               type="button"
                               role="menuitem"
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenMenuChallengeId(null);
                                 handleViewChallenge(challenge);
                               }}
                             >
-                              <Eye className="h-4 w-4 shrink-0 text-gray-500" />
+                              <Eye className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
                               View race
                             </button>
                             <button
                               type="button"
                               role="menuitem"
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenMenuChallengeId(null);
                                 void handleShareChallenge(challenge.inviteCode);
                               }}
                             >
-                              <Share2 className="h-4 w-4 shrink-0 text-gray-500" />
+                              <Share2 className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
                               Copy invite link
                             </button>
                             {challenge.isCreator && (
@@ -675,20 +662,20 @@ const MyChallenges: React.FC = () => {
                                 <button
                                   type="button"
                                   role="menuitem"
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setOpenMenuChallengeId(null);
                                     handleEditChallenge();
                                   }}
                                 >
-                                  <Edit3 className="h-4 w-4 shrink-0 text-gray-500" />
+                                  <Edit3 className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
                                   Edit…
                                 </button>
                                 <button
                                   type="button"
                                   role="menuitem"
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void confirmAndDeleteChallenge(challenge);
@@ -716,10 +703,10 @@ const MyChallenges: React.FC = () => {
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-medium text-gray-900">{challenge.progress}%</span>
+                        <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{challenge.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(challenge.progress)}`}
                           style={{ width: `${challenge.progress}%` }}
@@ -730,24 +717,24 @@ const MyChallenges: React.FC = () => {
                     {/* Challenge Details */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
-                        <Target className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">
+                        <Target className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">
                           {challenge.goal} {challenge.goalUnit}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">{challenge.duration}</span>
+                        <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">{challenge.duration}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">
+                        <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">
                           {challenge.participants}/{challenge.maxParticipants}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">
+                        <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">
                           {challenge.status === ChallengeStatus.ACTIVE
                             ? `${getDaysRemaining(challenge.endDate)} days remaining`
                             : challenge.status === ChallengeStatus.COMPLETED
@@ -781,7 +768,7 @@ const MyChallenges: React.FC = () => {
                           e.stopPropagation();
                           handleShareChallenge(challenge.inviteCode);
                         }}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        className="px-3 py-2 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors dark:text-gray-300 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700"
                       >
                         <Share2 className="w-4 h-4" />
                       </motion.button>
@@ -795,7 +782,7 @@ const MyChallenges: React.FC = () => {
                               e.stopPropagation();
                               handleEditChallenge();
                             }}
-                            className="px-3 py-2 text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                            className="px-3 py-2 text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 dark:hover:text-blue-200"
                           >
                             <Edit3 className="w-4 h-4" />
                           </motion.button>
@@ -807,7 +794,7 @@ const MyChallenges: React.FC = () => {
                               e.stopPropagation();
                               void confirmAndDeleteChallenge(challenge);
                             }}
-                            className="px-3 py-2 text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                            className="px-3 py-2 text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 dark:hover:text-red-300"
                           >
                             <Trash2 className="w-4 h-4" />
                           </motion.button>
@@ -817,8 +804,7 @@ const MyChallenges: React.FC = () => {
                   </div>
                 </motion.div>
               ))}
-                </div>
-              )}
+              </div>
             </>
           )}
         </motion.div>

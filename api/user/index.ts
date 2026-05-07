@@ -2,6 +2,7 @@
  * POST /api/user — Upsert Strava user and issue session.
  * Requires `Authorization: Bearer <INTERNAL_USER_UPSERT_SECRET>` (server-to-server / tooling only).
  */
+import { timingSafeEqual } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
@@ -49,7 +50,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ') || authHeader.slice(7) !== secret) {
+  const provided = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const secretBuf = Buffer.from(secret);
+  const providedBuf = Buffer.alloc(secretBuf.length);
+  Buffer.from(provided).copy(providedBuf);
+  if (!provided || !timingSafeEqual(secretBuf, providedBuf)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

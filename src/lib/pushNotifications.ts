@@ -39,7 +39,7 @@ export async function enableWebPush(bearerToken: string, baseUrl = getApiBaseUrl
   const ready = await navigator.serviceWorker.ready;
   const sub = await ready.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(key),
+    applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
   });
   const json = sub.toJSON();
 

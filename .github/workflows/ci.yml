@@ -42,6 +42,9 @@ jobs:
       - name: Typecheck API (server)
         run: npm run typecheck:api
 
+      - name: Typecheck App (frontend)
+        run: tsc -p tsconfig.app.json --noEmit
+
       - name: Tests
         run: npm run test
 

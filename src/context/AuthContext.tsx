@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User, StravaTokens } from '../types';
-import { API_BASE_URL, SESSION, AUTH_EXCHANGE, AUTH_LOGOUT } from '../config/api';
+import { API_BASE_URL, SESSION, AUTH_EXCHANGE, AUTH_REFRESH, AUTH_LOGOUT } from '../config/api';
 import { assertOk, authFetch, parseJsonResponse } from '../lib/apiClient';
-import { sessionResponseSchema, authExchangeResponseSchema } from '../schemas/apiResponses';
+import { sessionResponseSchema, authExchangeResponseSchema, authRefreshResponseSchema } from '../schemas/apiResponses';
 import { createLogger } from '../lib/logger';
-import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '../lib/sessionStore';
+import { clearAuthTokens, getAccessToken, getAccessExpiresAtMs, getRefreshToken, setAccessTokenOnly, setAuthTokens } from '../lib/sessionStore';
+import { useToast } from './ToastContext';
 
 const log = createLogger('auth');
 
@@ -20,6 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { showToast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [stravaTokens, setStravaTokens] = useState<StravaTokens | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const checkExistingSession = async (signal?: AbortSignal) => {
-      if (!getRefreshToken()) {
+      const storedRefreshToken = getRefreshToken();
+      if (!storedRefreshToken) {
         setUser(null);
         setStravaTokens(null);
         setIsLoading(false);
@@ -77,6 +80,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
+        if (!getAccessToken() || Date.now() >= getAccessExpiresAtMs() - 5_000) {
+          const refreshRes = await fetch(AUTH_REFRESH, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: storedRefreshToken }),
+            signal,
+          });
+
+          if (!refreshRes.ok) {
+            clearAuthTokens();
+            setUser(null);
+            setStravaTokens(null);
+            showToast('error', 'Session expired', 'Please reconnect your Strava account.');
+            return;
+          }
+
+          const refreshData = await parseJsonResponse(refreshRes, authRefreshResponseSchema);
+          setAccessTokenOnly(refreshData.accessToken, refreshData.expiresIn);
+        }
+
         const response = await authFetch(SESSION, {
           headers: { 'Content-Type': 'application/json' },
           signal,
@@ -86,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           clearAuthTokens();
           setUser(null);
           setStravaTokens(null);
+          showToast('error', 'Session expired', 'Please reconnect your Strava account.');
           return;
         }
 
@@ -109,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       controller.abort();
     };
-  }, [applySessionPayload]);
+  }, [applySessionPayload, showToast]);
 
   const disconnectStrava = useCallback(async () => {
     if (!getAccessToken()) {

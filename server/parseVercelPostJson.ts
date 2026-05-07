@@ -1,8 +1,8 @@
 import type { VercelRequest } from '@vercel/node';
 
-export type ParsePostJsonResult<T extends Record<string, unknown>> =
+export type ParsePostJsonResult<T> =
   | { ok: true; data: T }
-  | { ok: false; reason: 'invalid_json' | 'body_not_object' };
+  | { ok: false; reason: 'invalid_json' | 'not_object' };
 
 type LogWarn = (message: unknown, ...details: unknown[]) => void;
 
@@ -30,7 +30,7 @@ export function parseVercelPostJsonObject<T extends Record<string, unknown>>(
       const parsed: unknown = JSON.parse(trimmed);
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
         logWarn(`${logContext}: JSON body must be an object`);
-        return { ok: false, reason: 'body_not_object' };
+        return { ok: false, reason: 'not_object' };
       }
       return { ok: true, data: parsed as T };
     } catch (e) {
@@ -44,5 +44,5 @@ export function parseVercelPostJsonObject<T extends Record<string, unknown>>(
   }
 
   logWarn(`${logContext}: unexpected body type`, typeof raw);
-  return { ok: false, reason: 'body_not_object' };
+  return { ok: false, reason: 'not_object' };
 }

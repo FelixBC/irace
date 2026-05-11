@@ -27,7 +27,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
       case 3:
         return <Award className="w-5 h-5 text-amber-600" />;
       default:
-        return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-500">{rank}</span>;
+        return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400">{rank}</span>;
     }
   };
 
@@ -35,13 +35,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
         <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
         Leaderboard
       </h3>
-      <p className="text-xs text-gray-500 mb-6">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
         Progress shown only to participants in this challenge, per your consent when joining.
       </p>
 
@@ -62,7 +62,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex-shrink-0">
                     {getRankIcon(index + 1)}
@@ -76,15 +76,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {participant.user.name}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono text-gray-900">
+                    <p className="text-sm font-mono text-gray-900 dark:text-white">
                       {participant.distance.toFixed(1)}km
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {participant.percentage.toFixed(0)}%
                     </p>
                   </div>
@@ -92,7 +92,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
               ))}
 
               {track.participants.length === 0 && (
-                <p className="text-sm text-gray-500 italic">No participants yet</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic">No participants yet</p>
               )}
             </div>
           </div>

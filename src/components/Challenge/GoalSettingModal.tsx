@@ -129,12 +129,12 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden"
+          className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Handle Bar */}
           <div className="flex justify-center pt-3 pb-2">
-            <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
           </div>
 
           {/* Header */}
@@ -142,18 +142,18 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
                 <span className="text-2xl">{sportGoals[0]?.sport ? SPORT_GOAL_CONFIG[sportGoals[0].sport].icon : '🎯'}</span>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Set {sportGoals[0]?.sport ? SPORT_GOAL_CONFIG[sportGoals[0].sport].name : 'Sport'} Goal
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Choose your target distance or sessions for this challenge
             </p>
           </div>
@@ -171,7 +171,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                 >
                   {/* Quick Presets */}
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-3">Quick Presets:</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Quick Presets:</p>
                     <div className="grid grid-cols-3 gap-2">
                       {config.presets.map((preset) => (
                         <motion.button
@@ -182,7 +182,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                           className={`py-3 px-2 rounded-xl text-sm font-medium transition-all ${
                             sportGoal.goal === preset
                               ? 'bg-orange-500 text-white shadow-lg'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                         >
                           {preset} {config.unit}
@@ -193,7 +193,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
 
                   {/* Custom Input */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                       Custom Goal:
                     </label>
                     <div className="flex items-center space-x-3">
@@ -203,10 +203,10 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                         step="0.1"
                         value={sportGoal.goal}
                         onChange={(e) => handleGoalChange(sportGoal.sport, parseFloat(e.target.value) || 0)}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-lg font-medium"
+                        className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-lg font-medium bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                         placeholder={`Enter ${config.name.toLowerCase()} goal`}
                       />
-                      <span className="text-gray-600 font-medium min-w-[3rem] text-lg">
+                      <span className="text-gray-600 dark:text-gray-300 font-medium min-w-[3rem] text-lg">
                         {config.unit}
                       </span>
                     </div>
@@ -215,7 +215,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                   {/* Slider for visual input */}
                   <div>
                     <div className="flex items-center space-x-3">
-                      <Sliders className="w-4 h-4 text-gray-400" />
+                      <Sliders className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <input
                         type="range"
                         min="0"
@@ -223,9 +223,9 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                         step="0.1"
                         value={sportGoal.goal}
                         onChange={(e) => handleGoalChange(sportGoal.sport, parseFloat(e.target.value))}
-                        className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer slider"
+                        className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer slider"
                       />
-                      <span className="text-sm text-gray-500 min-w-[4rem] text-right font-medium">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 min-w-[4rem] text-right font-medium">
                         {sportGoal.goal} {config.unit}
                       </span>
                     </div>
@@ -236,7 +236,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+          <div className="bg-gray-50 dark:bg-gray-800/80 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}

@@ -38,10 +38,10 @@ const AuthCallback: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
         <div className="text-center max-w-md">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Authentication</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Authentication</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
           <button
             type="button"
             onClick={() => navigate('/')}

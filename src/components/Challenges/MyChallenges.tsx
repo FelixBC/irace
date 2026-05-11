@@ -415,7 +415,7 @@ const MyChallenges: React.FC = () => {
                   placeholder="Search challenges..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -425,7 +425,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Status</option>
                 <option value={ChallengeStatus.ACTIVE}>Active</option>
@@ -437,7 +437,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sportFilter}
                 onChange={(e) => setSportFilter(e.target.value as SportFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Sports</option>
                 <option value={Sport.RUNNING}>Running</option>
@@ -452,7 +452,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={ownershipFilter}
                 onChange={(e) => setOwnershipFilter(e.target.value as OwnershipFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Challenges</option>
                 <option value="created">Created by Me</option>
@@ -462,7 +462,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="recent">Most Recent</option>
                 <option value="name">Name A-Z</option>
@@ -620,7 +620,7 @@ const MyChallenges: React.FC = () => {
                               cur === challenge.id ? null : challenge.id
                             );
                           }}
-                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </motion.button>

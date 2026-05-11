@@ -48,26 +48,26 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
             
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Something went wrong
             </h1>
             
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               We encountered an unexpected error. Please try again or return to the home page.
             </p>
 
             {import.meta.env.DEV && this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 mb-2">
+                <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-2">
                   Error details (development only)
                 </summary>
-                <div className="bg-gray-100 p-3 rounded text-xs font-mono text-gray-700 overflow-auto">
+                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs font-mono text-gray-700 dark:text-gray-300 overflow-auto">
                   <p className="font-semibold mb-2">{this.state.error.name}:</p>
                   <p className="mb-2">{this.state.error.message}</p>
                   {this.state.errorInfo && (
@@ -91,7 +91,7 @@ class ErrorBoundary extends Component<Props, State> {
               
               <button
                 onClick={this.handleGoHome}
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <Home className="w-4 h-4" />
                 <span>Go Home</span>

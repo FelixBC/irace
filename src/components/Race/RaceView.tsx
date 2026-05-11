@@ -420,10 +420,10 @@ const RaceView: React.FC = () => {
 
   if (!challenge) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading challenge...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading challenge...</p>
         </div>
       </div>
     );
@@ -434,7 +434,7 @@ const RaceView: React.FC = () => {
   const endDate = asDate(challenge.endDate);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -593,22 +593,22 @@ const RaceView: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
                   <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
                   Results
                 </h3>
                 {challenge?.status === ChallengeStatus.COMPLETED && (
-                  <p className="text-xs text-gray-500 mb-4">Challenge closed. Results are final.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Challenge closed. Results are final.</p>
                 )}
                 {finishers.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">No one finished yet.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">No one finished yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {finishers.slice(0, 10).map((p) => (
-                      <div key={p.user.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50">
-                        <div className="w-8 text-sm font-mono text-gray-500">{p.finishPosition}.</div>
+                      <div key={p.user.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <div className="w-8 text-sm font-mono text-gray-500 dark:text-gray-400">{p.finishPosition}.</div>
                         <img
                           src={
                             p.user.image ||
@@ -618,8 +618,8 @@ const RaceView: React.FC = () => {
                           className="w-8 h-8 rounded-full object-cover"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{p.user.name || 'User'}</div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.user.name || 'User'}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">
                             {typeof p.finalDistance === 'number'
                               ? `${p.finalDistance.toFixed(1)}km`
                               : typeof p.distance === 'number'
@@ -642,9 +642,9 @@ const RaceView: React.FC = () => {
               !stravaData &&
               !isLoadingStrava &&
               !isDemo && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <p className="text-gray-500 mb-2">No Strava activities found</p>
-                <p className="text-sm text-gray-400">Your recent activities will appear here</p>
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">No Strava activities found</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Your recent activities will appear here</p>
               </div>
             )}
           </div>

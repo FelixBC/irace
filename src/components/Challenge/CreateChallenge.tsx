@@ -267,11 +267,11 @@ const CreateChallenge: React.FC = () => {
 
           {step === 2 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Challenge Settings</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Challenge Settings</h2>
               
               {/* Duration Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-4">
                   Challenge Duration
                 </label>
                 <div className="grid grid-cols-2 gap-4">
@@ -283,12 +283,12 @@ const CreateChallenge: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
                         formData.duration === option.value
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/35 dark:border-orange-500'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500 dark:bg-gray-800/40'
                       }`}
                     >
-                      <p className="font-medium text-gray-900">{option.label}</p>
-                      <p className="text-sm text-gray-600">{option.description}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{option.label}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{option.description}</p>
                     </motion.button>
                   ))}
                 </div>
@@ -296,7 +296,7 @@ const CreateChallenge: React.FC = () => {
 
               {/* Privacy Settings */}
               <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-4">
                   Privacy Settings
                 </label>
                 <div className="space-y-3">
@@ -309,8 +309,8 @@ const CreateChallenge: React.FC = () => {
                       className="w-4 h-4 text-orange-500 focus:ring-orange-500"
                     />
                     <div className="ml-3">
-                      <p className="font-medium text-gray-900">Public Challenge</p>
-                      <p className="text-sm text-gray-600">Anyone can join with the link</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Public Challenge</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Anyone can join with the link</p>
                     </div>
                   </label>
                   <label className="flex items-center">
@@ -322,8 +322,8 @@ const CreateChallenge: React.FC = () => {
                       className="w-4 h-4 text-orange-500 focus:ring-orange-500"
                     />
                     <div className="ml-3">
-                      <p className="font-medium text-gray-900">Private Challenge</p>
-                      <p className="text-sm text-gray-600">Invite-only challenge</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Private Challenge</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Invite-only challenge</p>
                     </div>
                   </label>
                 </div>
@@ -334,14 +334,14 @@ const CreateChallenge: React.FC = () => {
                 const missingGoals = formData.sports.filter(sport => !formData.goals[sport]);
                 if (missingGoals.length > 0) {
                   return (
-                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/40 dark:border-amber-800/60">
                       <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 text-amber-600 mr-2" />
+                        <AlertCircle className="w-5 h-5 text-amber-600 mr-2 dark:text-amber-400" />
                         <div>
-                          <p className="text-sm font-medium text-amber-800">
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                             Goals Required
                           </p>
-                          <p className="text-sm text-amber-700">
+                          <p className="text-sm text-amber-700 dark:text-amber-300">
                             Please set goals for: {missingGoals.map(sport => {
                               const sportOption = sportOptions.find(s => s.id === sport);
                               return sportOption?.name || sport;
@@ -355,17 +355,17 @@ const CreateChallenge: React.FC = () => {
                 return null;
               })()}
 
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800/50 dark:border-gray-600">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-500 dark:bg-gray-900"
                     checked={formData.creatorParticipantSharingAck}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, creatorParticipantSharingAck: e.target.checked }))
                     }
                   />
-                  <span className="text-sm text-gray-700 leading-relaxed">
+                  <span className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
                     I understand that people who join this challenge (via my invite link) will see each
                     other&apos;s <strong>challenge progress</strong> here — aggregated stats for this challenge
                     only, not their full Strava profiles. See the{' '}
@@ -383,7 +383,7 @@ const CreateChallenge: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={() => setStep(1)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100"
                 >
                   Back
                 </motion.button>
@@ -414,32 +414,32 @@ const CreateChallenge: React.FC = () => {
           {step === 3 && createdChallenge && (
             <div className="text-center">
               <div className="mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-950/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Challenge Created!</h2>
-                <p className="text-gray-600">Your fitness challenge is ready to share</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Challenge Created!</h2>
+                <p className="text-gray-600 dark:text-gray-300">Your fitness challenge is ready to share</p>
               </div>
 
               {/* Challenge Info */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-                <h3 className="font-semibold text-gray-900 mb-3">{createdChallenge.name}</h3>
+              <div className="bg-gray-50 dark:bg-gray-800/60 dark:border dark:border-gray-600 rounded-lg p-6 mb-6 text-left">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{createdChallenge.name}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600">Sports</p>
-                    <p className="font-medium">{createdChallenge.sports?.join(', ') || 'No sports selected'}</p>
+                    <p className="text-gray-600 dark:text-gray-400">Sports</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{createdChallenge.sports?.join(', ') || 'No sports selected'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Duration</p>
-                    <p className="font-medium">{createdChallenge.duration}</p>
+                    <p className="text-gray-600 dark:text-gray-400">Duration</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{createdChallenge.duration}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Privacy</p>
-                    <p className="font-medium">{createdChallenge.isPublic ? 'Public' : 'Private'}</p>
+                    <p className="text-gray-600 dark:text-gray-400">Privacy</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{createdChallenge.isPublic ? 'Public' : 'Private'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Invite Code</p>
-                    <p className="font-medium font-mono">{createdChallenge.inviteCode}</p>
+                    <p className="text-gray-600 dark:text-gray-400">Invite Code</p>
+                    <p className="font-medium font-mono text-gray-900 dark:text-gray-100">{createdChallenge.inviteCode}</p>
                   </div>
                 </div>
               </div>

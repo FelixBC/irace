@@ -106,21 +106,21 @@ const Profile: React.FC = () => {
   >([]);
 
   const sportConfig = {
-    RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50' },
-    CYCLING: { icon: '🚴‍♂️', color: 'from-blue-400 to-blue-600', bgColor: 'bg-blue-50' },
-    SWIMMING: { icon: '🏊‍♂️', color: 'from-teal-400 to-cyan-600', bgColor: 'bg-teal-50' },
-    WALKING: { icon: '🚶‍♂️', color: 'from-green-400 to-green-600', bgColor: 'bg-green-50' },
-    HIKING: { icon: '🥾', color: 'from-amber-400 to-amber-600', bgColor: 'bg-amber-50' },
-    WEIGHT_TRAINING: { icon: '💪', color: 'from-purple-400 to-purple-600', bgColor: 'bg-purple-50' },
-    YOGA: { icon: '🧘‍♀️', color: 'from-indigo-400 to-indigo-600', bgColor: 'bg-indigo-50' },
+    RUNNING: { icon: '🏃‍♂️', color: 'from-orange-400 to-red-500', bgColor: 'bg-orange-50 dark:bg-orange-950/40' },
+    CYCLING: { icon: '🚴‍♂️', color: 'from-blue-400 to-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/40' },
+    SWIMMING: { icon: '🏊‍♂️', color: 'from-teal-400 to-cyan-600', bgColor: 'bg-teal-50 dark:bg-teal-950/40' },
+    WALKING: { icon: '🚶‍♂️', color: 'from-green-400 to-green-600', bgColor: 'bg-green-50 dark:bg-green-950/40' },
+    HIKING: { icon: '🥾', color: 'from-amber-400 to-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/40' },
+    WEIGHT_TRAINING: { icon: '💪', color: 'from-purple-400 to-purple-600', bgColor: 'bg-purple-50 dark:bg-purple-950/40' },
+    YOGA: { icon: '🧘‍♀️', color: 'from-indigo-400 to-indigo-600', bgColor: 'bg-indigo-50 dark:bg-indigo-950/40' },
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'completed': return 'text-blue-600 bg-blue-100';
-      case 'upcoming': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'active': return 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-950/50';
+      case 'completed': return 'text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50';
+      case 'upcoming': return 'text-orange-600 bg-orange-100 dark:text-orange-300 dark:bg-orange-950/40';
+      default: return 'text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
     }
   };
 
@@ -142,20 +142,20 @@ const Profile: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8"
+          className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8"
         >
           <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
             {/* Profile Picture */}
@@ -184,21 +184,21 @@ const Profile: React.FC = () => {
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     {user.name || 'Strava User'}
                   </h1>
-                  <p className="text-gray-600 mb-4">{user.email}</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">{user.email}</p>
                   
                   {/* Strava Connection Status */}
                   <div className="flex items-center space-x-2 mb-4">
                     <div className={`w-3 h-3 rounded-full ${isConnectedToStrava ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
                       {isConnectedToStrava ? 'Connected to Strava' : 'Not connected to Strava'}
                     </span>
                   </div>
 
                   {/* Member Since */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                     <Calendar className="w-4 h-4" />
                     <span>Member since January 2025</span>
                   </div>
@@ -229,12 +229,12 @@ const Profile: React.FC = () => {
         >
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Challenges</p>
-                                  <p className="text-2xl font-bold text-gray-900">{stats.totalChallenges}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Challenges</p>
+                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalChallenges}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-orange-600" />
@@ -244,12 +244,12 @@ const Profile: React.FC = () => {
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Distance</p>
-                                  <p className="text-2xl font-bold text-gray-900">{stats.totalDistance.toFixed(1)} km</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Distance</p>
+                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalDistance.toFixed(1)} km</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -259,12 +259,12 @@ const Profile: React.FC = () => {
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Activities</p>
-                                  <p className="text-2xl font-bold text-gray-900">{stats.totalActivities}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Activities</p>
+                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalActivities}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Activity className="w-6 h-6 text-green-600" />
@@ -274,12 +274,12 @@ const Profile: React.FC = () => {
 
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Rank</p>
-                                  <p className="text-2xl font-bold text-gray-900">{stats.rank}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rank</p>
+                                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.rank}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Award className="w-6 h-6 text-yellow-600" />
@@ -289,8 +289,8 @@ const Profile: React.FC = () => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
-          <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8 px-8">
               {[
                 { id: 'overview', label: 'Overview', icon: Activity },
@@ -307,8 +307,8 @@ const Profile: React.FC = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'border-orange-500 text-orange-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -329,13 +329,13 @@ const Profile: React.FC = () => {
               >
                 {/* Recent Challenges */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Challenges</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Challenges</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {recentChallenges.slice(0, 4).map((challenge) => (
                       <motion.div
                         key={challenge.id}
                         whileHover={{ scale: 1.02 }}
-                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                        className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-2xl">{sportConfig[challenge.sport]?.icon}</span>
@@ -343,8 +343,8 @@ const Profile: React.FC = () => {
                             {getStatusText(challenge.status)}
                           </span>
                         </div>
-                        <h4 className="font-medium text-gray-900 mb-2">{challenge.name}</h4>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">{challenge.name}</h4>
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div 
                             className="bg-orange-500 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${challenge.progress}%` }}
@@ -358,23 +358,23 @@ const Profile: React.FC = () => {
 
                 {/* Recent Activities */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activities</h3>
                   <div className="space-y-3">
                     {recentActivities.map((activity) => (
                       <motion.div
                         key={activity.id}
                         whileHover={{ scale: 1.01 }}
-                        className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-600"
                       >
                         <span className="text-2xl">{sportConfig[activity.sport]?.icon}</span>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 dark:text-white">
                             {activity.sport === Sport.WEIGHT_TRAINING 
                               ? (activity.calories ? `${activity.calories} calories ${activity.sport.toLowerCase()}` : `${activity.sport.toLowerCase()}`)
                               : `${activity.distance.toFixed(1)} ${activity.unit || 'km'} ${activity.sport.toLowerCase()}`
                             }
                           </p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                          <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {activity.heartRate && (
                               <span className="flex items-center">
                                 ❤️ {activity.heartRate.average}-{activity.heartRate.max} bpm
@@ -407,7 +407,7 @@ const Profile: React.FC = () => {
                 className="space-y-6"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">All Challenges</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">All Challenges</h3>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -425,7 +425,7 @@ const Profile: React.FC = () => {
                     <motion.div
                       key={challenge.id}
                       whileHover={{ scale: 1.02 }}
-                      className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                      className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600"
                     >
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-3xl">{sportConfig[challenge.sport]?.icon}</span>
@@ -433,14 +433,14 @@ const Profile: React.FC = () => {
                           {getStatusText(challenge.status)}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-3">{challenge.name}</h4>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3">{challenge.name}</h4>
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-3">
                         <div 
                           className="bg-orange-500 h-3 rounded-full transition-all duration-300"
                           style={{ width: `${challenge.progress}%` }}
                         ></div>
                       </div>
-                      <p className="text-sm text-gray-600">{challenge.progress}% complete</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{challenge.progress}% complete</p>
                     </motion.div>
                   ))}
                 </div>
@@ -453,53 +453,53 @@ const Profile: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <h3 className="text-lg font-semibold text-gray-900">Activity History</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activity History</h3>
                 
                 {/* Activity Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2">This Week</h4>
+                  <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">This Week</h4>
                     <p className="text-2xl font-bold text-orange-600">47.2 km</p>
-                    <p className="text-sm text-gray-600">+12% from last week</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">+12% from last week</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2">This Month</h4>
+                  <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">This Month</h4>
                     <p className="text-2xl font-bold text-blue-600">189.5 km</p>
-                    <p className="text-sm text-gray-600">+8% from last month</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">+8% from last month</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2">Longest Streak</h4>
+                  <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Longest Streak</h4>
                     <p className="text-2xl font-bold text-green-600">{stats.longestStreak} days</p>
-                    <p className="text-sm text-gray-600">Current: 5 days</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Current: 5 days</p>
                   </div>
                 </div>
 
                 {/* Activity List */}
-                <div className="bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="p-4 border-b border-gray-200">
-                    <h4 className="font-medium text-gray-900">Recent Activities</h4>
+                <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">Recent Activities</h4>
                   </div>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {recentActivities.map((activity, index) => (
                       <motion.div
                         key={activity.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="p-4 hover:bg-gray-100 transition-colors"
+                        className="p-4 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-colors"
                       >
                         <div className="flex items-center space-x-4">
                           <span className="text-2xl">{sportConfig[activity.sport]?.icon}</span>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-gray-900 dark:text-white">
                               {activity.distance.toFixed(1)} {activity.unit} {activity.sport.toLowerCase()}
                             </p>
-                            <p className="text-sm text-gray-600">{activity.date}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{activity.date}</p>
                           </div>
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </motion.button>
@@ -517,17 +517,17 @@ const Profile: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Settings</h3>
                 
                 <div className="space-y-4">
                   {/* Notifications (Web Push) */}
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-600 space-y-3">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center space-x-3 min-w-0">
-                        <Bell className="w-5 h-5 text-gray-600 shrink-0" />
+                        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400 shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Push notifications</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-medium text-gray-900 dark:text-white">Push notifications</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
                             {pushUiState === 'unsupported' &&
                               'Not configured for this build (add VITE_VAPID_PUBLIC_KEY).'}
                             {pushUiState === 'denied' &&
@@ -591,7 +591,7 @@ const Profile: React.FC = () => {
                           className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all relative ${
                             pushUiState === 'on'
                               ? 'bg-orange-500 after:translate-x-full after:border-white'
-                              : 'bg-gray-200'
+                              : 'bg-gray-200 dark:bg-gray-600'
                           }`}
                         />
                       </label>
@@ -599,7 +599,7 @@ const Profile: React.FC = () => {
                     {pushMessage && <p className="text-sm text-red-600">{pushMessage}</p>}
                     {import.meta.env.DEV && isWebPushConfigured() && (
                       <div className="flex flex-wrap gap-2 items-center">
-                        <span className="text-xs text-gray-500">Dev only:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Dev only:</span>
                         <motion.button
                           type="button"
                           whileHover={{ scale: 1.03 }}
@@ -620,7 +620,7 @@ const Profile: React.FC = () => {
                               setPushBusy(false);
                             }
                           }}
-                          className="text-xs px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+                          className="text-xs px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                         >
                           Send test notification
                         </motion.button>
@@ -629,15 +629,15 @@ const Profile: React.FC = () => {
                   </div>
 
                   {/* Privacy */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center space-x-3">
-                      <Shield className="w-5 h-5 text-gray-600" />
+                      <Shield className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       <div>
-                        <p className="font-medium text-gray-900">Profile Privacy</p>
-                        <p className="text-sm text-gray-600">Control who can see your profile</p>
+                        <p className="font-medium text-gray-900 dark:text-white">Profile Privacy</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Control who can see your profile</p>
                       </div>
                     </div>
-                    <select className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <select className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 dark:[color-scheme:dark]">
                       <option>Public</option>
                       <option>Friends Only</option>
                       <option>Private</option>
@@ -645,13 +645,13 @@ const Profile: React.FC = () => {
                   </div>
 
                   {/* Strava Connection */}
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-600 space-y-3">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center space-x-3 min-w-0">
-                        <ExternalLink className="w-5 h-5 text-gray-600 shrink-0" />
+                        <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400 shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Strava Connection</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-medium text-gray-900 dark:text-white">Strava Connection</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
                             {isConnectedToStrava ? 'Connected' : 'Not connected'}
                           </p>
                         </div>
@@ -717,12 +717,12 @@ const Profile: React.FC = () => {
                   </div>
 
                   {/* Logout */}
-                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900/50">
                     <div className="flex items-center space-x-3">
                       <LogOut className="w-5 h-5 text-red-600" />
                       <div>
-                        <p className="font-medium text-red-900">Logout</p>
-                        <p className="text-sm text-red-600">Sign out of your account</p>
+                        <p className="font-medium text-red-900 dark:text-red-200">Logout</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">Sign out of your account</p>
                       </div>
                     </div>
                     <motion.button

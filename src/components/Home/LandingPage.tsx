@@ -222,7 +222,7 @@ const LandingPage: React.FC = () => {
 
               <Link
                 to="/race/demo-challenge"
-                className="inline-flex items-center space-x-2 mt-8 bg-white text-gray-900 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+                className="inline-flex items-center space-x-2 mt-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-transparent dark:border-gray-600"
               >
                 <Play className="w-4 h-4" />
                 <span>Try Demo Race</span>

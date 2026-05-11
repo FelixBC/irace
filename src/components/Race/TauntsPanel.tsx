@@ -71,18 +71,18 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-        <MessageSquare className="w-5 h-5 text-gray-700 mr-2" />
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+        <MessageSquare className="w-5 h-5 text-gray-700 dark:text-gray-300 mr-2" />
         Taunts
       </h3>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
         Preset messages only. Keep it competitive.
       </p>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
+        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/60 rounded-lg px-3 py-2 mb-4">
           {error}
         </div>
       )}
@@ -93,24 +93,24 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
             key={p.key}
             disabled={!canSend || isSending}
             onClick={() => send(p.key)}
-            className="text-sm px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {p.text}
           </button>
         ))}
         {presets.length === 0 && !isLoading && (
-          <span className="text-sm text-gray-500">No presets available.</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">No presets available.</span>
         )}
       </div>
 
       <div className="space-y-2 max-h-64 overflow-auto pr-1">
         {isLoading ? (
-          <div className="text-sm text-gray-500">Loading…</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Loading…</div>
         ) : taunts.length === 0 ? (
-          <div className="text-sm text-gray-500 italic">No taunts yet.</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 italic">No taunts yet.</div>
         ) : (
           taunts.map((t) => (
-            <div key={t.id} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50">
+            <div key={t.id} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
               <img
                 src={
                   t.user.image ||
@@ -121,10 +121,10 @@ export const TauntsPanel: React.FC<{ inviteCode: string; pollMs?: number }> = ({
               />
               <div className="min-w-0">
                 <div className="text-sm">
-                  <span className="font-medium text-gray-900">{t.user.name || 'User'}</span>{' '}
-                  <span className="text-gray-700">{t.text}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{t.user.name || 'User'}</span>{' '}
+                  <span className="text-gray-700 dark:text-gray-300">{t.text}</span>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-400 dark:text-gray-500">
                   {new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>

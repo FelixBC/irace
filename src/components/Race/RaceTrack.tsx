@@ -16,51 +16,51 @@ const sportConfig = {
   RUNNING: {
     icon: '🏃‍♂️',
     color: 'from-orange-400 to-red-500',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
-    textColor: 'text-orange-700',
+    bgColor: 'bg-orange-50 dark:bg-orange-950/35',
+    borderColor: 'border-orange-200 dark:border-orange-900/50',
+    textColor: 'text-orange-700 dark:text-orange-300',
   },
   CYCLING: {
     icon: '🚴‍♂️',
     color: 'from-blue-400 to-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    textColor: 'text-blue-700',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/35',
+    borderColor: 'border-blue-200 dark:border-blue-900/50',
+    textColor: 'text-blue-700 dark:text-blue-300',
   },
   SWIMMING: {
     icon: '🏊‍♂️',
     color: 'from-teal-400 to-cyan-600',
-    bgColor: 'bg-teal-50',
-    borderColor: 'border-teal-200',
-    textColor: 'text-teal-700',
+    bgColor: 'bg-teal-50 dark:bg-teal-950/35',
+    borderColor: 'border-teal-200 dark:border-teal-900/50',
+    textColor: 'text-teal-700 dark:text-teal-300',
   },
   WALKING: {
     icon: '🚶‍♂️',
     color: 'from-green-400 to-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    textColor: 'text-green-700',
+    bgColor: 'bg-green-50 dark:bg-green-950/35',
+    borderColor: 'border-green-200 dark:border-green-900/50',
+    textColor: 'text-green-700 dark:text-green-300',
   },
   HIKING: {
     icon: '🥾',
     color: 'from-amber-400 to-amber-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-    textColor: 'text-amber-700',
+    bgColor: 'bg-amber-50 dark:bg-amber-950/35',
+    borderColor: 'border-amber-200 dark:border-amber-900/50',
+    textColor: 'text-amber-700 dark:text-amber-300',
   },
   WEIGHT_TRAINING: {
     icon: '💪',
     color: 'from-purple-400 to-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    textColor: 'text-purple-700',
+    bgColor: 'bg-purple-50 dark:bg-purple-950/35',
+    borderColor: 'border-purple-200 dark:border-purple-900/50',
+    textColor: 'text-purple-700 dark:text-purple-300',
   },
   YOGA: {
     icon: '🧘‍♀️',
     color: 'from-indigo-400 to-indigo-600',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-200',
-    textColor: 'text-indigo-700',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-950/35',
+    borderColor: 'border-indigo-200 dark:border-indigo-900/50',
+    textColor: 'text-indigo-700 dark:text-indigo-300',
   },
 };
 
@@ -77,22 +77,22 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
             <h3 className={`text-lg font-semibold ${config.textColor} capitalize`}>
               {track.sport}
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {track.participants.length} participants
             </p>
             {/* Challenge Goal Badge */}
             <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-200">
                 🎯 Goal: {track.maxDistance.toFixed(1)} {track.sport === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
               </span>
             </div>
             {/* Progress vs Goal */}
             {track.participants.length === 1 && track.participants[0] && (
               <div className="mt-2 text-sm">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-300">
                   Progress: {track.participants[0].distance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sets' : 'km'} / {track.maxDistance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sessions' : 'km'}
                 </span>
-                <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                <div className="mt-1 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <motion.div
                     className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
                     initial={{ width: 0 }}
@@ -109,24 +109,24 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
           {track.leader && (
             <div className="flex items-center space-x-2 mb-1">
               <Crown className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {track.leader.name}
               </span>
             </div>
           )}
-          <p className="text-xs text-gray-500">{timeRemaining} left</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{timeRemaining} left</p>
         </div>
       </div>
 
       {/* Track Container */}
       <div className="relative">
         {/* Track Background */}
-        <div className="h-20 bg-white rounded-lg border-2 border-gray-200 relative overflow-hidden">
+        <div className="h-20 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-600 relative overflow-hidden">
           {/* Grid Lines */}
           {[25, 50, 75].map((position) => (
             <div
               key={position}
-              className="absolute top-0 bottom-0 w-px bg-gray-300 opacity-30"
+              className="absolute top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600 opacity-30"
               style={{ left: `${position}%` }}
             />
           ))}
@@ -136,10 +136,10 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
           <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500" />
 
           {/* Distance Markers */}
-          <div className="absolute -bottom-6 left-0 text-xs text-gray-500 font-mono">
+          <div className="absolute -bottom-6 left-0 text-xs text-gray-500 dark:text-gray-400 font-mono">
             {track.sport === Sport.WEIGHT_TRAINING ? '0' : '0km'}
           </div>
-          <div className="absolute -bottom-6 right-0 text-xs text-gray-500 font-mono">
+          <div className="absolute -bottom-6 right-0 text-xs text-gray-500 dark:text-gray-400 font-mono">
             {track.sport === Sport.WEIGHT_TRAINING 
               ? `${track.maxDistance.toFixed(0)} sessions`
               : `${track.maxDistance.toFixed(1)}km`
@@ -211,10 +211,10 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
               alt={participant.user.name}
               className="w-4 h-4 rounded-full object-cover"
             />
-            <span className="text-xs text-gray-600 w-16 truncate">
+            <span className="text-xs text-gray-600 dark:text-gray-300 w-16 truncate">
               {participant.user.name}
             </span>
-            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+            <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
               <motion.div
                 className={`h-full bg-gradient-to-r ${config.color} rounded-full`}
                 initial={{ width: 0 }}
@@ -222,7 +222,7 @@ const RaceTrack: React.FC<RaceTrackProps> = ({ track, timeRemaining }) => {
                 transition={{ duration: 1, ease: 'easeOut' }}
               />
             </div>
-            <span className="text-xs font-mono text-gray-500 w-12 text-right">
+            <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-12 text-right">
               {participant.distance.toFixed(1)}{track.sport === Sport.WEIGHT_TRAINING ? ' sets' : 'km'}
             </span>
           </div>

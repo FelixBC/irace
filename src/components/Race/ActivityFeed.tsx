@@ -105,13 +105,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.2 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
       onMouseEnter={() => setIsAutoRotating(false)}
       onMouseLeave={() => setIsAutoRotating(true)}
     >
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <ActivityIcon className="w-5 h-5 text-gray-600 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+          <ActivityIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-2" />
           Recent Activities
         </h3>
         {displayActivities.length > 3 && (
@@ -120,7 +120,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  Math.floor(currentIndex / 3) === index ? 'bg-orange-500' : 'bg-gray-300'
+                  Math.floor(currentIndex / 3) === index ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               />
             ))}
@@ -148,7 +148,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <img
                     src={
@@ -160,7 +160,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {user.name}
                       </p>
                       <span className="text-lg">
@@ -179,8 +179,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                     )}
                     
                     {/* Main Activity Info */}
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className={`font-semibold ${sportConfig[activity.sport]?.color || 'text-gray-600'}`}>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                      <span className={`font-semibold ${sportConfig[activity.sport]?.color || 'text-gray-600 dark:text-gray-400'}`}>
                         {activity.sport === Sport.WEIGHT_TRAINING 
                           ? (activity.calories ? `${activity.calories} calories` : 'strength training')
                           : `${activity.distance.toFixed(1)}${activity.unit || 'km'}`
@@ -205,7 +205,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
                     )}
                     
                     {/* Duration and Time */}
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                       <div className="flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
                         <span className="font-medium">{formatDuration(activity.duration)}</span>
@@ -220,7 +220,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, users }) => {
         </AnimatePresence>
 
         {displayActivities.length === 0 && (
-          <p className="text-center text-gray-500 py-8">
+          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
             No activities yet. Start exercising to see them here!
           </p>
         )}

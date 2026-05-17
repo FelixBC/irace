@@ -25,7 +25,7 @@
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background: #f97316;
+  background: #2563EB;
   height: 20px;
   width: 20px;
   border-radius: 50%;
@@ -34,7 +34,7 @@
 }
 
 .slider::-webkit-slider-thumb:hover {
-  background: #ea580c;
+  background: #1D4ED8;
   transform: scale(1.1);
 }
 
@@ -46,7 +46,7 @@
 }
 
 .slider::-moz-range-thumb {
-  background: #f97316;
+  background: #2563EB;
   height: 20px;
   width: 20px;
   border-radius: 50%;
@@ -56,5 +56,5 @@
 }
 
 .slider::-moz-range-thumb:hover {
-  background: #ea580c;
+  background: #1D4ED8;
 }

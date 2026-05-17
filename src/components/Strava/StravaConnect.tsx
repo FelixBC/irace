@@ -31,7 +31,7 @@ const StravaConnect: React.FC<StravaConnectProps> = ({
     <Button
       onClick={handleConnect}
       disabled={isLoading}
-      className="bg-orange-500 hover:bg-orange-600 text-white"
+      className="bg-brand hover:bg-brand-hover text-white"
     >
       {isLoading ? 'Connecting...' : 'Connect Strava'}
     </Button>

@@ -181,7 +181,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                           whileTap={{ scale: 0.95 }}
                           className={`py-3 px-2 rounded-xl text-sm font-medium transition-all ${
                             sportGoal.goal === preset
-                              ? 'bg-orange-500 text-white shadow-lg'
+                              ? 'bg-brand text-white shadow-lg'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                         >
@@ -203,7 +203,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
                         step="0.1"
                         value={sportGoal.goal}
                         onChange={(e) => handleGoalChange(sportGoal.sport, parseFloat(e.target.value) || 0)}
-                        className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-lg font-medium bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand focus:border-transparent text-center text-lg font-medium bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                         placeholder={`Enter ${config.name.toLowerCase()} goal`}
                       />
                       <span className="text-gray-600 dark:text-gray-300 font-medium min-w-[3rem] text-lg">
@@ -240,7 +240,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all transform active:scale-95 flex items-center justify-center space-x-2"
+              className="w-full bg-brand hover:bg-brand-hover disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all transform active:scale-95 flex items-center justify-center space-x-2"
             >
               <Target className="w-5 h-5" />
               <span>Set Goal</span>

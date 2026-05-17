@@ -16,30 +16,23 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const handleStravaLogin = () => {
-    if (!isConnectedToStrava) {
-      const returnTo = `${location.pathname}${location.search}` || '/';
-      window.location.href = getStravaAuthUrl(returnTo);
-    }
-  };
-
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo — iRace brand blue, not Strava orange */}
           <Link to="/" className="flex items-center space-x-2">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center"
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              className="w-8 h-8 bg-gradient-to-r from-brand-dark to-brand rounded-full flex items-center justify-center"
             >
               <Trophy className="w-4 h-4 text-white" />
             </motion.div>
-            <motion.span 
+            <motion.span
               className="text-xl font-bold text-gray-900 dark:text-white"
               whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
               iRace
             </motion.span>
@@ -50,39 +43,39 @@ const Header: React.FC = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
               <Link
                 to="/"
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
               >
                 <Home className="w-4 h-4" />
                 <span>Home</span>
               </Link>
             </motion.div>
-            
+
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
               <Link
                 to="/create"
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Challenge</span>
               </Link>
             </motion.div>
-            
+
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
               <Link
                 to="/my-challenges"
-                className="text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
+                className="text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
               >
                 My Challenges
               </Link>
@@ -98,26 +91,27 @@ const Header: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 400, damping: 10 }}
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-gray-900"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </motion.button>
+
             {user ? (
               <div className="relative">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                   <img
-                    src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=32&background=random`}
+                    src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=32&background=2563EB&color=fff`}
                     alt={user.name || 'User'}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {user.name || 'Strava User'}
+                    {user.name || 'Athlete'}
                   </span>
                 </motion.button>
 
@@ -129,8 +123,8 @@ const Header: React.FC = () => {
                   >
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Link
                         to="/profile"
@@ -142,8 +136,8 @@ const Header: React.FC = () => {
                     </motion.div>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Link
                         to="/my-challenges"
@@ -153,11 +147,24 @@ const Header: React.FC = () => {
                         My Challenges
                       </Link>
                     </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Link
+                        to="/settings"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        Settings
+                      </Link>
+                    </motion.div>
                     {isConnectedToStrava && (
                       <motion.div
                         whileHover={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                        transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                        className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
                         <button
                           type="button"
@@ -178,8 +185,8 @@ const Header: React.FC = () => {
                     )}
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <button
                         onClick={() => {
@@ -196,28 +203,37 @@ const Header: React.FC = () => {
                 )}
               </div>
             ) : (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                onClick={handleStravaLogin}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isConnectedToStrava 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }`}
+              /* Official Strava connect button for unauthenticated users */
+              <motion.a
+                href={getStravaAuthUrl(location.pathname)}
+                onClick={(e) => { if (isConnectedToStrava) e.preventDefault(); }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                className="focus:outline-none focus:ring-2 focus:ring-strava-orange focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded"
+                aria-label="Connect with Strava"
               >
-                {isConnectedToStrava ? 'Connected to Strava' : 'Connect Strava'}
-              </motion.button>
+                <img
+                  src="/strava/btn_strava_connect_with_orange.svg"
+                  alt="Connect with Strava"
+                  className="h-10 w-auto dark:hidden"
+                />
+                <img
+                  src="/strava/btn_strava_connect_with_white.svg"
+                  alt="Connect with Strava"
+                  className="h-10 w-auto hidden dark:block"
+                />
+              </motion.a>
             )}
 
             {/* Mobile Menu Button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </motion.button>
@@ -233,49 +249,29 @@ const Header: React.FC = () => {
             className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4"
           >
             <nav className="flex flex-col space-y-4">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              <Link
+                to="/"
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <Link
-                  to="/"
-                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Home className="w-4 h-4" />
-                  <span>Home</span>
-                </Link>
-              </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                <Home className="w-4 h-4" />
+                <span>Home</span>
+              </Link>
+              <Link
+                to="/create"
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <Link
-                  to="/create"
-                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Challenge</span>
-                </Link>
-              </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                <Plus className="w-4 h-4" />
+                <span>Create Challenge</span>
+              </Link>
+              <Link
+                to="/my-challenges"
+                className="text-gray-600 dark:text-gray-300 hover:text-brand transition-colors px-3 py-2 rounded-lg hover:bg-brand-faint dark:hover:bg-gray-800"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <Link
-                  to="/my-challenges"
-                  className="text-gray-600 dark:text-gray-300 hover:text-orange-500 transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Challenges
-                </Link>
-              </motion.div>
+                My Challenges
+              </Link>
             </nav>
           </motion.div>
         )}

@@ -70,7 +70,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ raceTracks }) => {
                   <img
                     src={
                       participant.user.image ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.user.name || 'User')}&size=64&background=f97316&color=fff`
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.user.name || 'User')}&size=64&background=2563EB&color=fff`
                     }
                     alt={participant.user.name}
                     className="w-8 h-8 rounded-full object-cover"

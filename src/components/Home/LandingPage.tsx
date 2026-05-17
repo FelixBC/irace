@@ -9,81 +9,117 @@ import SportAnimation from './SportAnimation';
 const LandingPage: React.FC = () => {
   const { isConnectedToStrava } = useAuth();
 
-  const handleStravaConnect = () => {
-    if (!isConnectedToStrava) {
-      const authUrl = getStravaAuthUrl();
-      window.location.href = authUrl;
-    }
-  };
+  const stravaAuthUrl = getStravaAuthUrl('/');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-950 transition-colors">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
+      {/* Hero Section — iRace brand gradient, not Strava orange */}
+      <div className="relative overflow-hidden hero-gradient">
+        <style>{`
+          .hero-gradient {
+            background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #3B82F6 100%);
+            background-size: 300% 300%;
+            animation: gradient-shift 8s ease infinite;
+          }
+          @keyframes gradient-shift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .hero-gradient { animation: none; background-position: 0% 50%; }
+          }
+        `}</style>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
           <div className="text-center">
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
+              className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6"
             >
-              <span className="block">Race Your Friends with</span>
-              <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-                Real Strava Data
-              </span>
+              <Zap className="w-4 h-4" />
+              <span>Invite-only fitness challenges</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight"
+            >
+              Race Your Friends.
+              <span className="block text-blue-200">Every Kilometer Counts.</span>
             </motion.h1>
-            
+
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto"
+              className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto"
             >
-              Create fitness challenges with friends and compete in real-time using your actual 
-              running, cycling, swimming, walking, hiking, and strength training activities from Strava. TypeRacer meets fitness!
+              Create invite-only fitness challenges with friends and compete in real-time.
+              Running, cycling, swimming, walking, hiking, and strength training — all tracked
+              automatically from your connected account.
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6"
+              transition={{ delay: 0.35 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               {isConnectedToStrava ? (
                 <Link
                   to="/create"
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-xl transition-colors flex items-center space-x-2 shadow-lg"
+                  className="inline-flex items-center space-x-2 bg-white text-brand hover:bg-blue-50 font-semibold py-3 px-8 rounded-xl transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-brand"
                 >
                   <Plus className="w-5 h-5" />
                   <span>Create Challenge</span>
                 </Link>
               ) : (
-                <button
-                  onClick={handleStravaConnect}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-xl transition-colors flex items-center space-x-2 shadow-lg"
+                /* Official Strava OAuth button — R4 compliant */
+                <a
+                  href={stravaAuthUrl}
+                  className="focus:outline-none focus:ring-2 focus:ring-strava-orange focus:ring-offset-2 focus:ring-offset-brand rounded-md"
+                  aria-label="Connect with Strava to start"
                 >
-                  <span>Connect Strava to Start</span>
-                </button>
+                  <img
+                    src="/strava/btn_strava_connect_with_white.svg"
+                    alt="Connect with Strava"
+                    className="h-12 w-auto"
+                  />
+                </a>
               )}
-              
+
               <Link
                 to="/race/demo-challenge"
-                className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold py-4 px-8 rounded-xl transition-colors flex items-center space-x-2 border border-gray-200 dark:border-gray-600 shadow-lg"
+                className="inline-flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-semibold py-3 px-8 rounded-xl transition-colors border border-white/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-brand"
               >
                 <Play className="w-5 h-5" />
                 <span>View Demo Race</span>
               </Link>
             </motion.div>
 
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-              <a href="/privacy" className="text-orange-600 hover:underline">
-                Privacy
-              </a>
-              {' · '}
-              <a href="/terms" className="text-orange-600 hover:underline">
-                Terms
-              </a>
-            </p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 flex items-center justify-center gap-4"
+            >
+              {/* Powered by Strava lockup — white variant on dark/blue background */}
+              <img
+                src="/strava/api_logo_pwrdBy_strava_horiz_white.svg"
+                alt="Powered by Strava"
+                className="h-5 w-auto opacity-80"
+              />
+              <span className="text-blue-200 text-xs">·</span>
+              <p className="text-xs text-blue-200">
+                <a href="/privacy" className="hover:text-white underline">Privacy</a>
+                {' · '}
+                <a href="/terms" className="hover:text-white underline">Terms</a>
+              </p>
+            </motion.div>
 
             {/* Sport Animation */}
             <motion.div
@@ -97,34 +133,22 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Animated Background Elements */}
+        {/* Subtle ambient orbs — iRace blue palette only */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.1, 1],
-            }}
-            transition={{ 
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-            }}
-            className="absolute top-20 right-20 w-32 h-32 bg-gradient-to-r from-orange-400 to-red-500 rounded-full opacity-10"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-20 right-20 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"
           />
           <motion.div
-            animate={{ 
-              rotate: -360,
-              y: [0, -20, 0],
-            }}
-            transition={{ 
-              rotate: { duration: 25, repeat: Infinity, ease: "linear" },
-              y: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-            }}
-            className="absolute bottom-20 left-20 w-24 h-24 bg-gradient-to-r from-blue-400 to-teal-500 rounded-full opacity-10"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+            className="absolute bottom-20 left-20 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl"
           />
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* How It Works */}
       <div className="py-20 bg-white dark:bg-gray-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -132,50 +156,46 @@ const LandingPage: React.FC = () => {
               How It Works
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">
-              Three simple steps to start racing with friends
+              Three steps to start racing with friends
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: <Plus className="w-8 h-8 text-orange-500" />,
-                title: 'Create Challenge',
-                description: 'Set up a fitness challenge with running, cycling, swimming, walking, hiking, or strength training. Choose duration and invite friends.',
-                step: '01'
+                icon: <Plus className="w-8 h-8 text-brand" />,
+                title: 'Create a Challenge',
+                description: 'Set up a fitness challenge with your sport, goal, and duration. Choose who can join.',
+                step: '01',
               },
               {
-                icon: <Users className="w-8 h-8 text-blue-500" />,
+                icon: <Users className="w-8 h-8 text-brand" />,
                 title: 'Invite Friends',
-                description: 'Share your challenge link or QR code. Friends connect their Strava accounts to join.',
-                step: '02'
+                description: 'Share your challenge link or QR code. Friends connect their accounts to join.',
+                step: '02',
               },
               {
-                icon: <Trophy className="w-8 h-8 text-green-500" />,
+                icon: <Trophy className="w-8 h-8 text-brand" />,
                 title: 'Race & Win',
-                description: 'Watch progress in real-time as everyone exercises. See who reaches the finish line first!',
-                step: '03'
-              }
+                description: 'Track progress in real-time as everyone exercises. See who crosses the finish line first.',
+                step: '03',
+              },
             ].map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-                className="relative bg-gray-50 dark:bg-gray-800/80 rounded-xl p-8 text-center border border-transparent dark:border-gray-700"
+                transition={{ delay: index * 0.15 }}
+                className="relative bg-gray-50 dark:bg-gray-800/80 rounded-xl p-8 text-center border border-gray-200 dark:border-gray-700"
               >
-                <div className="absolute top-4 right-4 text-4xl font-bold text-gray-200 dark:text-gray-600">
+                <div className="absolute top-4 right-4 text-4xl font-bold text-gray-200 dark:text-gray-700">
                   {feature.step}
                 </div>
-                <div className="mb-4 flex justify-center">
-                  {feature.icon}
-                </div>
+                <div className="mb-4 flex justify-center">{feature.icon}</div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {feature.description}
-                </p>
+                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -183,46 +203,33 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Demo Race Preview */}
-      <div className="py-20 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+      <div className="py-20 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">
-              See It In Action
-            </h2>
-            <p className="text-xl text-gray-300">
-              Experience the TypeRacer-style fitness competition
-            </p>
+            <h2 className="text-3xl font-bold mb-4">See It In Action</h2>
+            <p className="text-xl text-gray-300">Live race visualization — real athlete progress</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-2xl font-semibold mb-6">
-                Real-Time Race Visualization
-              </h3>
+              <h3 className="text-2xl font-semibold mb-6">Real-Time Race View</h3>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                    <Zap className="w-4 h-4" />
+                {[
+                  { icon: <Zap className="w-4 h-4" />, text: 'TypeRacer-style horizontal progress tracks per athlete' },
+                  { icon: <Users className="w-4 h-4" />, text: 'Participant avatars and rank updated as activities sync' },
+                  { icon: <Trophy className="w-4 h-4" />, text: 'Live leaderboard showing aggregated challenge progress' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </div>
+                    <span className="text-gray-300">{item.text}</span>
                   </div>
-                  <span>Live progress tracking with TypeRacer-style horizontal tracks</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <span>Participant avatars moving along the race track</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <span>Real-time leaderboards and activity feeds</span>
-                </div>
+                ))}
               </div>
-
               <Link
                 to="/race/demo-challenge"
-                className="inline-flex items-center space-x-2 mt-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-transparent dark:border-gray-600"
+                className="inline-flex items-center space-x-2 mt-8 bg-brand hover:bg-brand-hover text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-gray-900"
               >
                 <Play className="w-4 h-4" />
                 <span>Try Demo Race</span>
@@ -230,66 +237,71 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="bg-white/10 backdrop-blur rounded-xl p-6">
-              {/* Mock Race Track Preview */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl">🏃‍♂️</span>
-                    <span className="font-semibold">Running</span>
+                    <span className="text-2xl" aria-hidden="true">🏃</span>
+                    <span className="font-semibold">Running — 3 days left</span>
                   </div>
-                  <span className="text-sm opacity-75">3 days left</span>
                 </div>
-                
                 <div className="bg-white/20 rounded-lg h-16 relative overflow-hidden">
-                  <div className="absolute top-2 left-4 flex space-x-2">
+                  <div className="absolute top-4 left-4 flex space-x-2">
                     <motion.div
-                      animate={{ x: [0, 200, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      className="w-8 h-8 bg-orange-500 rounded-full"
-                    />
+                      animate={{ x: [0, 180, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-xs text-white font-bold"
+                    >
+                      A
+                    </motion.div>
                     <motion.div
-                      animate={{ x: [0, 150, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                      className="w-8 h-8 bg-blue-500 rounded-full"
-                    />
+                      animate={{ x: [0, 130, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+                      className="w-8 h-8 bg-indigo-400 rounded-full flex items-center justify-center text-xs text-white font-bold"
+                    >
+                      B
+                    </motion.div>
                   </div>
                 </div>
-                
-                <div className="text-sm opacity-75">
-                  Real participants racing in real-time
-                </div>
+                <p className="text-sm text-white/60">Aggregate challenge progress — per activity detail stays private</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-20 bg-orange-500">
+      {/* CTA Section — iRace brand blue, not Strava orange */}
+      <div className="py-20 bg-brand">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Ready to Race Your Friends?
-          </h2>
-          <p className="text-xl text-orange-100 mb-8">
-            Join thousands of fitness enthusiasts competing in real-time challenges
+          <h2 className="text-3xl font-bold text-white mb-6">Ready to Race?</h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Set up your first challenge in under two minutes.
           </p>
-          
+
           {isConnectedToStrava ? (
             <Link
               to="/create"
-              className="bg-white hover:bg-gray-100 text-orange-500 font-semibold py-4 px-8 rounded-xl transition-colors inline-flex items-center space-x-2 shadow-lg"
+              className="inline-flex items-center space-x-2 bg-white hover:bg-blue-50 text-brand font-semibold py-4 px-8 rounded-xl transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-brand"
             >
               <Plus className="w-5 h-5" />
               <span>Create Your First Challenge</span>
             </Link>
           ) : (
-            <button
-              onClick={handleStravaConnect}
-              className="bg-white hover:bg-gray-100 text-orange-500 font-semibold py-4 px-8 rounded-xl transition-colors inline-flex items-center space-x-2 shadow-lg"
+            <a
+              href={stravaAuthUrl}
+              className="inline-block focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-brand rounded-md"
+              aria-label="Connect with Strava to get started"
             >
-              <span>Get Started with Strava</span>
-            </button>
+              <img
+                src="/strava/btn_strava_connect_with_white.svg"
+                alt="Connect with Strava"
+                className="h-12 w-auto mx-auto"
+              />
+            </a>
           )}
+
+          <p className="mt-6 text-xs text-blue-200">
+            iRace is not affiliated with or endorsed by Strava, Inc.
+          </p>
         </div>
       </div>
     </div>

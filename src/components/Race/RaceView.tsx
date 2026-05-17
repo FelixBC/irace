@@ -51,22 +51,18 @@ function getChallengeTimeDisplay(challenge: Challenge): { ended: boolean; countd
 }
 
 function demoAvatar(name: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&background=f97316&color=fff`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&background=2563EB&color=fff`;
 }
 
-/** Sample feed for /race/demo-challenge (sidebar looks empty without Strava). */
-function getDemoActivityFeed(): { activities: Activity[]; users: User[] } {
+/** Sample feed for /race/demo-challenge — single viewer persona, R1 compliant. */
+function getDemoActivityFeed(): { activities: Activity[]; user: User } {
   const now = Date.now();
-  const users: User[] = [
-    { id: 'demo-user-1', name: 'Alex', image: demoAvatar('Alex') },
-    { id: 'demo-user-2', name: 'Jordan', image: demoAvatar('Jordan') },
-    { id: 'demo-user-3', name: 'Sam', image: demoAvatar('Sam') },
-  ];
+  const user: User = { id: 'demo-viewer', name: 'Alex (Demo)', image: demoAvatar('Alex') };
   const activities: Activity[] = [
     {
       id: 'demo-act-1',
       stravaActivityId: '0',
-      userId: 'demo-user-1',
+      userId: 'demo-viewer',
       sport: Sport.RUNNING,
       distance: 8.2,
       duration: 2400,
@@ -77,29 +73,7 @@ function getDemoActivityFeed(): { activities: Activity[]; users: User[] } {
     {
       id: 'demo-act-2',
       stravaActivityId: '0',
-      userId: 'demo-user-2',
-      sport: Sport.RUNNING,
-      distance: 5.1,
-      duration: 1800,
-      unit: 'km',
-      date: new Date(now - 50 * 3600000),
-      synced: false,
-    },
-    {
-      id: 'demo-act-3',
-      stravaActivityId: '0',
-      userId: 'demo-user-3',
-      sport: Sport.CYCLING,
-      distance: 22.4,
-      duration: 3600,
-      unit: 'km',
-      date: new Date(now - 28 * 3600000),
-      synced: false,
-    },
-    {
-      id: 'demo-act-4',
-      stravaActivityId: '0',
-      userId: 'demo-user-1',
+      userId: 'demo-viewer',
       sport: Sport.CYCLING,
       distance: 14.0,
       duration: 2700,
@@ -108,7 +82,7 @@ function getDemoActivityFeed(): { activities: Activity[]; users: User[] } {
       synced: false,
     },
   ];
-  return { activities, users };
+  return { activities, user };
 }
 
 function buildDemoChallenge(): Challenge {
@@ -415,14 +389,13 @@ const RaceView: React.FC = () => {
   const isDemo = isDemoChallengeId(challengeId);
   const demoFeed = useMemo(() => (isDemo ? getDemoActivityFeed() : null), [isDemo]);
   const feedActivities = demoFeed?.activities ?? stravaData?.activities ?? [];
-  const feedUsers =
-    demoFeed?.users ?? (stravaData?.user ? [stravaData.user] : []);
+  const feedUser: User | null = demoFeed?.user ?? stravaData?.user ?? null;
 
   if (!challenge) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading challenge...</p>
         </div>
       </div>
@@ -435,8 +408,8 @@ const RaceView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+      {/* Hero Section — iRace brand blue, not Strava orange */}
+      <div className="bg-gradient-to-r from-brand-dark to-brand text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
             <motion.h1
@@ -446,7 +419,7 @@ const RaceView: React.FC = () => {
             >
               {challenge.name}
               {isDemo && (
-                <span className="block text-lg font-normal text-orange-200 mt-2">
+                <span className="block text-lg font-normal text-blue-200 mt-2">
                   🎮 Demo Challenge
                 </span>
               )}
@@ -472,8 +445,8 @@ const RaceView: React.FC = () => {
           {/* Challenge Mode Status */}
           {isDemo ? (
             <div className="flex justify-center mt-6">
-              <div className="bg-orange-500/20 backdrop-blur rounded-lg px-4 py-2">
-                <div className="flex items-center space-x-2 text-orange-200">
+              <div className="bg-white/20 backdrop-blur rounded-lg px-4 py-2">
+                <div className="flex items-center space-x-2 text-blue-200">
                   <span>🎮</span>
                   <span>Demo Mode • Using sample data with multiple participants</span>
                 </div>
@@ -612,7 +585,7 @@ const RaceView: React.FC = () => {
                         <img
                           src={
                             p.user.image ||
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name || 'User')}&size=64&background=f97316&color=fff`
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user.name || 'User')}&size=64&background=2563EB&color=fff`
                           }
                           alt={p.user.name}
                           className="w-8 h-8 rounded-full object-cover"
@@ -635,7 +608,7 @@ const RaceView: React.FC = () => {
             )}
             <Leaderboard raceTracks={raceTracks} />
             {!isDemo && challengeId && <TauntsPanel inviteCode={challengeId} />}
-            <ActivityFeed activities={feedActivities} users={feedUsers} />
+            <ActivityFeed activities={feedActivities} user={feedUser} />
 
             {/* Show message when no Strava data */}
             {isConnectedToStrava &&

@@ -20,7 +20,7 @@ const TermsOfService = lazy(() => import('./components/Legal/TermsOfService'));
 function RouteFallback() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand" />
     </div>
   );
 }

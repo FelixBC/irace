@@ -119,7 +119,7 @@ const Profile: React.FC = () => {
     switch (status) {
       case 'active': return 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-950/50';
       case 'completed': return 'text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50';
-      case 'upcoming': return 'text-orange-600 bg-orange-100 dark:text-orange-300 dark:bg-orange-950/40';
+      case 'upcoming': return 'text-brand bg-brand-faint dark:text-brand-light dark:bg-brand/20';
       default: return 'text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
     }
   };
@@ -141,7 +141,7 @@ const Profile: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading profile...</p>
         </div>
       </div>
@@ -173,7 +173,7 @@ const Profile: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
                 >
                   <Camera className="w-4 h-4" />
                 </motion.button>
@@ -185,7 +185,7 @@ const Profile: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    {user.name || 'Strava User'}
+                    {user.name || 'Athlete'}
                   </h1>
                   <p className="text-gray-600 dark:text-gray-300 mb-4">{user.email}</p>
                   
@@ -210,7 +210,7 @@ const Profile: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>Edit Profile</span>
@@ -236,8 +236,8 @@ const Profile: React.FC = () => {
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Challenges</p>
                                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalChallenges}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-brand-faint rounded-lg flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-brand" />
               </div>
             </div>
           </motion.div>
@@ -307,7 +307,7 @@ const Profile: React.FC = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                        ? 'border-brand text-brand dark:text-brand-light'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
                     }`}
                   >
@@ -346,7 +346,7 @@ const Profile: React.FC = () => {
                         <h4 className="font-medium text-gray-900 dark:text-white mb-2">{challenge.name}</h4>
                         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div 
-                            className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                            className="bg-brand h-2 rounded-full transition-all duration-300"
                             style={{ width: `${challenge.progress}%` }}
                           ></div>
                         </div>
@@ -413,7 +413,7 @@ const Profile: React.FC = () => {
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     onClick={() => window.location.href = '/create'}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                    className="bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                   >
                     <span>+</span>
                     <span>Create New</span>
@@ -436,7 +436,7 @@ const Profile: React.FC = () => {
                       <h4 className="font-semibold text-gray-900 dark:text-white mb-3">{challenge.name}</h4>
                       <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-3">
                         <div 
-                          className="bg-orange-500 h-3 rounded-full transition-all duration-300"
+                          className="bg-brand h-3 rounded-full transition-all duration-300"
                           style={{ width: `${challenge.progress}%` }}
                         ></div>
                       </div>
@@ -459,7 +459,7 @@ const Profile: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">This Week</h4>
-                    <p className="text-2xl font-bold text-orange-600">47.2 km</p>
+                    <p className="text-2xl font-bold text-brand">47.2 km</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">+12% from last week</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
@@ -588,9 +588,9 @@ const Profile: React.FC = () => {
                           }}
                         />
                         <div
-                          className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all relative ${
+                          className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all relative ${
                             pushUiState === 'on'
-                              ? 'bg-orange-500 after:translate-x-full after:border-white'
+                              ? 'bg-brand after:translate-x-full after:border-white'
                               : 'bg-gray-200 dark:bg-gray-600'
                           }`}
                         />
@@ -691,9 +691,14 @@ const Profile: React.FC = () => {
                             setStravaActionError(null);
                             window.location.href = getStravaAuthUrl('/profile');
                           }}
-                          className="px-4 py-2 rounded-lg font-medium bg-orange-500 hover:bg-orange-600 text-white shrink-0"
+                          className="focus:outline-none focus:ring-2 focus:ring-strava-orange focus:ring-offset-2 rounded-md shrink-0"
+                          aria-label="Connect with Strava"
                         >
-                          Connect Strava
+                          <img
+                            src="/strava/btn_strava_connect_with_orange.svg"
+                            alt="Connect with Strava"
+                            className="h-10 w-auto"
+                          />
                         </motion.button>
                       )}
                     </div>
@@ -704,7 +709,7 @@ const Profile: React.FC = () => {
                           href="https://www.strava.com/settings/apps"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-orange-600 underline"
+                          className="font-bold underline text-strava-orange"
                         >
                           Strava → Settings → My Apps
                         </a>

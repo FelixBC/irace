@@ -53,19 +53,16 @@ const JoinChallenge: React.FC = () => {
       setIsJoining(true);
       setError(null);
 
-      // Join the challenge
       await ChallengeService.joinChallenge(challenge.id, {
         challengeDataConsentAccepted: peerSharingConsent,
         challengeDataConsentVersion: CHALLENGE_DATA_CONSENT_VERSION,
       });
-      
+
       setSuccess(true);
-      
-      // Redirect to the race view after 2 seconds
+
       setTimeout(() => {
         navigate(`/race/${challenge.inviteCode}`);
       }, 2000);
-
     } catch (err) {
       log.error('join failed', err);
       setError(err instanceof Error ? err.message : 'Failed to join challenge. Please try again.');
@@ -90,7 +87,7 @@ const JoinChallenge: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300">Loading challenge...</p>
         </div>
       </div>
@@ -106,7 +103,7 @@ const JoinChallenge: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors"
+            className="bg-brand hover:bg-brand-hover text-white px-6 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
           >
             Go Home
           </button>
@@ -122,7 +119,7 @@ const JoinChallenge: React.FC = () => {
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Successfully Joined!</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">You're now part of the challenge. Redirecting to race view...</p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto" />
         </div>
       </div>
     );
@@ -137,7 +134,7 @@ const JoinChallenge: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-300 mb-6">{error || 'Challenge not found or expired'}</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors"
+            className="bg-brand hover:bg-brand-hover text-white px-6 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
           >
             Go Home
           </button>
@@ -147,13 +144,13 @@ const JoinChallenge: React.FC = () => {
   }
 
   const sportConfig = {
-    RUNNING: { icon: '🏃‍♂️', name: 'Running', color: 'text-orange-600' },
-    CYCLING: { icon: '🚴‍♂️', name: 'Cycling', color: 'text-blue-600' },
-    SWIMMING: { icon: '🏊‍♂️', name: 'Swimming', color: 'text-teal-600' },
-    WALKING: { icon: '🚶‍♂️', name: 'Walking', color: 'text-green-600' },
-    HIKING: { icon: '🥾', name: 'Hiking', color: 'text-brown-600' },
+    RUNNING: { icon: '🏃', name: 'Running', color: 'text-orange-600' },
+    CYCLING: { icon: '🚴', name: 'Cycling', color: 'text-blue-600' },
+    SWIMMING: { icon: '🏊', name: 'Swimming', color: 'text-teal-600' },
+    WALKING: { icon: '🚶', name: 'Walking', color: 'text-green-600' },
+    HIKING: { icon: '🥾', name: 'Hiking', color: 'text-amber-600' },
     WEIGHT_TRAINING: { icon: '💪', name: 'Weight Training', color: 'text-purple-600' },
-    YOGA: { icon: '🧘‍♀️', name: 'Yoga', color: 'text-indigo-600' },
+    YOGA: { icon: '🧘', name: 'Yoga', color: 'text-indigo-600' },
   };
 
   return (
@@ -165,11 +162,11 @@ const JoinChallenge: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700"
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 px-8 py-12 text-center">
+          {/* Header — iRace brand blue gradient, not Strava orange */}
+          <div className="bg-gradient-to-r from-brand-dark to-brand px-8 py-12 text-center">
             <h1 className="text-3xl font-bold text-white mb-2">{challenge.name}</h1>
-            <p className="text-orange-100 text-lg">{challenge.description}</p>
-            <div className="mt-4 flex items-center justify-center space-x-4 text-orange-100">
+            <p className="text-blue-100 text-lg">{challenge.description}</p>
+            <div className="mt-4 flex items-center justify-center space-x-4 text-blue-100">
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-1" />
                 <span>
@@ -197,7 +194,7 @@ const JoinChallenge: React.FC = () => {
                     key={index}
                     className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg"
                   >
-                    <span className="text-xl">{sportConfig[sport]?.icon}</span>
+                    <span className="text-xl" aria-hidden="true">{sportConfig[sport]?.icon}</span>
                     <span className={`font-medium ${sportConfig[sport]?.color}`}>
                       {sportConfig[sport]?.name}
                     </span>
@@ -216,7 +213,7 @@ const JoinChallenge: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Challenge Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <Target className="w-5 h-5 text-orange-500" />
+                  <Target className="w-5 h-5 text-brand" />
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Goal</p>
                     <p className="font-semibold text-gray-900 dark:text-white">
@@ -225,7 +222,7 @@ const JoinChallenge: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <Trophy className="w-5 h-5 text-orange-500" />
+                  <Trophy className="w-5 h-5 text-brand" />
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Type</p>
                     <p className="font-semibold text-gray-900 dark:text-white">{challenge.challengeType}</p>
@@ -234,19 +231,20 @@ const JoinChallenge: React.FC = () => {
               </div>
             </div>
 
-            {/* Join Section */}
-            <div className="text-center">
+            {/* Join Section — consent text is legally load-bearing, do not edit copy */}
+            <div>
               {error && (
                 <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg">
                   <p className="text-red-700 dark:text-red-300">{error}</p>
                 </div>
               )}
-              
-              <div className="mb-6 p-6 bg-orange-50 dark:bg-orange-950/35 rounded-lg border border-orange-200 dark:border-orange-900/50 text-left">
-                <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-200 mb-2 text-center">
+
+              <div className="mb-6 p-6 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-600 text-left">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
                   Join This Challenge
                 </h3>
-                <p className="text-orange-800 dark:text-orange-200/90 mb-4 text-sm leading-relaxed">
+                {/* Consent text — do not modify without legal review */}
+                <p className="text-gray-700 dark:text-gray-200 mb-4 text-sm leading-relaxed">
                   iRace is a <strong>community challenge</strong> app: other people in this invite-only
                   challenge can see <strong>aggregated progress</strong> (e.g. distances toward the challenge goal)
                   and the display name/avatar you use here — not your full private Strava feed. We only use Strava
@@ -255,44 +253,55 @@ const JoinChallenge: React.FC = () => {
                 <label className="flex items-start gap-3 cursor-pointer mb-4">
                   <input
                     type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-500 dark:bg-gray-900"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-gray-500 dark:bg-gray-900"
                     checked={peerSharingConsent}
                     onChange={(e) => setPeerSharingConsent(e.target.checked)}
                   />
                   <span className="text-sm text-gray-800 dark:text-gray-200">
                     I agree that my challenge stats may be shown to other participants in this challenge, as
                     described in the{' '}
-                    <a href="/privacy" className="text-orange-600 dark:text-orange-400 underline">
+                    <a href="/privacy" className="text-brand dark:text-brand-light underline">
                       Privacy Policy
                     </a>
                     .
                   </span>
                 </label>
+
                 <div className="text-center space-y-3">
                   {user && isConnectedToStrava ? (
                     <button
                       type="button"
                       onClick={() => void handleJoinChallenge()}
                       disabled={isJoining || !peerSharingConsent || !!isAlreadyJoined}
-                      className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                      className="bg-brand hover:bg-brand-hover disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                     >
                       {isJoining ? 'Joining...' : isAlreadyJoined ? 'Already in this challenge' : 'Join challenge'}
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={handleJoinWithStrava}
-                      disabled={isJoining || !peerSharingConsent}
-                      className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
-                    >
-                      {isJoining ? 'Joining...' : 'Connect Strava & join'}
-                    </button>
+                    /* Official Strava button for connecting — R4 compliant */
+                    <div className="flex flex-col items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleJoinWithStrava}
+                        disabled={isJoining || !peerSharingConsent}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-strava-orange focus:ring-offset-2 rounded-md"
+                        aria-label="Connect with Strava and join this challenge"
+                      >
+                        <img
+                          src="/strava/btn_strava_connect_with_orange.svg"
+                          alt="Connect with Strava"
+                          className="h-12 w-auto"
+                        />
+                      </button>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">& join this challenge</p>
+                    </div>
                   )}
                 </div>
               </div>
 
+              {/* Trademark disclosure */}
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Strava® is a registered trademark. This app uses the Strava API but is not endorsed by Strava.
+                Strava® is a registered trademark of Strava, Inc. This app uses the Strava API but is not affiliated with or endorsed by Strava.
               </p>
             </div>
           </div>

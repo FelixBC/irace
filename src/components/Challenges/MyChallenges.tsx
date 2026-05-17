@@ -180,7 +180,7 @@ const MyChallenges: React.FC = () => {
     if (progress >= 80) return 'bg-green-500';
     if (progress >= 60) return 'bg-blue-500';
     if (progress >= 40) return 'bg-yellow-500';
-    if (progress >= 20) return 'bg-orange-500';
+    if (progress >= 20) return 'bg-amber-500';
     return 'bg-red-500';
   };
 
@@ -266,7 +266,7 @@ const MyChallenges: React.FC = () => {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-transparent">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300">Loading…</p>
         </div>
       </div>
@@ -277,7 +277,7 @@ const MyChallenges: React.FC = () => {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-transparent px-4">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-brand-faint dark:bg-brand/20 text-brand dark:text-brand-light flex items-center justify-center mx-auto mb-4">
             <Users className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">My Challenges</h1>
@@ -288,7 +288,7 @@ const MyChallenges: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleConnectStrava}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Connect Strava
           </motion.button>
@@ -316,7 +316,7 @@ const MyChallenges: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={handleCreateChallenge}
-              className="mt-4 sm:mt-0 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+              className="mt-4 sm:mt-0 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
             >
               <Plus className="w-5 h-5" />
               <span>Create Challenge</span>
@@ -340,8 +340,8 @@ const MyChallenges: React.FC = () => {
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Challenges</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{challenges.length}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <div className="w-12 h-12 bg-brand-faint dark:bg-brand/20 rounded-lg flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-brand dark:text-brand-light" />
               </div>
             </div>
           </motion.div>
@@ -415,7 +415,7 @@ const MyChallenges: React.FC = () => {
                   placeholder="Search challenges..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:[color-scheme:dark]"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-brand focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -425,7 +425,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Status</option>
                 <option value={ChallengeStatus.ACTIVE}>Active</option>
@@ -437,7 +437,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sportFilter}
                 onChange={(e) => setSportFilter(e.target.value as SportFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Sports</option>
                 <option value={Sport.RUNNING}>Running</option>
@@ -452,7 +452,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={ownershipFilter}
                 onChange={(e) => setOwnershipFilter(e.target.value as OwnershipFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="all">All Challenges</option>
                 <option value="created">Created by Me</option>
@@ -462,7 +462,7 @@ const MyChallenges: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-brand focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
               >
                 <option value="recent">Most Recent</option>
                 <option value="name">Name A-Z</option>
@@ -479,7 +479,7 @@ const MyChallenges: React.FC = () => {
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400'
+                    ? 'bg-brand-faint text-brand dark:bg-brand/20 dark:text-brand-light'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
@@ -496,7 +496,7 @@ const MyChallenges: React.FC = () => {
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400'
+                    ? 'bg-brand-faint text-brand dark:bg-brand/20 dark:text-brand-light'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
@@ -519,7 +519,7 @@ const MyChallenges: React.FC = () => {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
                 <p className="text-gray-600 dark:text-gray-300">Loading your challenges...</p>
               </div>
             </div>
@@ -541,7 +541,7 @@ const MyChallenges: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCreateChallenge}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
+                  className="bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
                 >
                   <Plus className="w-5 h-5" />
                   <span>Create Your First Challenge</span>
@@ -569,7 +569,7 @@ const MyChallenges: React.FC = () => {
                   tabIndex={0}
                   className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${
                     viewMode === 'list' ? 'flex' : ''
-                  } cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950`}
+                  } cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-gray-950`}
                 >
                   {/* Challenge Header */}
                   <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
@@ -580,7 +580,7 @@ const MyChallenges: React.FC = () => {
                             {getStatusText(challenge.status)}
                           </span>
                           {challenge.isCreator ? (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 flex items-center">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-brand-faint text-brand dark:bg-brand/20 dark:text-brand-light flex items-center">
                               <Star className="w-3 h-3 mr-1" />
                               Created
                             </span>
@@ -755,7 +755,7 @@ const MyChallenges: React.FC = () => {
                           e.stopPropagation();
                           handleViewChallenge(challenge);
                         }}
-                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                        className="flex-1 bg-brand hover:bg-brand-hover text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         <Eye className="w-4 h-4" />
                         <span>View</span>

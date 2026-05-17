@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "preview": "vite preview",
     "generate-vapid": "node scripts/generate-vapid-keys.mjs",
-    "strava:webhook-register": "node scripts/register-strava-webhook.mjs"
+    "strava:webhook-register": "node scripts/register-strava-webhook.mjs",
+    "compliance": "node scripts/check-strava-compliance.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",

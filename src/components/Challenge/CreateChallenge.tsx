@@ -157,7 +157,7 @@ const CreateChallenge: React.FC = () => {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     step >= stepNumber
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-brand text-white'
                       : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -166,7 +166,7 @@ const CreateChallenge: React.FC = () => {
                 {stepNumber < 3 && (
                   <div
                     className={`w-12 h-0.5 mx-2 ${
-                      step > stepNumber ? 'bg-orange-500' : 'bg-gray-200 dark:bg-gray-700'
+                      step > stepNumber ? 'bg-brand' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -204,7 +204,7 @@ const CreateChallenge: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Winter Fitness Challenge 2025"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent transition-colors"
                   maxLength={50}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -226,7 +226,7 @@ const CreateChallenge: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
                         formData.sports.includes(sport.id)
-                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                          ? 'border-brand bg-brand-faint dark:bg-brand/10 dark:border-brand'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
@@ -235,7 +235,7 @@ const CreateChallenge: React.FC = () => {
                         <div>
                           <p className="font-medium text-gray-900 dark:text-gray-100">{sport.name}</p>
                           {formData.goals[sport.id] && (
-                            <p className="text-sm text-orange-600 dark:text-orange-300">
+                            <p className="text-sm text-brand dark:text-brand-light">
                               Goal: {formData.goals[sport.id]} {sport.id === Sport.WEIGHT_TRAINING ? 'sessions' : 'km'}
                             </p>
                           )}
@@ -257,7 +257,7 @@ const CreateChallenge: React.FC = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 onClick={handleNext}
                 disabled={!formData.name.trim() || formData.sports.length === 0}
-                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-brand hover:bg-brand-hover disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-4 h-4" />
@@ -283,7 +283,7 @@ const CreateChallenge: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
                         formData.duration === option.value
-                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/35 dark:border-orange-500'
+                          ? 'border-brand bg-brand-faint dark:bg-brand/10 dark:border-brand'
                           : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500 dark:bg-gray-800/40'
                       }`}
                     >
@@ -306,7 +306,7 @@ const CreateChallenge: React.FC = () => {
                       name="privacy"
                       checked={!formData.isPrivate}
                       onChange={() => setFormData(prev => ({ ...prev, isPrivate: false }))}
-                      className="w-4 h-4 text-orange-500 focus:ring-orange-500"
+                      className="w-4 h-4 text-brand focus:ring-brand"
                     />
                     <div className="ml-3">
                       <p className="font-medium text-gray-900 dark:text-gray-100">Public Challenge</p>
@@ -319,7 +319,7 @@ const CreateChallenge: React.FC = () => {
                       name="privacy"
                       checked={formData.isPrivate}
                       onChange={() => setFormData(prev => ({ ...prev, isPrivate: true }))}
-                      className="w-4 h-4 text-orange-500 focus:ring-orange-500"
+                      className="w-4 h-4 text-brand focus:ring-brand"
                     />
                     <div className="ml-3">
                       <p className="font-medium text-gray-900 dark:text-gray-100">Private Challenge</p>
@@ -359,7 +359,7 @@ const CreateChallenge: React.FC = () => {
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:border-gray-500 dark:bg-gray-900"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-gray-500 dark:bg-gray-900"
                     checked={formData.creatorParticipantSharingAck}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, creatorParticipantSharingAck: e.target.checked }))
@@ -369,7 +369,7 @@ const CreateChallenge: React.FC = () => {
                     I understand that people who join this challenge (via my invite link) will see each
                     other&apos;s <strong>challenge progress</strong> here — aggregated stats for this challenge
                     only, not their full Strava profiles. See the{' '}
-                    <a href="/privacy" className="text-orange-600 underline">
+                    <a href="/privacy" className="text-brand dark:text-brand-light underline">
                       Privacy Policy
                     </a>
                     .
@@ -393,7 +393,7 @@ const CreateChallenge: React.FC = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   onClick={handleCreateChallenge}
                   disabled={isCreating || !formData.creatorParticipantSharingAck}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  className="flex-1 bg-brand hover:bg-brand-hover disabled:bg-brand/60 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                 >
                   {isCreating ? (
                     <>
@@ -484,7 +484,7 @@ const CreateChallenge: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={goToRace}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  className="w-full bg-brand hover:bg-brand-hover text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>Go to Challenge</span>

@@ -10,7 +10,7 @@ interface RaceTrackProps {
 
 const avatarUrl = (name?: string | null, image?: string | null, size = 32) =>
   image ||
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&size=${size}&background=f97316&color=fff`;
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&size=${size}&background=2563EB&color=fff`;
 
 const sportConfig = {
   RUNNING: {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Challenge, ChallengeStatus } from '../../types';
+import { Challenge, ChallengeStatus, UserStats } from '../../types';
 import { ChallengeService } from '../../services/challengeService';
+import { getUserStats } from '../../services/userStatsService';
 import { createLogger } from '../../lib/logger';
 import ProfileHero from './ProfileHero';
 import ActiveChallenges from './ActiveChallenges';
@@ -18,6 +19,7 @@ const ProfilePage: React.FC = () => {
   const { user, isConnectedToStrava } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
@@ -29,6 +31,13 @@ const ProfilePage: React.FC = () => {
       .catch(err => log.error('failed to load challenges', err))
       .finally(() => setLoading(false));
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !isConnectedToStrava) return;
+    getUserStats(user.id)
+      .then(setStats)
+      .catch(err => log.error('failed to load stats', err));
+  }, [user?.id, isConnectedToStrava]);
 
   const activeChallenges = challenges.filter(c => c.status === ChallengeStatus.ACTIVE);
   const pastChallenges = challenges.filter(c => c.status !== ChallengeStatus.ACTIVE);
@@ -79,11 +88,12 @@ const ProfilePage: React.FC = () => {
           isConnectedToStrava={isConnectedToStrava}
           activeChallenges={activeChallenges}
           pastChallenges={pastChallenges}
+          stats={stats}
         />
         <ActiveChallenges challenges={activeChallenges} loading={loading} />
-        <StreaksAndPBs />
-        <ActivityHeatmap />
-        <LifetimeStats />
+        <StreaksAndPBs stats={stats} />
+        <ActivityHeatmap cells={stats?.heatmap} />
+        <LifetimeStats stats={stats?.lifetimeStats} />
         <ChallengesHistory challenges={pastChallenges} loading={loading} />
         <HeadToHead />
         <ProfileFooterStrip />

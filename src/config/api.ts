@@ -18,6 +18,7 @@ export const API_CONFIG = {
       CHALLENGES: `${this.BASE_URL}/challenges`,
       CHALLENGE: (id: string) => `${this.BASE_URL}/challenges/${id}`,
       USER_CHALLENGES: (userId: string) => `${this.BASE_URL}/challenges/user/${userId}`,
+      USER_STATS: (userId: string) => `${this.BASE_URL}/users/${userId}/stats`,
       JOIN_CHALLENGE: (id: string) => `${this.BASE_URL}/challenges/${id}/join`,
       UPDATE_PROGRESS: (id: string) => `${this.BASE_URL}/challenges/${id}/progress`,
     };
@@ -34,6 +35,7 @@ export const {
   CHALLENGES,
   CHALLENGE,
   USER_CHALLENGES,
+  USER_STATS,
   JOIN_CHALLENGE,
   UPDATE_PROGRESS
 } = API_CONFIG.ENDPOINTS;

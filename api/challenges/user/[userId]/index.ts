@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         _count: { select: { participants: true } },
         participants: {
           where: { userId },
-          select: { currentDistance: true },
+          select: { currentDistance: true, finishPosition: true, finalDistance: true },
           take: 1,
         },
       },
@@ -94,6 +94,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         participants: challenge._count.participants,
         isCreator: challenge.creatorId === userId,
         myProgress,
+        myFinishPosition: row?.finishPosition ?? null,
+        myFinalDistance: row?.finalDistance != null ? Number(row.finalDistance) : null,
         createdAt: challenge.createdAt,
         updatedAt: challenge.updatedAt,
       };

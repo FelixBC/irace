@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Flame, TrendingUp, Trophy } from 'lucide-react';
-import { User, Challenge, Sport } from '../../types';
+import { format } from 'date-fns';
+import { User, Challenge, Sport, UserStats } from '../../types';
 
 const SPORT_ICONS: Partial<Record<Sport, string>> = {
   [Sport.RUNNING]: '🏃',
@@ -38,12 +39,14 @@ interface ProfileHeroProps {
   isConnectedToStrava: boolean;
   activeChallenges: Challenge[];
   pastChallenges: Challenge[];
+  stats?: UserStats | null;
 }
 
 const ProfileHero: React.FC<ProfileHeroProps> = ({
   user,
   activeChallenges,
   pastChallenges,
+  stats,
 }) => {
   const primarySport = useMemo<Sport | null>(() => {
     const sports = [...activeChallenges, ...pastChallenges].flatMap(c => c.sports);
@@ -52,6 +55,19 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
     sports.forEach(s => counts.set(s, (counts.get(s) ?? 0) + 1));
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
   }, [activeChallenges, pastChallenges]);
+
+  const memberSince = stats?.memberSince
+    ? `Member since ${format(new Date(stats.memberSince), 'MMM yyyy')}`
+    : null;
+
+  const weekDist = stats?.weeklyStats.distance ?? null;
+  const lastWeekDist = stats?.weeklyStats.distanceLastWeek ?? null;
+  const weekDelta = weekDist !== null && lastWeekDist !== null ? weekDist - lastWeekDist : null;
+
+  const streak = stats?.streaks.current ?? null;
+  const winRate = stats?.winRecord.rate ?? null;
+  const wins = stats?.winRecord.wins ?? null;
+  const losses = stats?.winRecord.losses ?? null;
 
   return (
     <motion.section
@@ -91,42 +107,98 @@ const ProfileHero: React.FC<ProfileHeroProps> = ({
             )}
           </div>
 
-          {/* Member since — TODO(backend): user.createdAt not in User type */}
           <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-5">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <Sk className="h-3 w-28" />
+            {memberSince ? (
+              <span>{memberSince}</span>
+            ) : (
+              <Sk className="h-3 w-28" />
+            )}
           </div>
 
-          {/* Hero stats — all require backend endpoints */}
+          {/* Hero stats */}
           <div className="grid grid-cols-3 gap-3 max-w-xs">
-            {/* Current Streak — TODO(backend): no streak endpoint */}
+            {/* Current Streak */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-1">
-                <Flame className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+                <Flame
+                  className={`w-3.5 h-3.5 ${
+                    streak && streak > 0
+                      ? 'text-orange-500'
+                      : 'text-gray-300 dark:text-gray-600'
+                  }`}
+                />
               </div>
-              <Sk className="h-6 w-10 mx-auto mb-1" />
+              {streak !== null ? (
+                <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white leading-tight">
+                  {streak}
+                </p>
+              ) : (
+                <Sk className="h-6 w-10 mx-auto mb-1" />
+              )}
               <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                Current streak
+                {streak === 1 ? 'day streak' : 'day streak'}
               </p>
             </div>
 
-            {/* This Week — TODO(backend): no weekly stats endpoint */}
+            {/* This Week */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-1">
-                <TrendingUp className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+                <TrendingUp
+                  className={`w-3.5 h-3.5 ${
+                    weekDist !== null ? 'text-brand' : 'text-gray-300 dark:text-gray-600'
+                  }`}
+                />
               </div>
-              <Sk className="h-6 w-12 mx-auto mb-1" />
+              {weekDist !== null ? (
+                <>
+                  <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white leading-tight">
+                    {weekDist.toFixed(1)}
+                  </p>
+                  {weekDelta !== null && lastWeekDist !== null && lastWeekDist > 0 && (
+                    <p
+                      className={`text-[9px] leading-tight ${
+                        weekDelta >= 0
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-500 dark:text-red-400'
+                      }`}
+                    >
+                      {weekDelta >= 0 ? '+' : ''}
+                      {weekDelta.toFixed(1)} km
+                    </p>
+                  )}
+                </>
+              ) : (
+                <Sk className="h-6 w-12 mx-auto mb-1" />
+              )}
               <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                This week
+                km this week
               </p>
             </div>
 
-            {/* Win Rate — TODO(backend): finishPosition needed for accurate W/L */}
+            {/* Win Rate */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-1">
-                <Trophy className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+                <Trophy
+                  className={`w-3.5 h-3.5 ${
+                    winRate !== null ? 'text-amber-500' : 'text-gray-300 dark:text-gray-600'
+                  }`}
+                />
               </div>
-              <Sk className="h-6 w-10 mx-auto mb-1" />
+              {winRate !== null ? (
+                <>
+                  <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white leading-tight">
+                    {winRate}%
+                  </p>
+                  {wins !== null && losses !== null && (
+                    <p className="text-[9px] text-gray-500 dark:text-gray-400 leading-tight">
+                      {wins}W – {losses}L
+                    </p>
+                  )}
+                </>
+              ) : (
+                <Sk className="h-6 w-10 mx-auto mb-1" />
+              )}
               <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
                 Win rate
               </p>

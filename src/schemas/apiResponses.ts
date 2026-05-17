@@ -100,6 +100,8 @@ export const challengeSchema = z
     completedAt: z.coerce.date().nullable().optional(),
     participants: z.union([z.array(challengeParticipantSchema), z.number()]).optional(),
     myProgress: z.number().optional(),
+    myFinishPosition: z.number().nullable().optional(),
+    myFinalDistance: z.number().nullable().optional(),
     isCreator: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
@@ -157,6 +159,42 @@ export const tauntsListResponseSchema = z.object({
 
 export const sendTauntResponseSchema = z.object({
   taunt: z.any(),
+});
+
+export const userStatsSchema = z.object({
+  memberSince: z.string().nullable(),
+  streaks: z.object({
+    current: z.number(),
+    longest: z.number(),
+    hoursUntilLost: z.number().nullable(),
+  }),
+  weeklyStats: z.object({
+    distance: z.number(),
+    distanceLastWeek: z.number(),
+  }),
+  lifetimeStats: z.object({
+    totalDistanceKm: z.number(),
+    totalTimeSeconds: z.number(),
+    totalActivities: z.number(),
+    totalElevationM: z.number(),
+    sportBreakdown: z.record(z.string(), z.number()),
+  }),
+  personalBests: z.object({
+    longestActivityKm: z.number(),
+    fastestPaceSecPerKm: z.number().nullable(),
+  }),
+  heatmap: z.array(
+    z.object({
+      date: z.string(),
+      distance: z.number(),
+      count: z.number(),
+    })
+  ),
+  winRecord: z.object({
+    wins: z.number(),
+    losses: z.number(),
+    rate: z.number(),
+  }),
 });
 
 export const apiErrorBodySchema = z.object({

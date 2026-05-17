@@ -24,6 +24,12 @@ const TABS: { id: FilterTab; label: string }[] = [
   { id: 'podium', label: 'Podium' },
 ];
 
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
 function outcomeFor(c: Challenge): { label: string; color: string; icon: React.ReactNode } {
   if (c.status === ChallengeStatus.CANCELLED) {
     return {
@@ -33,6 +39,36 @@ function outcomeFor(c: Challenge): { label: string; color: string; icon: React.R
     };
   }
   if (c.status === ChallengeStatus.COMPLETED) {
+    const pos = c.myFinishPosition;
+    if (pos === 1) {
+      return {
+        label: '1st place',
+        color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30',
+        icon: <Trophy className="w-3 h-3" />,
+      };
+    }
+    if (pos === 2) {
+      return {
+        label: '2nd place',
+        color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30',
+        icon: <Trophy className="w-3 h-3" />,
+      };
+    }
+    if (pos === 3) {
+      return {
+        label: '3rd place',
+        color: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30',
+        icon: <Trophy className="w-3 h-3" />,
+      };
+    }
+    if (pos != null && pos > 3) {
+      return {
+        label: `${ordinal(pos)} place`,
+        color: 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800',
+        icon: null,
+      };
+    }
+    // No finishPosition recorded — fall back to progress
     const pct = c.myProgress ?? 0;
     if (pct >= 100) {
       return {
@@ -52,6 +88,24 @@ function outcomeFor(c: Challenge): { label: string; color: string; icon: React.R
     color: 'text-gray-400 bg-gray-50 dark:bg-gray-800',
     icon: null,
   };
+}
+
+function isWon(c: Challenge): boolean {
+  if (c.status !== ChallengeStatus.COMPLETED) return false;
+  if (c.myFinishPosition != null) return c.myFinishPosition === 1;
+  return (c.myProgress ?? 0) >= 100;
+}
+
+function isPodium(c: Challenge): boolean {
+  if (c.status !== ChallengeStatus.COMPLETED) return false;
+  if (c.myFinishPosition != null) return c.myFinishPosition <= 3;
+  return (c.myProgress ?? 0) >= 100;
+}
+
+function isLost(c: Challenge): boolean {
+  if (c.status !== ChallengeStatus.COMPLETED) return false;
+  if (c.myFinishPosition != null) return c.myFinishPosition > 1;
+  return (c.myProgress ?? 0) < 100;
 }
 
 function formatDateRange(start: Date | string, end: Date | string): string {
@@ -88,9 +142,9 @@ const ChallengesHistory: React.FC<ChallengesHistoryProps> = ({ challenges, loadi
 
   const filtered = useMemo(() => {
     if (tab === 'all') return sorted;
-    if (tab === 'won') return sorted.filter(c => c.status === ChallengeStatus.COMPLETED && (c.myProgress ?? 0) >= 100);
-    if (tab === 'lost') return sorted.filter(c => c.status === ChallengeStatus.COMPLETED && (c.myProgress ?? 0) < 100);
-    if (tab === 'podium') return sorted.filter(c => c.status === ChallengeStatus.COMPLETED && (c.myProgress ?? 0) >= 100);
+    if (tab === 'won') return sorted.filter(isWon);
+    if (tab === 'lost') return sorted.filter(isLost);
+    if (tab === 'podium') return sorted.filter(isPodium);
     return sorted;
   }, [sorted, tab]);
 
@@ -125,12 +179,6 @@ const ChallengesHistory: React.FC<ChallengesHistoryProps> = ({ challenges, loadi
           ))}
         </div>
 
-        {(tab === 'won' || tab === 'podium') && (
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-3">
-            Showing challenges where you reached your goal. Rank-based filtering (1st/podium) requires backend position data.
-          </p>
-        )}
-
         {loading && (
           <>
             <SkeletonRow />
@@ -159,7 +207,7 @@ const ChallengesHistory: React.FC<ChallengesHistoryProps> = ({ challenges, loadi
             {filtered.map((c, i) => {
               const { label, color, icon } = outcomeFor(c);
               const sports = c.sports.slice(0, 3);
-              const isWin = c.status === ChallengeStatus.COMPLETED && (c.myProgress ?? 0) >= 100;
+              const won = isWon(c);
 
               return (
                 <motion.div
@@ -169,20 +217,18 @@ const ChallengesHistory: React.FC<ChallengesHistoryProps> = ({ challenges, loadi
                   transition={{ delay: i * 0.03 }}
                   className="flex items-center gap-4 py-4 first:pt-0 last:pb-0"
                 >
-                  {/* Sport icon */}
                   <div
                     className={`w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0 ${
-                      isWin ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-gray-50 dark:bg-gray-800'
+                      won ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
                     <span aria-hidden="true">{SPORT_ICONS[sports[0]] ?? '🏆'}</span>
                   </div>
 
-                  {/* Name + dates */}
                   <div className="flex-1 min-w-0">
                     <p
                       className={`text-sm font-medium truncate ${
-                        isWin ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-white'
+                        won ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-white'
                       }`}
                     >
                       {c.name}
@@ -192,7 +238,6 @@ const ChallengesHistory: React.FC<ChallengesHistoryProps> = ({ challenges, loadi
                     </p>
                   </div>
 
-                  {/* Outcome chip */}
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${color} shrink-0`}
                   >

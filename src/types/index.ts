@@ -66,6 +66,9 @@ export interface Challenge {
   participants?: ChallengeParticipant[];
   /** 0–100 for the current user on “My challenges” (distance vs challenge goal). */
   myProgress?: number;
+  /** Finish rank (1 = winner). Present on completed challenges from the user list endpoint. */
+  myFinishPosition?: number | null;
+  myFinalDistance?: number | null;
   /** Present when listing challenges for the current user. */
   isCreator?: boolean;
 }
@@ -165,41 +168,36 @@ export interface RaceTrack {
 
 // ─── Profile page types ──────────────────────────────────────────────────────
 
-// TODO(backend): not returned by any endpoint; requires /api/users/me/profile
 export interface ProfileStreaks {
   current: number;
   longest: number;
   hoursUntilLost: number | null;
 }
 
-// TODO(backend): requires aggregation over activity sync history
 export interface ProfileWeeklyStats {
   distance: number;
   distanceLastWeek: number;
 }
 
-// TODO(backend): requires finishPosition on ChallengeParticipant; not in list endpoint
 export interface ProfileWinRecord {
   wins: number;
   losses: number;
   rate: number;
 }
 
-// TODO(backend): requires aggregation over full activity history
 export interface PersonalBest {
   longestActivityKm: number;
-  fastestPaceSecPerKm: number;
+  /** Seconds per km for running. Null when no running activities exist. */
+  fastestPaceSecPerKm: number | null;
   biggestElevationGainM: number;
 }
 
-// TODO(backend): requires daily distance/count aggregation — GET /api/users/:id/heatmap
 export interface HeatmapCell {
   date: string;
   distance: number;
   count: number;
 }
 
-// TODO(backend): requires full activity history aggregation
 export interface LifetimeStats {
   totalDistanceKm: number;
   totalTimeSeconds: number;
@@ -208,11 +206,20 @@ export interface LifetimeStats {
   sportBreakdown: Partial<Record<Sport, number>>;
 }
 
-// TODO(backend): requires cross-challenge opponent tracking with finishPosition
 export interface HeadToHeadRecord {
   userId: string;
   name: string;
   image: string | null;
   wins: number;
   losses: number;
+}
+
+export interface UserStats {
+  memberSince: string | null;
+  streaks: ProfileStreaks;
+  weeklyStats: ProfileWeeklyStats;
+  lifetimeStats: LifetimeStats;
+  personalBests: PersonalBest;
+  heatmap: HeatmapCell[];
+  winRecord: ProfileWinRecord;
 }

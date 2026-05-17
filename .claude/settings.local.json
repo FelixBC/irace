@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Felix Blanco\\\\Desktop\\\\work\\\\stravaracer\" -Force | Where-Object {$_.PSIsContainer -eq $false} | Select-Object Name)",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(npx skills *)",
+      "WebFetch(domain:www.strava.com)",
+      "WebFetch(domain:developers.strava.com)",
+      "WebFetch(domain:press.strava.com)",
+      "WebFetch(domain:communityhub.strava.com)",
+      "Bash(python3 \".agents/skills/ui-ux-pro-max/scripts\" \"competitive fitness social challenge app distinct identity energetic\")",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Bash(where node *)",
+      "Bash(C:\\\\Python313\\\\python.exe \".agents/skills/ui-ux-pro-max/scripts\" \"competitive fitness social challenge app distinct identity energetic\" --design-system)",
+      "PowerShell(python \".agents/skills/ui-ux-pro-max/scripts\" \"competitive fitness social challenge app distinct identity energetic\" --design-system 2>&1 | Select-Object -First 80)",
+      "Bash(dir dist\\\\assets /b)",
+      "Bash(findstr /i \"strava\")"
+    ]
+  }
+}

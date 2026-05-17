@@ -382,3 +382,33 @@ and is the most defensible position for API review.
 ---
 
 *This document is internal guidance. For legal questions, consult qualified counsel.*
+
+---
+
+## Section 4 — Profile Page Backend Follow-Ups (PR3)
+
+The `/profile` page displays real data where available and skeleton placeholders where backend
+endpoints do not yet exist. The table below tracks all gaps.
+
+| ID | Field(s) | Why skeleton | Backend work needed |
+|----|----------|--------------|---------------------|
+| PF-1 | `currentStreak`, `longestStreak`, `hoursUntilLost` | No streak endpoint | Aggregate Activity rows by userId over consecutive days |
+| PF-2 | `weeklyDistance`, `weeklyDistanceDelta` | No weekly stats endpoint | Sum Activity.distance for current and prior calendar week |
+| PF-3 | `wins`, `losses`, `winRate` | `finishPosition` missing from list endpoint | Return `participants` as array (not count) in `GET /api/challenges?userId=...`; include `finishPosition` |
+| PF-4 | `longestActivityKm`, `fastestPaceSecPerKm`, `biggestElevationGainM` | No PB endpoint | Aggregate queries over Activity table per user |
+| PF-5 | `HeatmapCell[] (date, distance, count)` | No heatmap endpoint | New `GET /api/users/:id/heatmap?range=12wk\|6mo\|1yr` — daily aggregated distance + count |
+| PF-6 | `totalDistanceKm`, `totalTimeSeconds`, `totalActivities`, `totalElevationM`, `sportBreakdown` | No lifetime stats endpoint | Aggregate queries over Activity table per user |
+| PF-7 | `HeadToHeadRecord[] (userId, name, image, wins, losses)` | No H2H endpoint | Cross-challenge aggregation tracking finish positions per opponent pair |
+| PF-8 | `user.createdAt` | Not in User type | Return `createdAt` from session endpoint; add `createdAt?: string` to `User` interface |
+
+### What is explicitly NOT shown on the Profile page (R1 compliance)
+
+| Data not shown | Reason |
+|----------------|--------|
+| Global iRace leaderboard across all users | Exposes aggregate data of other users outside a challenge context |
+| "Top X% on Strava" claims | Requires platform-wide Strava data comparison |
+| Friends' activity feed on the profile | Would show other users' Strava activity data (R1 violation) |
+| AI-generated insights from Strava data | Prohibited by R2 |
+| Maps, route lines, GPS coordinates | Raw per-activity geographic data |
+| Other users' raw activity metrics (distance, pace, HR, elevation) | R1 violation |
+| Opponent per-activity detail anywhere in head-to-head view | R1 violation — only iRace-derived rank (W/L count) is shown |

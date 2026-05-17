@@ -10,7 +10,8 @@ import ErrorBoundary from './components/ui/ErrorBoundary';
 const LandingPage = lazy(() => import('./components/Home/LandingPage'));
 const RaceView = lazy(() => import('./components/Race/RaceView'));
 const CreateChallenge = lazy(() => import('./components/Challenge/CreateChallenge'));
-const Profile = lazy(() => import('./components/Profile/Profile'));
+const ProfilePage = lazy(() => import('./components/Profile/ProfilePage'));
+const SettingsPage = lazy(() => import('./components/Settings/SettingsPage'));
 const MyChallenges = lazy(() => import('./components/Challenges/MyChallenges'));
 const JoinChallenge = lazy(() => import('./components/Challenge/JoinChallenge'));
 const AuthCallback = lazy(() => import('./components/Auth/AuthCallback'));
@@ -41,7 +42,8 @@ function App() {
                       <Route path="/race/:challengeId" element={<RaceView />} />
                       <Route path="/join/:inviteCode" element={<JoinChallenge />} />
                       <Route path="/create" element={<CreateChallenge />} />
-                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/my-challenges" element={<MyChallenges />} />
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/privacy" element={<PrivacyPolicy />} />

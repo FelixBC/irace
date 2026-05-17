@@ -162,3 +162,57 @@ export interface RaceTrack {
   maxDistance: number;
   leader: User | null;
 }
+
+// ─── Profile page types ──────────────────────────────────────────────────────
+
+// TODO(backend): not returned by any endpoint; requires /api/users/me/profile
+export interface ProfileStreaks {
+  current: number;
+  longest: number;
+  hoursUntilLost: number | null;
+}
+
+// TODO(backend): requires aggregation over activity sync history
+export interface ProfileWeeklyStats {
+  distance: number;
+  distanceLastWeek: number;
+}
+
+// TODO(backend): requires finishPosition on ChallengeParticipant; not in list endpoint
+export interface ProfileWinRecord {
+  wins: number;
+  losses: number;
+  rate: number;
+}
+
+// TODO(backend): requires aggregation over full activity history
+export interface PersonalBest {
+  longestActivityKm: number;
+  fastestPaceSecPerKm: number;
+  biggestElevationGainM: number;
+}
+
+// TODO(backend): requires daily distance/count aggregation — GET /api/users/:id/heatmap
+export interface HeatmapCell {
+  date: string;
+  distance: number;
+  count: number;
+}
+
+// TODO(backend): requires full activity history aggregation
+export interface LifetimeStats {
+  totalDistanceKm: number;
+  totalTimeSeconds: number;
+  totalActivities: number;
+  totalElevationM: number;
+  sportBreakdown: Partial<Record<Sport, number>>;
+}
+
+// TODO(backend): requires cross-challenge opponent tracking with finishPosition
+export interface HeadToHeadRecord {
+  userId: string;
+  name: string;
+  image: string | null;
+  wins: number;
+  losses: number;
+}

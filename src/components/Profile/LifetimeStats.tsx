@@ -37,18 +37,23 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit, delay = 0 }) =>
 
 interface LifetimeStatsProps {
   stats?: LifetimeStatsData;
+  errorMessage?: string | null;
 }
 
-const LifetimeStats: React.FC<LifetimeStatsProps> = ({ stats }) => (
+const LifetimeStats: React.FC<LifetimeStatsProps> = ({ stats, errorMessage }) => (
   <section aria-label="Lifetime stats">
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">Lifetime Stats</h2>
-        {!stats && (
+        {errorMessage ? (
+          <span className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">
+            Error
+          </span>
+        ) : !stats ? (
           <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
             Coming soon
           </span>
-        )}
+        ) : null}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
         <StatCard

@@ -50,9 +50,10 @@ const BentoCard: React.FC<BentoCardProps> = ({ icon, label, value, sub, delay = 
 
 interface StreaksAndPBsProps {
   stats?: UserStats | null;
+  errorMessage?: string | null;
 }
 
-const StreaksAndPBs: React.FC<StreaksAndPBsProps> = ({ stats }) => {
+const StreaksAndPBs: React.FC<StreaksAndPBsProps> = ({ stats, errorMessage }) => {
   const current = stats?.streaks.current;
   const longest = stats?.streaks.longest;
   const longestKm = stats?.personalBests.longestActivityKm;
@@ -64,11 +65,15 @@ const StreaksAndPBs: React.FC<StreaksAndPBsProps> = ({ stats }) => {
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           Streaks &amp; Personal Bests
         </h2>
-        {!stats && (
+        {errorMessage ? (
+          <span className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">
+            Error
+          </span>
+        ) : !stats ? (
           <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
             Loading…
           </span>
-        )}
+        ) : null}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <BentoCard
@@ -102,6 +107,12 @@ const StreaksAndPBs: React.FC<StreaksAndPBsProps> = ({ stats }) => {
         <BentoCard
           icon={<Mountain className="w-4 h-4" />}
           label="Best elevation day"
+          value={
+            stats == null
+              ? undefined
+              : '—'
+          }
+          sub={stats != null ? 'Per-activity elevation not stored yet' : undefined}
           delay={0.16}
         />
       </div>

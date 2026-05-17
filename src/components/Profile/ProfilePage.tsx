@@ -20,6 +20,7 @@ const ProfilePage: React.FC = () => {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
@@ -34,9 +35,22 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (!user?.id || !isConnectedToStrava) return;
+    let cancelled = false;
+    setStatsError(null);
     getUserStats(user.id)
-      .then(setStats)
-      .catch(err => log.error('failed to load stats', err));
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch((err) => {
+        log.error('failed to load stats', err);
+        if (!cancelled) {
+          setStats(null);
+          setStatsError(err instanceof Error ? err.message : 'Failed to load profile stats');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, isConnectedToStrava]);
 
   const activeChallenges = challenges.filter(c => c.status === ChallengeStatus.ACTIVE);
@@ -83,6 +97,19 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {statsError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-900 dark:text-amber-100"
+          >
+            <p className="font-medium">Profile stats could not be loaded</p>
+            <p className="text-amber-800/90 dark:text-amber-200/90 mt-1">{statsError}</p>
+            <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-2">
+              If you use local dev, run <code className="font-mono">vercel dev</code> so{' '}
+              <code className="font-mono">/api</code> routes are available (Vite alone does not serve them).
+            </p>
+          </div>
+        )}
         <ProfileHero
           user={user}
           isConnectedToStrava={isConnectedToStrava}
@@ -91,9 +118,9 @@ const ProfilePage: React.FC = () => {
           stats={stats}
         />
         <ActiveChallenges challenges={activeChallenges} loading={loading} />
-        <StreaksAndPBs stats={stats} />
+        <StreaksAndPBs stats={stats} errorMessage={statsError} />
         <ActivityHeatmap cells={stats?.heatmap} />
-        <LifetimeStats stats={stats?.lifetimeStats} />
+        <LifetimeStats stats={stats?.lifetimeStats} errorMessage={statsError} />
         <ChallengesHistory challenges={pastChallenges} loading={loading} />
         <HeadToHead />
         <ProfileFooterStrip />

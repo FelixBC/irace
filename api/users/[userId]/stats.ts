@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createLogger } from '../../../server/logger.js';
 import { createFreshPrismaClient } from '../../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../../server/optionalInsecureTls.js';
-import { getQueryString } from '../../../server/vercelQuery.js';
+import { getUsersStatsUserId } from '../../../server/vercelQuery.js';
 import { resolveBearerUserId } from '../../../server/authSession.js';
 import { sendJsonError } from '../../../server/apiHelpers.js';
 import { applyCors } from '../../../server/cors.js';
@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return sendJsonError(res, 405, 'Method not allowed');
 
-  const userId = getQueryString(req, 'userId');
+  const userId = getUsersStatsUserId(req);
   if (!userId) return sendJsonError(res, 400, 'userId is required');
 
   const prisma = createFreshPrismaClient();

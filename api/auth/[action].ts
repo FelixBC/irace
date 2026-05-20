@@ -2,6 +2,7 @@
  * Dynamic auth route to keep Vercel function count low:
  * - POST /api/auth/exchange
  * - POST /api/auth/refresh
+ * - POST /api/auth/logout
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { Prisma } from '@prisma/client';
@@ -9,7 +10,7 @@ import { createLogger } from '../../server/logger.js';
 import { createFreshPrismaClient } from '../../server/prisma.js';
 import { applyOptionalInsecureTlsFromEnv } from '../../server/optionalInsecureTls.js';
 import { applyCors } from '../../server/cors.js';
-import { hashOpaqueToken, signAccessToken, ACCESS_TOKEN_TTL_SEC } from '../../server/authTokens.js';
+import { hashOpaqueToken, signAccessToken, ACCESS_TOKEN_TTL_SEC, verifyAccessToken } from '../../server/authTokens.js';
 import { parseVercelPostJsonObject } from '../../server/parseVercelPostJson.js';
 
 const logExchange = createLogger('authExchange');
@@ -168,6 +169,39 @@ async function handleRefresh(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+const logLogout = createLogger('authLogout');
+
+async function handleLogout(req: VercelRequest, res: VercelResponse) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No valid authorization header' });
+  }
+
+  const token = authHeader.slice(7);
+  const claims = verifyAccessToken(token);
+  if (!claims) {
+    return res.status(401).json({ error: 'Invalid or expired access token' });
+  }
+
+  applyOptionalInsecureTlsFromEnv();
+  const prisma = createFreshPrismaClient();
+
+  try {
+    await prisma.session.deleteMany({
+      where: { id: claims.sessionId, userId: claims.userId },
+    });
+    logLogout.debug('session revoked', claims.sessionId);
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    logLogout.error('logout failed', e);
+    return res.status(500).json({ error: 'Logout failed' });
+  } finally {
+    await prisma.$disconnect().catch((err) => {
+      logLogout.warn('prisma disconnect failed', err);
+    });
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   applyCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -185,6 +219,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const action = getAction(req);
   if (action === 'exchange') return handleExchange(req, res);
   if (action === 'refresh') return handleRefresh(req, res);
+  if (action === 'logout') return handleLogout(req, res);
 
   return res.status(404).json({ error: 'Not Found' });
 }
